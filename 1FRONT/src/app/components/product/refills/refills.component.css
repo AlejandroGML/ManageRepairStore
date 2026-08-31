@@ -83,3 +83,16 @@ mat-form-field {
     font-weight: bold;
   }
   
+/* ===== Port Phase 6 — refills restyle ===== */
+.page { padding-top: 4px; }
+.total-value {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-base) 0 var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.total-value strong {
+  font-size: 20px;
+  color: var(--color-text);
+}

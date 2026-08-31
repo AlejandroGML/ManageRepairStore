@@ -1,9 +1,17 @@
-<div class="button-container">
-  <button mat-raised-button color="primary" class="search-product-button" (click)="openProductSearch()">Buscar Producto</button>
-</div>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Ventas</h1>
+      <p class="page-lead">Punto de venta — agrega productos al carrito y completa la venta.</p>
+    </div>
+    <button class="btn btn-primary search-product-button" (click)="openProductSearch()">
+      <mat-icon fontIcon="add_shopping_cart"></mat-icon> Buscar Producto
+    </button>
+  </div>
 
-<mat-card class="table-container">
-  <div class="table-responsive"><table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+<mat-card class="card table-container">
+  <div class="card-head"><h2 class="card-title">Carrito de venta</h2></div>
+  <div class="table-responsive"><table mat-table [dataSource]="dataSource">
     <!-- Columna Nombre del Producto -->
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef> Nombre Producto </th>
@@ -62,11 +70,14 @@
 </mat-card>
 
 <div class="total-sale-container">
-  Valor Total de Venta: {{ totalSaleValue | currency:'CLP':'symbol' }}
+  <span>Valor Total de Venta</span>
+  <strong class="mono">{{ totalSaleValue | currency:'CLP':'symbol' }}</strong>
 </div>
 
 <div class="button-container">
-  <button mat-raised-button color="primary" [disabled]="submitting" class="purchase-button" (click)="completeSale()">
-    {{ submitting ? 'Procesando...' : 'Realizar Venta' }}
+  <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
+    <mat-icon fontIcon="check_circle"></mat-icon>
+    {{ submitting ? 'Procesando...' : 'Completar Venta' }}
   </button>
+</div>
 </div>

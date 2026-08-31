@@ -86,8 +86,15 @@ export class ProductComponent implements OnInit {
     });
   }
 
-   // Método para exportar datos a Excel
-   exportToExcel(): void {
+/** Tone for the stock bar: crit <= 3, warn <= 8, ok otherwise */
+  stockTone(stock?: number): string {
+    if (stock === undefined || stock <= 3) return 'crit';
+    if (stock <= 8) return 'warn';
+    return 'ok';
+  }
+
+  // Método para exportar datos a Excel
+  exportToExcel(): void {
     const productData = this.dataSource.data.map((product) => {
       // Obtén la transacción más reciente del producto
       const lastTransaction = product.transactions ? product.transactions[product.transactions.length - 1] : null;

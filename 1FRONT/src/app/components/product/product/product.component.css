@@ -90,3 +90,36 @@ button.add-product-button {
 .ml-10 { margin-left: 10px; }
 .no-image-btn { cursor: pointer; font-size: 32px; }
 .product-card { display: none; }
+
+/* ===== Port Phase 4 — data-dense restyle ===== */
+.page { padding-top: 4px; }
+.page-actions { display: flex; gap: var(--space-sm); }
+
+.mat-mdc-card { border-radius: var(--radius-lg); }
+mat-form-field { width: 100%; }
+
+.product-main-row { margin-bottom: var(--space-lg); }
+
+.div-tabla { margin-top: 0; }
+
+.table-title { display: none; }
+
+.stock-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.stock-cell .stock-bar { width: 60px; }
+
+.mat-mdc-paginator {
+  border-top: 1px solid var(--color-border);
+  background: transparent;
+}
+
+.image-upload-container {
+  margin: var(--space-sm) 0 var(--space-base);
+}
+
+.add-product-button { margin-top: var(--space-sm); }

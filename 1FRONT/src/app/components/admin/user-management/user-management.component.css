@@ -45,3 +45,8 @@ mat-card-header {
   align-items: center;
   justify-content: space-between;
 }
+
+/* ===== Port Phase 7 — admin restyle ===== */
+.page { padding-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: var(--space-sm); }
+.close-btn { display: none; }

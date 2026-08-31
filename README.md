@@ -10,13 +10,19 @@ for the Chilean market (RUT, CLP, Chilean Spanish UI).
 
 | Layer | Tech |
 |---|---|
-| Frontend | Angular 21 + Angular Material + Bootstrap 5 (standalone components) |
+| Frontend | Angular 21 + Angular Material (standalone components) |
 | Backend | NestJS 11 + TypeORM + PostgreSQL 16 |
 | PDF/QR | Puppeteer (server-side) + `qrcode` |
 | Package manager | pnpm (no root package.json — each package has its own lockfile) |
 
 ## Architecture highlights
 
+- **Shell sidebar + topbar with role-based routing** — each role lands on its own
+  screen (`/panel` admin, `/bodega` warehouse, `/ventas` seller); routes are guarded
+  by `authGuard` + `rolesGuard`.
+- **Design system** — `docs/DESIGN.md` is the single source of truth (violet/teal
+  palette, Fira Sans + Fira Code, data-dense tokens). SCSS tokens in
+  `1FRONT/src/_variables.scss`, prototype component classes in `_components.scss`.
 - **Denormalized stock with a single mutation path** — `ProductEntity.stock` is the
   single source of truth. Every stock change goes through `mutateStock()`
   (`2BACK/src/product/product.service.ts`): `QueryRunner` + `pessimistic_write` lock
@@ -53,13 +59,15 @@ cd 1FRONT && pnpm install && pnpm start
 
 ### Demo credentials
 
-| Email | Password | Role |
-|---|---|---|
-| `admin@demo.example` | `Demo1234!` | admin |
-| `clerk@demo.example` | `Demo1234!` | seller |
+| Email | Password | Role | Landing |
+|---|---|---|---|
+| `admin@demo.example` | `Demo1234!` | admin | Panel (todas las pantallas) |
+| `clerk@demo.example` | `Demo1234!` | seller | Ventas |
+| `bodega@demo.example` | `Demo1234!` | warehouse | Bodega |
 
 The seed also creates 6 categories, 24 repair products with CLP prices, and 8
-fictional clients with valid (módulo-11) synthetic RUTs.
+fictional clients with valid (módulo-11) synthetic RUTs. The login screen offers
+one-click demo access per role.
 
 ## Testing
 

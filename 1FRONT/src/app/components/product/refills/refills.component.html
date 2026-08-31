@@ -1,3 +1,4 @@
+<div class="page">
 <div class="refill-controls">
   <mat-form-field appearance="fill" class="selector-field">
     <mat-label>Técnico Asignado</mat-label>
@@ -26,11 +27,18 @@
   </mat-form-field>
 </div>
 
+<div class="page-header">
+    <div>
+      <h1 class="page-title">Reposiciones</h1>
+      <p class="page-lead">Entradas de mercadería y reposición de stock.</p>
+    </div>
+  </div>
 <div class="button-container">
-  <button mat-raised-button color="primary" class="search-product-button" (click)="openProductSearch()">Buscar Producto</button>
+  <button class="btn btn-primary search-product-button" (click)="openProductSearch()"><mat-icon fontIcon="add_box"></mat-icon> Buscar Producto</button>
 </div>
 
-<mat-card class="table-container">
+<mat-card class="card table-container">
+  <div class="card-head"><h2 class="card-title">Carrito de reposición</h2></div>
   <div class="table-responsive"><table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
     <!-- Columna Nombre del Producto -->
     <ng-container matColumnDef="name">
@@ -104,5 +112,5 @@
 </div>
 
 <div class="button-container">
-  <button mat-raised-button color="primary" class="purchase-button" (click)="completeRefill()" [disabled]="submitting">Realizar Operación</button>
-</div>
+  <button class="btn btn-primary purchase-button" (click)="completeRefill()" [disabled]="submitting"><mat-icon fontIcon="check_circle"></mat-icon> Realizar Operación</button>
+</div></div>

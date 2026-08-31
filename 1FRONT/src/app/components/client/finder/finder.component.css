@@ -61,3 +61,5 @@ td{
 ::ng-deep .mdc-text-field--outlined{
     cursor: pointer;
 }
+/* ===== Port Phase 7 — finder restyle ===== */
+.page { padding-top: 4px; }

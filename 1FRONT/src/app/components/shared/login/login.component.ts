@@ -22,6 +22,12 @@ export class LoginComponent implements AfterViewInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
 
+  readonly demoAccounts: Record<string, { email: string; password: string }> = {
+    admin: { email: 'admin@demo.example', password: 'Demo1234!' },
+    seller: { email: 'clerk@demo.example', password: 'Demo1234!' },
+    warehouse: { email: 'bodega@demo.example', password: 'Demo1234!' },
+  };
+
   ngAfterViewInit() {
     if (this.authService.getToken()) {
       this.router.navigate(['/']);
@@ -30,6 +36,14 @@ export class LoginComponent implements AfterViewInit {
     setTimeout(() => {
       document.getElementById('input-email')?.focus();
     }, 400);
+  }
+
+  demoLogin(role: 'admin' | 'seller' | 'warehouse'): void {
+    const account = this.demoAccounts[role];
+    if (!account) return;
+    this.email = account.email;
+    this.password = account.password;
+    this.login();
   }
 
   login(): void {

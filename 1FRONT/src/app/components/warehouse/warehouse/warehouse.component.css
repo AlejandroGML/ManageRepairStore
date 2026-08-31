@@ -1,0 +1,16 @@
+/* ===== Port Phase 6 — warehouse restyle ===== */
+.page { padding-top: 4px; }
+
+/* Tabs styled as segmented control */
+.seg-tabs .mat-mdc-tab-header {
+  margin-bottom: var(--space-base);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.seg-tabs .mat-mdc-tab {
+  font-family: var(--font-body);
+}
+
+.seg-tabs .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--color-primary);
+}

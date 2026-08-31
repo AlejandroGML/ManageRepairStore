@@ -1,11 +1,16 @@
-<div>
-    <mat-tab-group (selectedIndexChange)="changeTab($event)">
-      <mat-tab label="Producto" *ngIf="allowedSubTabs.includes(TAB_PRODUCTS)">
-        <app-product></app-product>
-      </mat-tab>
-      <mat-tab label="Repuestos" *ngIf="allowedSubTabs.includes(TAB_REFILLS)">
-        <app-refills></app-refills>
-      </mat-tab>
-    </mat-tab-group>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Bodega</h1>
+      <p class="page-lead">Stock por ubicación — productos y reposiciones.</p>
+    </div>
   </div>
-  
+  <mat-tab-group (selectedIndexChange)="changeTab($event)" class="seg-tabs">
+    <mat-tab label="Producto" *ngIf="allowedSubTabs.includes(TAB_PRODUCTS)">
+      <app-product></app-product>
+    </mat-tab>
+    <mat-tab label="Repuestos" *ngIf="allowedSubTabs.includes(TAB_REFILLS)">
+      <app-refills></app-refills>
+    </mat-tab>
+  </mat-tab-group>
+</div>

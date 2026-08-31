@@ -153,3 +153,5 @@ mat-card {
         width: 100%;
     }
 }
+/* ===== Port Phase 5 — register restyle ===== */
+.page { padding-top: 4px; }

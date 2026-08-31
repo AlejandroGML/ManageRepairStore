@@ -1,28 +1,90 @@
-<div class="login-wrapper">
-    <mat-card>
-        <mat-card-header>
-          <mat-card-title class="mat-card-title text-center">Iniciar sesión</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form (ngSubmit)="login()">
-            <mat-form-field class="login-field">
-              <mat-label>Email</mat-label>
-              <input id="input-email" matInput 
-                autocomplete="email"
-                placeholder="correo@ejemplo.cl" [(ngModel)]="email" name="email" type="email" required>
-            </mat-form-field>
-            <mat-form-field class="login-field">
-              <mat-label>Contraseña</mat-label>
-              <input matInput placeholder="Contraseña" [(ngModel)]="password" 
-                autocomplete="current-password"
-                (keyup.enter)="login()"
-              name="password" type="password" required>
-            </mat-form-field>
-          </form>
-        </mat-card-content>
-        <div class="login-actions">
-          <button *ngIf="!loading" mat-raised-button class="login-btn" (click)="login()" type="submit">Iniciar sesión</button>
-          <mat-spinner *ngIf="loading" diameter="32" class="login-spinner"></mat-spinner>
+<div class="login-view">
+  <div class="login-brand">
+    <div class="brand-lockup">
+      <span class="brand-mark"><mat-icon fontIcon="handyman"></mat-icon></span>
+      <div class="wordmark">Manage Repair Store<span>Gestión de taller · Chile</span></div>
+    </div>
+
+    <div class="login-hero">
+      <h1>Controla tu taller de reparación en un solo lugar</h1>
+      <p>Stock en tiempo real, ventas, órdenes de servicio y tickets PDF/QR con RUT y precios en CLP. Hecho para el mercado chileno.</p>
+      <div class="hero-feature">
+        <mat-icon fontIcon="inventory_2"></mat-icon>
+        <div><b>Stock de un vistazo</b><span>Alertas de stock bajo y reposiciones con un clic.</span></div>
+      </div>
+      <div class="hero-feature">
+        <mat-icon fontIcon="receipt_long"></mat-icon>
+        <div><b>Tickets PDF + QR</b><span>Órdenes imprimibles con código verificable.</span></div>
+      </div>
+      <div class="hero-feature">
+        <mat-icon fontIcon="group"></mat-icon>
+        <div><b>Clientes con RUT</b><span>RUT válido (módulo 11), historial y órdenes.</span></div>
+      </div>
+    </div>
+
+    <div class="section-note">Demo · datos 100% sintéticos</div>
+  </div>
+
+  <div class="login-form-pane">
+    <div class="login-card">
+      <h2>Iniciar sesión</h2>
+      <div class="sub">Ingresa tus credenciales para entrar al panel.</div>
+
+      <form (ngSubmit)="login()">
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input
+            id="input-email"
+            class="input"
+            type="email"
+            placeholder="correo@ejemplo.cl"
+            [(ngModel)]="email"
+            name="email"
+            autocomplete="email"
+            required
+          >
         </div>
-    </mat-card>
+        <div class="field">
+          <label for="login-pass">Contraseña</label>
+          <input
+            id="input-pass"
+            class="input"
+            type="password"
+            placeholder="Contraseña"
+            [(ngModel)]="password"
+            name="password"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <div class="login-actions">
+          @if (!loading) {
+            <button type="submit" class="btn btn-primary login-btn">Iniciar sesión</button>
+          } @else {
+            <mat-spinner diameter="30" class="login-spinner"></mat-spinner>
+          }
+        </div>
+      </form>
+
+      <div class="demo-box">
+        <div class="demo-title">Acceso rápido demo</div>
+        <div class="demo-roles">
+          <button type="button" class="demo-role" (click)="demoLogin('admin')">
+            <span class="demo-avatar">A</span>
+            <div><b>Administrador</b><span>admin@demo.example</span></div>
+          </button>
+          <button type="button" class="demo-role" (click)="demoLogin('seller')">
+            <span class="demo-avatar">V</span>
+            <div><b>Vendedor</b><span>clerk@demo.example</span></div>
+          </button>
+          <button type="button" class="demo-role" (click)="demoLogin('warehouse')">
+            <span class="demo-avatar">B</span>
+            <div><b>Bodega</b><span>bodega@demo.example</span></div>
+          </button>
+        </div>
+        <div class="demo-note">Todos los accesos usan la contraseña <code>Demo1234!</code></div>
+      </div>
+    </div>
+  </div>
 </div>

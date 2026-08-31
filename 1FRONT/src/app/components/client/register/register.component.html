@@ -1,7 +1,14 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Registrar Orden</h1>
+      <p class="page-lead">Orden de ingreso — busca el cliente por N° o RUT y registra la reparación.</p>
+    </div>
+  </div>
 <form [formGroup]="form" class="form-register">
     <div class="row register-row">
         <div class="col-12 col-md-7 register-left-col">
-            <mat-card>
+            <mat-card class="card card-pad">
                 <div class="row">
                     <div class="col-4 offset-4">
                         <mat-form-field id="field-id">
@@ -70,11 +77,11 @@
             </mat-card>
         </div>
         <div class="col-12 col-md-3 offset-md-1 register-sidebar-col">
-            <mat-card class="right-card text-center">
+            <mat-card class="card right-card text-center">
                 <h3>Orden de Ingreso</h3>
                 <div class="row">
                     <div class="text-center register-action-area">
-                        <button class="send register-btn" type="button" (click)="registerOrder()" mat-raised-button color="primary">Registrar <mat-icon>add_box</mat-icon></button><br>
+                        <button class="btn btn-primary register-btn" type="button" (click)="registerOrder()"><mat-icon fontIcon="add_box"></mat-icon> Registrar</button><br>
                         <span id="clear-register">
                             <mat-icon class="icon-clear"
                               matTooltip="Limpiar datos"
@@ -90,7 +97,7 @@
             </mat-card><br>
 
             <!-- Datos Cliente // Descargar -->
-            <mat-card class="right-card sidebar-card">
+            <mat-card class="card right-card sidebar-card">
                 <mat-list>
                     <mat-list-item class="sidebar-title-item">
                         <span class="text-13"><b>Último Ingreso</b></span>
@@ -162,10 +169,9 @@
                     <mat-divider></mat-divider>
                     <mat-list-item class="last-entry-item">
                         <button type="button" (click)="descargarPDF()"
-                        class="button-pdf"
+                        class="btn btn-soft button-pdf"
                         [ngClass]="enablePDF?'active':'disabled'"
-                        [disabled]="!enablePDF"
-                        mat-raised-button color="primary">Descargar <mat-icon>picture_as_pdf</mat-icon></button>
+                        [disabled]="!enablePDF"><mat-icon fontIcon="picture_as_pdf"></mat-icon> Descargar</button>
                     </mat-list-item>
                   </mat-list>
             </mat-card>
@@ -174,3 +180,4 @@
 </form>
 <br><br>
 <app-pdf [ordenIngreso]="ordenIngreso"></app-pdf>
+</div>

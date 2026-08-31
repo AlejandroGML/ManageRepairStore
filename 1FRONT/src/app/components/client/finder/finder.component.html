@@ -1,8 +1,15 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Clientes y Órdenes</h1>
+      <p class="page-lead">Registro de clientes, RUT e historial de órdenes.</p>
+    </div>
+  </div>
 <br>
 <!-- Buscador -->
 <div class="div-buscador">
     <!-- Filtro  -->
-    <mat-card class="search-filter-card">
+    <mat-card class="card search-filter-card">
         <mat-card-content>
             <div class="row">
                 <div class="col-2 text-center">
@@ -50,7 +57,8 @@
 <!-- Tabla con datos -->
 <div class="div-tabla">
     <br>
-    <mat-card  *ngIf="!showEmptyRow && dataSource.data.length>0">
+    <mat-card class="card" *ngIf="!showEmptyRow && dataSource.data.length>0">
+    <div class="card-head"><h2 class="card-title">Resultados</h2></div>
         <mat-form-field class="filter-field-right" *ngIf="dataSource.data.length>5">
             <mat-label>Filtrar</mat-label>
             <input matInput (keyup)="applyFilter($event)" placeholder="Buscar cliente" #input>
@@ -137,10 +145,10 @@
             </tr>
         </table></div>
     </mat-card>
-    <mat-card *ngIf="showEmptyRow">
+    <mat-card class="card" *ngIf="showEmptyRow">
         <div class="empty-message">
             <h1>No se han encontrado resultados</h1>
         </div>
     </mat-card>
     <br><br>
-</div>
+</div></div>

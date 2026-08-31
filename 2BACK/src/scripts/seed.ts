@@ -189,7 +189,10 @@ async function seed() {
     const clerk = await userRepo.save(
       userRepo.create({ name: 'Vendedor Demo', email: 'clerk@demo.example', passwordHash, role: 'seller', active: true }),
     );
-    console.log(`  ✓ Users: ${admin.email}, ${clerk.email} (password: Demo1234!)`);
+    const bodega = await userRepo.save(
+      userRepo.create({ name: 'Bodega Demo', email: 'bodega@demo.example', passwordHash, role: 'warehouse', active: true }),
+    );
+    console.log(`  ✓ Users: ${admin.email}, ${clerk.email}, ${bodega.email} (password: Demo1234!)`);
 
     // 2) Categories
     const categoryRepo = qr.manager.getRepository(CategoryEntity);

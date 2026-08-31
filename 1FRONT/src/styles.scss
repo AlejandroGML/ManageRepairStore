@@ -1,12 +1,10 @@
 @use '@angular/material' as mat;
 @use './variables' as vars;
 @use './theme' as theme;
+@use './components';
 
 // Apply Angular Material light theme globally
 @include mat.all-component-themes(theme.$mrs-light-theme);
-
-// --- Bootstrap must come BEFORE global styles so our overrides take precedence ---
-@import '~bootstrap/dist/css/bootstrap.min.css';
 
 // CSS Custom Properties for light mode (default)
 :root {
@@ -14,6 +12,8 @@
   --color-primary: #{vars.$color-primary};
   --color-primary-dark: #{vars.$color-primary-dark};
   --color-primary-light: #{vars.$color-primary-light};
+  --color-primary-disabled: #{vars.$color-primary-disabled};
+  --color-on-primary: #{vars.$color-on-primary};
   --color-secondary: #{vars.$color-secondary};
   --color-sidebar: #{vars.$color-sidebar};
   --on-sidebar: var(--color-text-dark);
@@ -81,6 +81,7 @@
   --color-text-muted: #{vars.$color-text-muted-dark};
   --color-border: #{vars.$color-border-dark};
   --color-sidebar: #{vars.$color-sidebar-dark};
+  --color-primary-light: #312a4a;
 
   // Bootstrap dark overrides
   --bs-body-bg: var(--color-bg);
@@ -233,3 +234,35 @@ button, .mat-mdc-button {
   font-weight: var(--font-medium);
   transition: all var(--transition-base);
 }
+
+// --- Grid + layout utilities (replaces Bootstrap; port phase 8) ---
+.row { display: flex; flex-wrap: wrap; margin-right: -10px; margin-left: -10px; }
+.row > [class*="col-"] { padding-right: 10px; padding-left: 10px; box-sizing: border-box; }
+
+.col-1 { width: 8.3333%; } .col-2 { width: 16.6667%; } .col-3 { width: 25%; }
+.col-4 { width: 33.3333%; } .col-5 { width: 41.6667%; } .col-6 { width: 50%; }
+.col-7 { width: 58.3333%; } .col-8 { width: 66.6667%; } .col-9 { width: 75%; }
+.col-10 { width: 83.3333%; } .col-11 { width: 91.6667%; } .col-12 { width: 100%; }
+.col-md-3 { width: 25%; } .col-md-6 { width: 50%; } .col-md-7 { width: 58.3333%; }
+
+.offset-1 { margin-left: 8.3333%; } .offset-2 { margin-left: 16.6667%; }
+.offset-3 { margin-left: 25%; } .offset-4 { margin-left: 33.3333%; }
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.pl-16 { padding-left: 16px; }
+.mt-10 { margin-top: 10px; }
+.mt-20 { margin-top: 20px; }
+.no-padding { padding: 0 !important; }
+
+@media (max-width: 768px) {
+  .col-2, .col-3, .col-4, .col-5, .col-6, .col-8, .col-10, .col-md-6, .col-md-7, .col-md-3 {
+    width: 100%;
+  }
+  .offset-1, .offset-2, .offset-3, .offset-4 { margin-left: 0; }
+}
+
+// .hidden — print/PDF visibility helper (used by pdf component)
+.hidden { display: none !important; }

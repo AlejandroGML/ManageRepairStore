@@ -82,3 +82,28 @@ mat-cell {
   padding: 10px 20px;
   font-weight: bold;
 }
+
+/* ===== Port Phase 5 — POS restyle ===== */
+.page { padding-top: 4px; }
+
+.total-sale-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-base) 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.total-sale-container strong {
+  font-size: 22px;
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+}
+
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-sm);
+}
