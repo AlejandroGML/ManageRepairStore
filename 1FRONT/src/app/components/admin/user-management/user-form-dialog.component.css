@@ -2,5 +2,5 @@
 .dialog-padded { padding: var(--space-base); }
 .pt-base { padding-top: var(--space-base); }
 .w-130 { width: 130px; }
-.btn-cancel { background-color: #6c757d !important; color: white !important; }
+.btn-cancel { background-color: var(--color-text-muted) !important; color: white !important; }
 .card-pt { padding-top: var(--space-base); }

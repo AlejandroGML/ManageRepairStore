@@ -11,7 +11,7 @@ td{
     max-height: 60vh;
 }
 .tr-body:hover{
-    background-color: rgb(93, 78, 60);
+    background-color: var(--color-primary-light);
 }
 .icon-order{
     cursor:pointer;
@@ -27,20 +27,20 @@ td{
     padding-right:6px;
 }
 .icon-edit:hover{
-    color: #285c21f6;
+    color: color-mix(in srgb, var(--color-success) 75%, #000);
 }
 .icon-remove{
     padding-left:6px;
-    color: #6c757d !important;
+    color: var(--color-text-muted) !important;
 }
 .icon-remove:hover{
-    color: #4f5861 !important;
+    color: var(--color-text) !important;
 }
 .empty-message{
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #fbd19e;
+    background-color: var(--color-warning-soft);
     padding-top: 16px;
     width: 90%;
     margin-left: 5%;

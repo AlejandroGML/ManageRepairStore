@@ -24,6 +24,11 @@ colors:
   success: "#047857"
   warning: "#F59E0B"
   error: "#DC2626"
+  success-soft: "#ECFDF5"
+  warning-soft: "#FFFBEB"
+  error-soft: "#FEF2F2"
+  brand-mid: "#4C3FA6"
+  warning-dark: "#FBBF24"
 typography:
   display:
     fontFamily: "Fira Sans, Roboto, sans-serif"
@@ -119,6 +124,21 @@ components:
   status-error:
     backgroundColor: "{colors.error}"
     textColor: "#FFFFFF"
+  badge-success:
+    backgroundColor: "{colors.success-soft}"
+    textColor: "{colors.success}"
+  badge-warning:
+    backgroundColor: "{colors.warning-soft}"
+    textColor: "#B45309"
+  badge-error:
+    backgroundColor: "{colors.error-soft}"
+    textColor: "#B91C1C"
+  badge-warning-dark:
+    backgroundColor: "{colors.warning-soft}"
+    textColor: "{colors.warning-dark}"
+  brand-gradient:
+    backgroundColor: "{colors.brand-mid}"
+    textColor: "{colors.on-primary}"
   dark-card:
     backgroundColor: "{colors.surface-dark-elevated}"
     textColor: "{colors.on-dark}"
@@ -165,6 +185,16 @@ a teal action accent:
 - Canvas `#FAFAFE` (subtle cool tint, replaces the warm cream `#FFF5E6`).
 - Text `#1F2937` on light; `on-dark` `#EDE9FE` on dark surfaces.
 - Success `#047857`, warning `#F59E0B`, error `#DC2626` — status badges, toasts, stock alerts.
+- Soft status tints for badge backgrounds: `success-soft` `#ECFDF5`, `warning-soft`
+  `#FFFBEB`, `error-soft` `#FEF2F2`. Badge text: success uses the strong token;
+  warning uses `#B45309` (amber-700) for contrast on the pale tint; error uses
+  `#B91C1C` (red-700) to keep WCAG AA on `error-soft`.
+- `brand-mid` `#4C3FA6` — gradient midpoint for brand surfaces (login panel,
+  sidebar brand-mark). `warning-dark` `#FBBF24` — warning text on dark surfaces.
+- Known limitation (prototype-faithful): `badge-warning-dark` (#FBBF24 on
+  #FFFBEB) sits at 1.61:1. The prototype keeps the pale pill background in dark
+  mode and only swaps the text color. Acceptable for status badges; a future
+  a11y pass could use a dark amber pill (#78350F bg + #FBBF24 text).
 - Dark mode surfaces: `surface-dark` `#17151F`, elevated `#221E33`, hairline `#3B3649`.
 
 Contrast: `primary` on white = 7.1:1 (AAA), `on-primary` white on `primary` = 7.1:1,

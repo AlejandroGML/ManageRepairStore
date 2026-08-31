@@ -14,7 +14,7 @@ body {
     right: 0;
     bottom: 0;
     z-index: 10000;
-    background-color: rgb(219, 238, 210,0.6);
+    background-color: color-mix(in srgb, var(--color-bg) 70%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,7 +25,7 @@ body {
     padding-right: 8px !important;
 }
 ::ng-deep .tr-row:hover{
-    background-color: rgb(245, 242, 237) !important;
+    background-color: var(--color-primary-light) !important;
 }
 
 ::ng-deep td{

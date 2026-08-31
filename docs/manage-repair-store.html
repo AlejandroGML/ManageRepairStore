@@ -1,0 +1,1285 @@
+<!doctype html>
+<html lang="es-CL" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manage Repair Store — Prototipo</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%236D28D9'/%3E%3Cpath fill='%23fff' d='M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+/* ============ TOKENS (docs/DESIGN.md) ============ */
+:root{
+  --primary:#6D28D9; --primary-active:#5B21B6; --primary-disabled:#DDD6FE; --primary-soft:#EDE9FE;
+  --secondary:#312E81; --accent:#0F766E;
+  --text:#1F2937; --text-strong:#111827; --muted:#6B7280;
+  --canvas:#FAFAFE; --surface:#FFFFFF; --hairline:#E5E7EB;
+  --surface-dark:#17151F; --surface-dark-elevated:#221E33; --hairline-dark:#3B3649;
+  --on-primary:#FFFFFF; --on-dark:#EDE9FE; --on-dark-soft:#9CA3AF;
+  --success:#047857; --warning:#F59E0B; --error:#DC2626;
+  --success-soft:#ECFDF5; --warning-soft:#FFFBEB; --error-soft:#FEF2F2;
+  --r-sm:4px; --r-md:8px; --r-lg:12px;
+  --s-xs:4px; --s-sm:8px; --s-md:12px; --s-base:16px; --s-lg:24px; --s-xl:32px;
+  --font-body:'Fira Sans',Roboto,sans-serif; --font-mono:'Fira Code',monospace;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05); --shadow-md:0 4px 6px rgba(0,0,0,.1); --shadow-lg:0 10px 24px rgba(17,24,39,.14);
+  --sidebar-w:248px; --topbar-h:64px;
+  --sidebar-bg:#312E81;
+}
+[data-theme="dark"]{
+  --canvas:#17151F; --surface:#221E33; --hairline:#3B3649;
+  --text:#EDE9FE; --text-strong:#FFFFFF; --muted:#9CA3AF;
+  --primary-soft:#312a4a; --success-soft:#10352b; --warning-soft:#3a2f14; --error-soft:#3a1d22;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow-md:0 4px 10px rgba(0,0,0,.5); --shadow-lg:0 12px 30px rgba(0,0,0,.6);
+  --sidebar-bg:#15121d;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0; font-family:var(--font-body); font-size:14px; color:var(--text);
+  background:var(--canvas); -webkit-font-smoothing:antialiased;
+}
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.material-symbols-outlined{ font-size:20px; line-height:1; vertical-align:middle; }
+a{ color:var(--primary); text-decoration:none; }
+h1,h2,h3,h4{ margin:0; color:var(--text-strong); font-weight:600; }
+button{ font-family:inherit; cursor:pointer; border:none; }
+[hidden]{ display:none !important; }
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:0 16px; height:38px;
+  border-radius:var(--r-md); font-size:14px; font-weight:500; transition:background .15s, transform .06s, box-shadow .15s;
+  border:1px solid transparent; white-space:nowrap;
+}
+.btn:active{ transform:translateY(1px); }
+.btn .material-symbols-outlined{ font-size:18px; }
+.btn-primary{ background:var(--primary); color:var(--on-primary); box-shadow:var(--shadow-sm); }
+.btn-primary:hover{ background:var(--primary-active); box-shadow:var(--shadow-md); }
+.btn-accent{ background:var(--accent); color:#fff; box-shadow:var(--shadow-sm); }
+.btn-accent:hover{ filter:brightness(1.08); }
+.btn-ghost{ background:transparent; color:var(--text); border-color:var(--hairline); }
+.btn-ghost:hover{ background:var(--primary-soft); color:var(--primary-active); border-color:var(--primary-soft); }
+.btn-soft{ background:var(--primary-soft); color:var(--primary-active); }
+.btn-soft:hover{ background:var(--primary-disabled); }
+.btn-danger{ background:var(--error); color:#fff; }
+.btn-danger:hover{ filter:brightness(1.08); }
+.btn-sm{ height:32px; padding:0 12px; font-size:13px; }
+.btn[disabled]{ background:var(--primary-disabled); color:#4B5563; cursor:not-allowed; box-shadow:none; }
+.icon-btn{
+  width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:var(--r-md); background:transparent; color:var(--muted); transition:background .15s, color .15s;
+}
+.icon-btn:hover{ background:var(--primary-soft); color:var(--primary-active); }
+
+/* ============ LOGIN ============ */
+#login-view{ min-height:100vh; display:grid; grid-template-columns:minmax(420px,46%) 1fr; }
+.login-brand{
+  background:linear-gradient(160deg,#312E81 0%, #4C3FA6 55%, #6D28D9 100%);
+  color:var(--on-dark); padding:56px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;
+}
+.login-brand::after{
+  content:""; position:absolute; right:-120px; top:-120px; width:380px; height:380px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+}
+.brand-lockup{ display:flex; align-items:center; gap:14px; position:relative; z-index:1; }
+.brand-mark{
+  width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.brand-mark .material-symbols-outlined{ font-size:26px; color:#fff; }
+.brand-lockup .wordmark{ font-size:18px; font-weight:700; letter-spacing:-.01em; }
+.brand-lockup .wordmark span{ display:block; font-size:12px; font-weight:400; color:var(--on-dark-soft); }
+.login-hero{ position:relative; z-index:1; max-width:440px; }
+.login-hero h1{ color:#fff; font-size:34px; line-height:1.2; letter-spacing:-.02em; margin-bottom:18px; }
+.login-hero p{ color:var(--on-dark-soft); font-size:15px; line-height:1.6; margin:0 0 28px; }
+.hero-feature{ display:flex; gap:12px; margin-bottom:16px; align-items:flex-start; }
+.hero-feature .material-symbols-outlined{ color:#C4B5FD; font-size:22px; margin-top:1px; }
+.hero-feature b{ color:var(--on-dark); font-weight:600; display:block; margin-bottom:2px; }
+.hero-feature span{ color:var(--on-dark-soft); font-size:13.5px; }
+.login-form-pane{ display:flex; align-items:center; justify-content:center; padding:48px; }
+.login-card{ width:100%; max-width:400px; }
+.login-card .brand-mark-sm{ display:none; }
+.login-card h2{ font-size:26px; letter-spacing:-.01em; margin-bottom:6px; }
+.login-card .sub{ color:var(--muted); margin-bottom:28px; }
+.field{ margin-bottom:16px; }
+.field label{ display:block; font-size:13px; font-weight:500; color:var(--text); margin-bottom:6px; }
+.input{
+  width:100%; height:44px; padding:0 14px; border:1px solid var(--hairline); border-radius:var(--r-md);
+  background:var(--surface); color:var(--text); font-family:var(--font-body); font-size:14px; transition:border-color .15s, box-shadow .15s;
+}
+.input:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft); }
+.input::placeholder{ color:var(--muted); opacity:.7; }
+.input-group{ position:relative; }
+.input-group .material-symbols-outlined{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:20px; }
+.input-group .input{ padding-left:40px; }
+.input-group .toggle-pass{ position:absolute; right:8px; top:50%; transform:translateY(-50%); }
+.login-row{ display:flex; align-items:center; justify-content:space-between; margin:4px 0 22px; font-size:13px; }
+.login-btn{ width:100%; height:46px; font-size:15px; font-weight:600; justify-content:center; }
+.demo-box{ margin-top:26px; background:var(--primary-soft); border:1px dashed var(--primary-disabled); border-radius:var(--r-md); padding:14px 16px; }
+.demo-box .demo-title{ font-size:12px; font-weight:600; color:var(--primary-active); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; }
+.demo-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--text); padding:3px 0; }
+.demo-row code{ font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+
+/* ============ APP SHELL ============ */
+.app{ display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:100vh; }
+.sidebar{
+  background:var(--sidebar-bg); color:var(--on-dark); display:flex; flex-direction:column;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.sidebar .brand{ padding:20px 20px 16px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,.08); }
+.sidebar .brand-mark{ width:38px; height:38px; border-radius:10px; background:linear-gradient(140deg,#6D28D9,#4C3FA6); display:flex; align-items:center; justify-content:center; }
+.sidebar .brand-mark .material-symbols-outlined{ font-size:22px; color:#fff; }
+.sidebar .wordmark{ font-size:15px; font-weight:700; letter-spacing:-.01em; }
+.sidebar .wordmark span{ display:block; font-size:11px; font-weight:400; color:var(--on-dark-soft); }
+.nav-group-label{ padding:18px 20px 6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--on-dark-soft); }
+.nav-item{
+  display:flex; align-items:center; gap:12px; width:calc(100% - 16px); margin:2px 8px; padding:10px 12px;
+  border-radius:var(--r-md); color:var(--on-dark-soft); font-size:14px; font-weight:500; text-align:left;
+  transition:background .15s, color .15s; position:relative;
+}
+.nav-item .material-symbols-outlined{ font-size:20px; }
+.nav-item:hover{ background:rgba(255,255,255,.06); color:var(--on-dark); }
+.nav-item.active{ background:var(--primary); color:#fff; box-shadow:var(--shadow-sm); }
+.nav-item .nav-badge{ margin-left:auto; background:var(--warning); color:#111; font-size:11px; font-weight:700; padding:1px 7px; border-radius:999px; }
+.sidebar-footer{ margin-top:auto; padding:16px 16px 20px; border-top:1px solid rgba(255,255,255,.08); }
+.user-chip{ display:flex; align-items:center; gap:10px; padding:10px; border-radius:var(--r-md); background:rgba(255,255,255,.05); }
+.avatar{ width:34px; height:34px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; flex-shrink:0; }
+.user-chip .u-name{ font-size:13px; font-weight:600; color:var(--on-dark); }
+.user-chip .u-role{ font-size:11px; color:var(--on-dark-soft); }
+.user-chip .logout{ margin-left:auto; color:var(--on-dark-soft); }
+
+/* topbar */
+.main{ display:flex; flex-direction:column; min-width:0; }
+.topbar{
+  height:var(--topbar-h); background:var(--surface); border-bottom:1px solid var(--hairline);
+  display:flex; align-items:center; gap:16px; padding:0 24px; position:sticky; top:0; z-index:20;
+}
+.topbar .page-title{ font-size:17px; font-weight:600; color:var(--text-strong); }
+.topbar .page-sub{ font-size:12.5px; color:var(--muted); }
+.topbar .spacer{ flex:1; }
+.topbar-search{ position:relative; width:260px; }
+.topbar-search .input{ height:38px; padding-left:38px; font-size:13.5px; background:var(--canvas); }
+.topbar-search .material-symbols-outlined{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:19px; }
+.topbar .divider{ width:1px; height:26px; background:var(--hairline); }
+
+/* content */
+.content{ padding:24px; display:flex; flex-direction:column; gap:20px; max-width:1440px; width:100%; margin:0 auto; }
+.page-header{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.page-header h1{ font-size:22px; letter-spacing:-.01em; }
+.page-header .lead{ color:var(--muted); margin-top:3px; }
+.page-header .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* cards */
+.card{ background:var(--surface); border:1px solid var(--hairline); border-radius:var(--r-lg); box-shadow:var(--shadow-sm); }
+.card-pad{ padding:20px; }
+.card-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--hairline); }
+.card-head h3{ font-size:15px; }
+.grid{ display:grid; gap:16px; }
+.grid-4{ grid-template-columns:repeat(4,1fr); }
+.grid-3{ grid-template-columns:repeat(3,1fr); }
+.grid-2{ grid-template-columns:repeat(2,1fr); }
+.grid-2-1{ grid-template-columns:2fr 1fr; }
+.grid-1-2{ grid-template-columns:1fr 2fr; }
+
+/* KPI */
+.kpi{ padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+.kpi .kpi-top{ display:flex; align-items:center; justify-content:space-between; }
+.kpi .kpi-label{ font-size:13px; color:var(--muted); font-weight:500; }
+.kpi .kpi-icon{ width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+.kpi .kpi-icon.violet{ background:var(--primary-soft); color:var(--primary); }
+.kpi .kpi-icon.teal{ background:var(--success-soft); color:var(--success); }
+.kpi .kpi-icon.amber{ background:var(--warning-soft); color:var(--warning); }
+.kpi .kpi-icon.red{ background:var(--error-soft); color:var(--error); }
+.kpi .kpi-value{ font-size:26px; font-weight:700; letter-spacing:-.02em; color:var(--text-strong); }
+.kpi .kpi-value .unit{ font-size:15px; font-weight:500; color:var(--muted); }
+.kpi .kpi-delta{ font-size:12.5px; display:flex; align-items:center; gap:4px; }
+.kpi .kpi-delta.up{ color:var(--success); }
+.kpi .kpi-delta.down{ color:var(--error); }
+.kpi .kpi-delta.flat{ color:var(--muted); }
+
+/* badges */
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; line-height:1.5; }
+.badge .dot{ width:6px; height:6px; border-radius:50%; }
+.badge-success{ background:var(--success-soft); color:var(--success); }
+.badge-success .dot{ background:var(--success); }
+.badge-warning{ background:var(--warning-soft); color:#B45309; }
+.badge-warning .dot{ background:var(--warning); }
+.badge-error{ background:var(--error-soft); color:var(--error); }
+.badge-error .dot{ background:var(--error); }
+.badge-neutral{ background:var(--primary-soft); color:var(--primary-active); }
+.badge-neutral .dot{ background:var(--primary); }
+[data-theme="dark"] .badge-warning{ color:#FBBF24; }
+
+/* tables */
+.table-wrap{ overflow-x:auto; }
+table.data{ width:100%; border-collapse:collapse; font-size:13.5px; }
+table.data th{
+  text-align:left; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+  padding:10px 14px; border-bottom:1px solid var(--hairline); background:var(--canvas); white-space:nowrap;
+}
+table.data td{ padding:11px 14px; border-bottom:1px solid var(--hairline); white-space:nowrap; vertical-align:middle; }
+table.data tbody tr{ transition:background .12s; }
+table.data tbody tr:hover{ background:var(--primary-soft); }
+table.data tbody tr:last-child td{ border-bottom:none; }
+td.num, th.num{ text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+td.strong{ color:var(--text-strong); font-weight:500; }
+.cell-main{ display:flex; align-items:center; gap:10px; }
+.thumb{ width:36px; height:36px; border-radius:var(--r-md); background:var(--canvas); border:1px solid var(--hairline); display:flex; align-items:center; justify-content:center; color:var(--muted); flex-shrink:0; }
+.thumb .material-symbols-outlined{ font-size:18px; }
+.paginator{ display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-top:1px solid var(--hairline); font-size:13px; color:var(--muted); }
+.paginator .pages{ display:flex; gap:4px; }
+.paginator .pg{ width:32px; height:32px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; color:var(--muted); font-weight:500; }
+.paginator .pg.active{ background:var(--primary); color:#fff; }
+.paginator .pg:hover:not(.active){ background:var(--primary-soft); }
+
+/* filter bar */
+.filter-bar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:16px 20px; border-bottom:1px solid var(--hairline); }
+.filter-bar .input, .filter-bar select{ height:38px; }
+.select{ height:38px; padding:0 12px; border:1px solid var(--hairline); border-radius:var(--r-md); background:var(--surface); color:var(--text); font-family:inherit; font-size:13.5px; }
+.select:focus{ outline:none; border-color:var(--primary); }
+.filter-bar .grow{ flex:1; min-width:220px; }
+
+/* segmented tabs */
+.seg{ display:inline-flex; background:var(--canvas); border:1px solid var(--hairline); border-radius:var(--r-md); padding:3px; gap:2px; }
+.seg button{ padding:7px 14px; border-radius:6px; font-size:13px; font-weight:500; color:var(--muted); background:transparent; transition:.12s; }
+.seg button.active{ background:var(--surface); color:var(--primary-active); box-shadow:var(--shadow-sm); font-weight:600; }
+
+/* POS */
+.pos-grid{ display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
+.pos-catalog .grid-3{ grid-template-columns:repeat(3,1fr); }
+.product-tile{ padding:14px; display:flex; flex-direction:column; gap:10px; cursor:pointer; transition:border-color .12s, box-shadow .12s, transform .06s; }
+.product-tile:hover{ border-color:var(--primary); box-shadow:var(--shadow-md); transform:translateY(-1px); }
+.product-tile .pt-top{ display:flex; align-items:center; gap:10px; }
+.product-tile .thumb{ width:42px; height:42px; }
+.product-tile .pt-name{ font-weight:600; color:var(--text-strong); font-size:14px; }
+.product-tile .pt-cat{ font-size:12px; color:var(--muted); }
+.product-tile .pt-price{ font-family:var(--font-mono); font-size:16px; font-weight:600; color:var(--text-strong); }
+.product-tile .pt-stock{ font-size:12px; }
+.cart-line{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--hairline); }
+.cart-line .cl-name{ font-weight:500; color:var(--text-strong); flex:1; min-width:0; }
+.cart-line .cl-name .cl-meta{ font-size:12px; color:var(--muted); font-family:var(--font-mono); }
+.qty{ display:flex; align-items:center; gap:2px; border:1px solid var(--hairline); border-radius:var(--r-md); }
+.qty button{ width:26px; height:26px; background:transparent; color:var(--muted); font-size:16px; line-height:1; }
+.qty button:hover{ color:var(--primary-active); }
+.qty .qty-n{ font-family:var(--font-mono); font-size:13px; min-width:22px; text-align:center; }
+.cart-line .cl-price{ font-family:var(--font-mono); font-weight:600; font-size:13.5px; }
+.cart-total{ border-top:1px solid var(--hairline); padding-top:14px; margin-top:4px; }
+.cart-total .row{ display:flex; justify-content:space-between; padding:4px 0; font-size:13.5px; color:var(--muted); }
+.cart-total .row.grand{ padding-top:12px; margin-top:8px; border-top:1px dashed var(--hairline); color:var(--text-strong); font-size:16px; font-weight:700; }
+.cart-total .row.grand .mono{ font-size:18px; }
+
+/* forms */
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+.form-grid .field.full{ grid-column:1 / -1; }
+textarea.input{ height:auto; min-height:72px; padding:10px 14px; resize:vertical; }
+
+/* activity feed */
+.feed-item{ display:flex; gap:12px; padding:12px 20px; border-bottom:1px solid var(--hairline); align-items:flex-start; }
+.feed-item:last-child{ border-bottom:none; }
+.feed-icon{ width:34px; height:34px; border-radius:var(--r-md); background:var(--primary-soft); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.feed-icon.teal{ background:var(--success-soft); color:var(--success); }
+.feed-item .f-title{ font-weight:500; color:var(--text-strong); }
+.feed-item .f-desc{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+.feed-item .f-time{ margin-left:auto; font-size:12px; color:var(--muted); font-family:var(--font-mono); white-space:nowrap; }
+
+/* modal */
+.modal-overlay{ position:fixed; inset:0; background:rgba(17,24,39,.5); display:none; align-items:flex-start; justify-content:center; z-index:100; padding:40px 16px; overflow-y:auto; }
+.modal-overlay.open{ display:flex; }
+.modal{ background:var(--surface); border-radius:var(--r-lg); box-shadow:var(--shadow-lg); width:100%; max-width:520px; animation:pop .16s ease; }
+.modal.wide{ max-width:680px; }
+@keyframes pop{ from{ transform:translateY(8px); opacity:0; } to{ transform:none; opacity:1; } }
+.modal-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--hairline); }
+.modal-head h3{ font-size:16px; }
+.modal-body{ padding:22px; }
+.modal-foot{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--hairline); }
+
+/* toast */
+#toast{ position:fixed; bottom:24px; right:24px; z-index:200; display:flex; flex-direction:column; gap:10px; }
+.toast{
+  background:var(--surface-dark-elevated); color:var(--on-dark); border-radius:var(--r-md); padding:12px 16px;
+  display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-lg); font-size:13.5px; animation:slideIn .18s ease;
+}
+.toast .material-symbols-outlined{ color:var(--success); }
+@keyframes slideIn{ from{ transform:translateX(20px); opacity:0; } to{ transform:none; opacity:1; } }
+
+/* misc */
+.empty-state{ padding:48px 20px; text-align:center; color:var(--muted); }
+.empty-state .material-symbols-outlined{ font-size:40px; color:var(--hairline); margin-bottom:10px; }
+.ticket{ font-family:var(--font-mono); font-size:13px; background:var(--canvas); border:1px dashed var(--hairline); border-radius:var(--r-md); padding:16px; }
+.ticket .t-head{ text-align:center; border-bottom:1px solid var(--hairline); padding-bottom:10px; margin-bottom:10px; }
+.ticket .t-row{ display:flex; justify-content:space-between; padding:3px 0; }
+.ticket .t-total{ border-top:1px solid var(--hairline); margin-top:8px; padding-top:8px; font-weight:700; }
+.qr-placeholder{ width:120px; height:120px; margin:12px auto; border:1px solid var(--hairline); border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; color:var(--muted); font-family:var(--font-mono); font-size:10px; text-align:center; }
+.stock-bar{ height:6px; border-radius:3px; background:var(--hairline); overflow:hidden; min-width:70px; }
+.stock-bar > span{ display:block; height:100%; border-radius:3px; }
+.section-note{ font-size:12.5px; color:var(--muted); }
+.check{ color:var(--success); }
+
+@media (max-width:1100px){ .grid-4{ grid-template-columns:repeat(2,1fr);} .pos-grid{ grid-template-columns:1fr; } }
+@media (max-width:900px){ .app{ grid-template-columns:1fr; } .sidebar{ position:fixed; left:-260px; z-index:60; transition:left .2s; width:var(--sidebar-w); } .sidebar.open{ left:0; } .topbar-search{ display:none; } }
+
+/* RUT input */
+.rut-wrap{ position:relative; }
+.rut-wrap .input{ padding-right:36px; font-family:var(--font-mono); }
+.rut-ind{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:18px; }
+.rut-ind.ok{ color:var(--success); }
+.rut-ind.bad{ color:var(--error); }
+.rut-hint{ font-size:11.5px; color:var(--muted); margin-top:4px; }
+
+/* demo login role buttons */
+.demo-roles{ display:flex; flex-direction:column; gap:8px; }
+.demo-role{ display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border-radius:var(--r-md); background:var(--surface); border:1px solid var(--hairline); text-align:left; transition:.12s; color:var(--text); }
+.demo-role:hover{ border-color:var(--primary); background:var(--primary-soft); }
+.demo-role .material-symbols-outlined{ color:var(--primary); }
+.demo-role .dr-label{ font-weight:600; color:var(--text-strong); font-size:13px; }
+.demo-role .dr-email{ font-size:11.5px; color:var(--muted); font-family:var(--font-mono); }
+
+/* orden de ingreso */
+.order-flow{ display:grid; grid-template-columns:1fr 320px; gap:16px; align-items:start; }
+.empresa-toggle{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+.empresa-toggle .sw{ position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+.empresa-toggle input{ opacity:0; width:0; height:0; }
+.empresa-toggle .track{ position:absolute; inset:0; background:var(--hairline); border-radius:999px; transition:.15s; cursor:pointer; }
+.empresa-toggle .track::before{ content:""; position:absolute; left:3px; top:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:.15s; box-shadow:var(--shadow-sm); }
+.empresa-toggle input:checked + .track{ background:var(--primary); }
+.empresa-toggle input:checked + .track::before{ transform:translateX(18px); }
+.summary-list{ font-size:13px; }
+.summary-list .s-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--hairline); }
+.summary-list .s-row:last-child{ border-bottom:none; }
+.summary-list .s-k{ color:var(--muted); }
+.summary-list .s-v{ color:var(--text-strong); font-weight:500; }
+.summary-list .s-v.mono{ font-family:var(--font-mono); }
+.hidden-field{ display:none; }
+.field .hidden-field{ margin-top:8px; }
+.client-search-row{ display:flex; gap:10px; align-items:flex-end; }
+
+@media (max-width:1100px){ .order-flow{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login-view">
+  <div class="login-brand">
+    <div class="brand-lockup">
+      <div class="brand-mark"><span class="material-symbols-outlined">handyman</span></div>
+      <div class="wordmark">Manage Repair Store<span>Gestión de taller · Chile</span></div>
+    </div>
+    <div class="login-hero">
+      <h1>Controla tu taller de reparación en un solo lugar</h1>
+      <p>Stock en tiempo real, ventas, órdenes de servicio y tickets PDF/QR con RUT y precios en CLP. Hecho para el mercado chileno.</p>
+      <div class="hero-feature"><span class="material-symbols-outlined">inventory_2</span><div><b>Stock de un vistazo</b><span>Alertas de stock bajo y reposiciones con un clic.</span></div></div>
+      <div class="hero-feature"><span class="material-symbols-outlined">receipt_long</span><div><b>Tickets PDF + QR</b><span>Órdenes imprimibles con código verificable.</span></div></div>
+      <div class="hero-feature"><span class="material-symbols-outlined">group</span><div><b>Clientes con RUT</b><span>RUT válido (módulo 11), historial y órdenes.</span></div></div>
+    </div>
+    <div class="section-note" style="color:var(--on-dark-soft)">Demo · datos 100% sintéticos</div>
+  </div>
+  <div class="login-form-pane">
+    <div class="login-card">
+      <h2>Iniciar sesión</h2>
+      <div class="sub">Ingresa tus credenciales para entrar al panel.</div>
+      <div class="field">
+        <label for="login-email">Email</label>
+        <div class="input-group">
+          <span class="material-symbols-outlined">mail</span>
+          <input class="input" id="login-email" type="email" placeholder="correo@ejemplo.cl" value="admin@demo.example" autocomplete="email">
+        </div>
+      </div>
+      <div class="field">
+        <label for="login-pass">Contraseña</label>
+        <div class="input-group">
+          <span class="material-symbols-outlined">lock</span>
+          <input class="input" id="login-pass" type="password" placeholder="Contraseña" value="Demo1234!" autocomplete="current-password">
+          <button class="icon-btn toggle-pass" type="button" onclick="togglePass()" aria-label="Mostrar contraseña"><span class="material-symbols-outlined">visibility</span></button>
+        </div>
+      </div>
+      <div class="login-row">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--muted)"><input type="checkbox" checked> Recordarme</label>
+        <a href="#" onclick="return false">¿Olvidaste tu contraseña?</a>
+      </div>
+      <button class="btn btn-primary login-btn" onclick="loginByEmail()">Iniciar sesión</button>
+      <div class="demo-box">
+        <div class="demo-title">Entrar como</div>
+        <div class="demo-roles">
+          <button class="demo-role" onclick="login('admin')"><span class="material-symbols-outlined">admin_panel_settings</span><span><span class="dr-label">Administrador</span><br><span class="dr-email">admin@demo.example</span></span></button>
+          <button class="demo-role" onclick="login('seller')"><span class="material-symbols-outlined">point_of_sale</span><span><span class="dr-label">Vendedor</span><br><span class="dr-email">clerk@demo.example</span></span></button>
+          <button class="demo-role" onclick="login('warehouse')"><span class="material-symbols-outlined">inventory_2</span><span><span class="dr-label">Bodega</span><br><span class="dr-email">bodega@demo.example</span></span></button>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Clave: <code>Demo1234!</code></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="app" id="app" hidden>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span class="material-symbols-outlined">handyman</span></div>
+      <div class="wordmark">Manage Repair Store<span>Panel de gestión</span></div>
+    </div>
+    <div class="nav-group-label">Principal</div>
+    <button class="nav-item active" data-screen="panel" data-roles="admin" onclick="go('panel')"><span class="material-symbols-outlined">dashboard</span>Panel</button>
+    <button class="nav-item" data-screen="ventas" data-roles="admin,seller" onclick="go('ventas')"><span class="material-symbols-outlined">point_of_sale</span>Ventas</button>
+    <button class="nav-item" data-screen="registrar" data-roles="admin" onclick="go('registrar')"><span class="material-symbols-outlined">assignment_add</span>Registrar orden</button>
+    <div class="nav-group-label">Inventario</div>
+    <button class="nav-item" data-screen="productos" data-roles="admin,warehouse" onclick="go('productos')"><span class="material-symbols-outlined">category</span>Productos</button>
+    <button class="nav-item" data-screen="bodega" data-roles="admin,warehouse" onclick="go('bodega')"><span class="material-symbols-outlined">inventory_2</span>Bodega</button>
+    <button class="nav-item" data-screen="reposiciones" data-roles="admin,warehouse" onclick="go('reposiciones')"><span class="material-symbols-outlined">package_2</span>Reposiciones<span class="nav-badge">3</span></button>
+    <div class="nav-group-label">Gestión</div>
+    <button class="nav-item" data-screen="clientes" data-roles="admin" onclick="go('clientes')"><span class="material-symbols-outlined">group</span>Clientes y órdenes</button>
+    <div class="nav-group-label">Sistema</div>
+    <button class="nav-item" data-screen="admin" data-roles="admin" onclick="go('admin')"><span class="material-symbols-outlined">admin_panel_settings</span>Administración</button>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="user-avatar">A</div>
+        <div>
+          <div class="u-name" id="user-name">Alejandro M.</div>
+          <div class="u-role" id="user-role">Administrador</div>
+        </div>
+        <button class="icon-btn logout" onclick="logout()" aria-label="Cerrar sesión" title="Cerrar sesión"><span class="material-symbols-outlined">logout</span></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Menú"><span class="material-symbols-outlined">menu</span></button>
+      <div>
+        <div class="page-title" id="topbar-title">Panel</div>
+        <div class="page-sub" id="topbar-sub">Resumen del taller</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="topbar-search">
+        <span class="material-symbols-outlined">search</span>
+        <input class="input" placeholder="Buscar global (Ctrl+K)…">
+      </div>
+      <div class="divider"></div>
+      <button class="icon-btn" onclick="toast('No tienes notificaciones nuevas')" aria-label="Notificaciones"><span class="material-symbols-outlined">notifications</span></button>
+      <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Cambiar tema"><span class="material-symbols-outlined">dark_mode</span></button>
+    </header>
+
+    <main class="content">
+
+      <!-- ===== PANEL ===== -->
+      <section class="screen" id="screen-panel">
+        <div class="page-header">
+          <div>
+            <h1>Panel de control</h1>
+            <div class="lead">Viernes, 31 de agosto · Resumen del taller</div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-ghost" onclick="toast('Reporte exportado a Excel')"><span class="material-symbols-outlined">download</span>Exportar</button>
+            <button class="btn btn-accent" onclick="go('ventas')"><span class="material-symbols-outlined">point_of_sale</span>Nueva venta</button>
+          </div>
+        </div>
+
+        <div class="grid grid-4">
+          <div class="card kpi">
+            <div class="kpi-top"><span class="kpi-label">Ventas de hoy</span><div class="kpi-icon teal"><span class="material-symbols-outlined">payments</span></div></div>
+            <div class="kpi-value mono">$412.900</div>
+            <div class="kpi-delta up"><span class="material-symbols-outlined">trending_up</span>+12,4% vs ayer</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-top"><span class="kpi-label">Órdenes abiertas</span><div class="kpi-icon violet"><span class="material-symbols-outlined">assignment</span></div></div>
+            <div class="kpi-value">18</div>
+            <div class="kpi-delta flat"><span class="material-symbols-outlined">schedule</span>5 en reparación</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-top"><span class="kpi-label">Stock bajo</span><div class="kpi-icon amber"><span class="material-symbols-outlined">warning</span></div></div>
+            <div class="kpi-value">6</div>
+            <div class="kpi-delta down"><span class="material-symbols-outlined">trending_down</span>3 críticos</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-top"><span class="kpi-label">Catálogo</span><div class="kpi-icon violet"><span class="material-symbols-outlined">category</span></div></div>
+            <div class="kpi-value">24</div>
+            <div class="kpi-delta flat"><span class="material-symbols-outlined">inventory_2</span>6 categorías</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2-1">
+          <div class="card">
+            <div class="card-head">
+              <h3>Alertas de stock bajo</h3>
+              <button class="btn btn-soft btn-sm" onclick="go('reposiciones')">Reponer</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <tr><td class="strong">Pantalla OLED iPhone 11</td><td class="num mono">2</td><td class="num mono">5</td><td><span class="badge badge-error"><span class="dot"></span>Crítico</span></td></tr>
+                  <tr><td class="strong">Batería Samsung A54</td><td class="num mono">1</td><td class="num mono">5</td><td><span class="badge badge-error"><span class="dot"></span>Crítico</span></td></tr>
+                  <tr><td class="strong">Módulo de carga USB-C</td><td class="num mono">4</td><td class="num mono">8</td><td><span class="badge badge-warning"><span class="dot"></span>Bajo</span></td></tr>
+                  <tr><td class="strong">Conector Lightning</td><td class="num mono">3</td><td class="num mono">10</td><td><span class="badge badge-warning"><span class="dot"></span>Bajo</span></td></tr>
+                  <tr><td class="strong">Vidrio templado</td><td class="num mono">6</td><td class="num mono">12</td><td><span class="badge badge-warning"><span class="dot"></span>Bajo</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Actividad reciente</h3></div>
+            <div class="feed-item">
+              <div class="feed-icon teal"><span class="material-symbols-outlined">point_of_sale</span></div>
+              <div><div class="f-title">Venta ORD-1042 · $89.990</div><div class="f-desc">Pantalla iPhone 11 — María González</div></div>
+              <div class="f-time">10:42</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-icon"><span class="material-symbols-outlined">assignment_add</span></div>
+              <div><div class="f-title">Nueva orden de servicio</div><div class="f-desc">Cambio de batería — Pedro Rojas</div></div>
+              <div class="f-time">09:15</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-icon"><span class="material-symbols-outlined">package_2</span></div>
+              <div><div class="f-title">Reposición registrada</div><div class="f-desc">+12 Batería Samsung A54</div></div>
+              <div class="f-time">Ayer</div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-icon teal"><span class="material-symbols-outlined">point_of_sale</span></div>
+              <div><div class="f-title">Venta ORD-1041 · $34.990</div><div class="f-desc">Fuente de poder ATX — Juan Pérez</div></div>
+              <div class="f-time">Ayer</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VENTAS ===== -->
+      <section class="screen" id="screen-ventas" hidden>
+        <div class="page-header">
+          <div>
+            <h1>Punto de venta</h1>
+            <div class="lead">Busca productos y agrégalos al carrito</div>
+          </div>
+          <div class="actions"><button class="btn btn-ghost" onclick="toast('Ticket reimpreso')"><span class="material-symbols-outlined">receipt_long</span>Último ticket</button></div>
+        </div>
+        <div class="pos-grid">
+          <div class="pos-catalog">
+            <div class="card">
+              <div class="filter-bar">
+                <div class="input-group grow">
+                  <span class="material-symbols-outlined" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:19px">search</span>
+                  <input class="input" style="padding-left:38px" placeholder="Buscar por nombre o código…">
+                </div>
+                <select class="select"><option>Repuestos electrónicos</option><option>Todas las categorías</option></select>
+                <button class="btn btn-ghost btn-sm" onclick="toast('Lector de código QR abierto')"><span class="material-symbols-outlined">qr_code_scanner</span>Escanear</button>
+              </div>
+              <div class="card-pad grid grid-3">
+                <div class="card product-tile" onclick="addToCart('Pantalla OLED iPhone 11',89990)">
+                  <div class="pt-top"><div class="thumb"><span class="material-symbols-outlined">smartphone</span></div><div><div class="pt-name">Pantalla OLED iPhone 11</div><div class="pt-cat">Pantallas</div></div></div>
+                  <div class="pt-price">$89.990</div>
+                  <div class="pt-stock"><span class="badge badge-warning"><span class="dot"></span>2 en stock</span></div>
+                </div>
+                <div class="card product-tile" onclick="addToCart('Batería Samsung A54',24990)">
+                  <div class="pt-top"><div class="thumb"><span class="material-symbols-outlined">battery_full</span></div><div><div class="pt-name">Batería Samsung A54</div><div class="pt-cat">Baterías</div></div></div>
+                  <div class="pt-price">$24.990</div>
+                  <div class="pt-stock"><span class="badge badge-error"><span class="dot"></span>1 en stock</span></div>
+                </div>
+                <div class="card product-tile" onclick="addToCart('Módulo de carga USB-C',7990)">
+                  <div class="pt-top"><div class="thumb"><span class="material-symbols-outlined">usb</span></div><div><div class="pt-name">Módulo de carga USB-C</div><div class="pt-cat">Conectores</div></div></div>
+                  <div class="pt-price">$7.990</div>
+                  <div class="pt-stock"><span class="badge badge-success"><span class="dot"></span>14 en stock</span></div>
+                </div>
+                <div class="card product-tile" onclick="addToCart('Placa madre Xiaomi',49990)">
+                  <div class="pt-top"><div class="thumb"><span class="material-symbols-outlined">memory</span></div><div><div class="pt-name">Placa madre Xiaomi</div><div class="pt-cat">Placas</div></div></div>
+                  <div class="pt-price">$49.990</div>
+                  <div class="pt-stock"><span class="badge badge-success"><span class="dot"></span>7 en stock</span></div>
+                </div>
+                <div class="card product-tile" onclick="addToCart('Fuente de poder ATX',34990)">
+                  <div class="pt-top"><div class="thumb"><span class="material-symbols-outlined">bolt</span></div><div><div class="pt-name">Fuente de poder ATX</div><div class="pt-cat">Componentes</div></div></div>
+                  <div class="pt-price">$34.990</div>
+                  <div class="pt-stock"><span class="badge badge-success"><span class="dot"></span>9 en stock</span></div>
+                </div>
+                <div class="card product-tile" onclick="addToCart('Conector Lightning',5990)">
+                  <div class="pt-top"><div class="thumb"><span class="material-symbols-outlined">cable</span></div><div><div class="pt-name">Conector Lightning</div><div class="pt-cat">Conectores</div></div></div>
+                  <div class="pt-price">$5.990</div>
+                  <div class="pt-stock"><span class="badge badge-warning"><span class="dot"></span>3 en stock</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Carrito</h3><span class="section-note" id="cart-count">0 ítems</span></div>
+            <div class="card-pad" id="cart-lines" style="min-height:200px">
+              <div class="empty-state"><span class="material-symbols-outlined">shopping_cart</span><br>Agrega productos para comenzar</div>
+            </div>
+            <div class="card-pad" style="padding-top:0">
+              <div class="cart-total" id="cart-total">
+                <div class="row"><span>Subtotal</span><span class="mono" id="subtotal">$0</span></div>
+                <div class="row"><span>Descuento</span><span class="mono" id="discount">$0</span></div>
+                <div class="row grand"><span>Total</span><span class="mono" id="total">$0</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:14px">
+                <span class="material-symbols-outlined" style="color:var(--muted)">person</span>
+                <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:flex-start" onclick="openModal('modal-choice-client')"><span id="cart-client-label" style="font-weight:500">Cliente: Sin cliente</span></button>
+              </div>
+              <button class="btn btn-accent" style="width:100%;height:46px;justify-content:center;margin-top:10px" onclick="checkout()"><span class="material-symbols-outlined">check_circle</span>Completar venta</button>
+              <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="clearCart()">Vaciar carrito</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REGISTRAR ORDEN (Orden de Ingreso) ===== -->
+      <section class="screen" id="screen-registrar" hidden>
+        <div class="page-header">
+          <div><h1>Orden de ingreso</h1><div class="lead">Registra el cliente y genera la orden de servicio</div></div>
+        </div>
+        <div class="order-flow">
+          <div class="card">
+            <div class="card-head"><h3>Datos del cliente</h3></div>
+            <div class="card-pad">
+              <div class="client-search-row">
+                <div class="field" style="flex:1;margin:0">
+                  <label>N° Cliente</label>
+                  <div class="input-group">
+                    <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)">search</span>
+                    <input class="input" style="padding-left:40px" id="client-id" placeholder="Ej: 70" onkeyup="if(event.key==='Enter')findClient()">
+                  </div>
+                </div>
+                <button class="btn btn-soft" onclick="findClient()"><span class="material-symbols-outlined">search</span>Buscar</button>
+              </div>
+              <div class="form-grid" style="margin-top:14px">
+                <div class="field full"><label>Nombre</label><input class="input" id="client-name" placeholder="Ej: Comercial Demo SpA"></div>
+                <div class="field full">
+                  <label>RUT</label>
+                  <div class="rut-wrap">
+                    <input class="input" id="client-rut" placeholder="Ej: 12.345.678-5" oninput="onRutInput(this)" maxlength="12">
+                    <span class="rut-ind" id="rut-ind"></span>
+                  </div>
+                  <div class="rut-hint" id="rut-hint"></div>
+                </div>
+                <div class="field full">
+                  <label class="empresa-toggle">
+                    <span class="sw"><input type="checkbox" id="empresa-toggle" onchange="toggleEmpresa()"><span class="track"></span></span>
+                    <span>Es empresa (razón social)</span>
+                  </label>
+                  <div class="hidden-field" id="empresa-field"><input class="input" id="client-company" placeholder="Nombre de la empresa"></div>
+                </div>
+                <div class="field"><label>Correo</label><input class="input" id="client-email" placeholder="info@demo.example"></div>
+                <div class="field"><label>Teléfono</label><input class="input" id="client-phone" placeholder="9 5555 1234"></div>
+                <div class="field"><label>Dirección</label><input class="input" id="client-address" placeholder="Av. Providencia 1234"></div>
+                <div class="field"><label>Comuna</label><input class="input" id="client-city" placeholder="Santiago"></div>
+                <div class="field full"><label>Descripción</label><textarea class="input" id="client-desc" placeholder="Descripción del equipo / reparación…"></textarea></div>
+                <div class="field full"><label>Observaciones</label><textarea class="input" id="client-obs" placeholder="Observaciones…"></textarea></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Orden de ingreso</h3></div>
+            <div class="card-pad">
+              <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="registerOrder()"><span class="material-symbols-outlined">add_box</span>Registrar orden</button>
+              <div class="summary-list" style="margin-top:16px">
+                <div class="s-row"><span class="s-k">N° Cliente</span><span class="s-v mono" id="sum-client-id">—</span></div>
+                <div class="s-row"><span class="s-k">Cliente</span><span class="s-v" id="sum-client-name">—</span></div>
+                <div class="s-row"><span class="s-k">N° Aviso</span><span class="s-v mono" id="sum-order-code">—</span></div>
+                <div class="s-row"><span class="s-k">Fecha</span><span class="s-v" id="sum-order-date">—</span></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:16px">
+                <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="downloadQR()"><span class="material-symbols-outlined">qr_code_2</span>QR</button>
+                <button class="btn btn-soft btn-sm" style="flex:1;justify-content:center" id="btn-pdf" disabled onclick="openTicket()"><span class="material-symbols-outlined">picture_as_pdf</span>PDF</button>
+              </div>
+              <p class="section-note" style="margin-top:12px">Registra la orden para habilitar QR y PDF.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PRODUCTOS ===== -->
+      <section class="screen" id="screen-productos" hidden>
+        <div class="page-header">
+          <div><h1>Catálogo de productos</h1><div class="lead">24 productos · 6 categorías</div></div>
+          <div class="actions">
+            <button class="btn btn-ghost" onclick="toast('Exportado a Excel')"><span class="material-symbols-outlined">download</span>Exportar Excel</button>
+            <button class="btn btn-primary" onclick="openModal('modal-product')"><span class="material-symbols-outlined">add</span>Agregar producto</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="filter-bar">
+            <div class="input-group grow">
+              <span class="material-symbols-outlined" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:19px">search</span>
+              <input class="input" style="padding-left:38px" id="prod-search" placeholder="Buscar por nombre, código o localización…" oninput="filterProducts(this.value)">
+            </div>
+            <select class="select"><option>Todas las categorías</option><option>Pantallas</option><option>Baterías</option><option>Conectores</option><option>Placas</option><option>Componentes</option></select>
+            <div class="seg"><button class="active">Todos</button><button>Con stock</button><button>Stock bajo</button></div>
+          </div>
+          <div class="table-wrap">
+            <table class="data" id="prod-table">
+              <thead><tr><th>ID</th><th>Imagen</th><th>Nombre</th><th class="num">Stock</th><th>Localización</th><th class="num">Costo</th><th class="num">Venta</th><th>Estado</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="mono muted">P-001</td><td><div class="thumb"><span class="material-symbols-outlined">smartphone</span></div></td><td class="strong">Pantalla OLED iPhone 11</td><td class="num">2</td><td>A1-01</td><td class="num">$52.000</td><td class="num">$89.990</td><td><span class="badge badge-error"><span class="dot"></span>Crítico</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-002</td><td><div class="thumb"><span class="material-symbols-outlined">battery_full</span></div></td><td class="strong">Batería Samsung A54</td><td class="num">1</td><td>A1-02</td><td class="num">$14.000</td><td class="num">$24.990</td><td><span class="badge badge-error"><span class="dot"></span>Crítico</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-003</td><td><div class="thumb"><span class="material-symbols-outlined">usb</span></div></td><td class="strong">Módulo de carga USB-C</td><td class="num">14</td><td>A2-01</td><td class="num">$3.200</td><td class="num">$7.990</td><td><span class="badge badge-success"><span class="dot"></span>En stock</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-004</td><td><div class="thumb"><span class="material-symbols-outlined">memory</span></div></td><td class="strong">Placa madre Xiaomi</td><td class="num">7</td><td>B1-03</td><td class="num">$31.000</td><td class="num">$49.990</td><td><span class="badge badge-success"><span class="dot"></span>En stock</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-005</td><td><div class="thumb"><span class="material-symbols-outlined">bolt</span></div></td><td class="strong">Fuente de poder ATX</td><td class="num">9</td><td>B1-01</td><td class="num">$21.000</td><td class="num">$34.990</td><td><span class="badge badge-success"><span class="dot"></span>En stock</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-006</td><td><div class="thumb"><span class="material-symbols-outlined">cable</span></div></td><td class="strong">Conector Lightning</td><td class="num">3</td><td>A2-02</td><td class="num">$2.000</td><td class="num">$5.990</td><td><span class="badge badge-warning"><span class="dot"></span>Bajo</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-007</td><td><div class="thumb"><span class="material-symbols-outlined">screensaver</span></div></td><td class="strong">Vidrio templado</td><td class="num">6</td><td>A3-01</td><td class="num">$1.500</td><td class="num">$4.990</td><td><span class="badge badge-warning"><span class="dot"></span>Bajo</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td class="mono muted">P-008</td><td><div class="thumb"><span class="material-symbols-outlined">photo_camera</span></div></td><td class="strong">Cámara trasera Huawei</td><td class="num">11</td><td>A2-03</td><td class="num">$17.000</td><td class="num">$29.990</td><td><span class="badge badge-success"><span class="dot"></span>En stock</span></td><td class="num"><button class="icon-btn" title="Ver transacciones" onclick="openModal('modal-transactions')"><span class="material-symbols-outlined">history</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-product')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="paginator">
+            <span>Mostrando 1–8 de 24</span>
+            <div class="pages"><button class="pg active">1</button><button class="pg">2</button><button class="pg">3</button><button class="pg"><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== BODEGA ===== -->
+      <section class="screen" id="screen-bodega" hidden>
+        <div class="page-header">
+          <div><h1>Bodega</h1><div class="lead">Ubicaciones y niveles de stock por pasillo</div></div>
+          <div class="actions"><button class="btn btn-ghost" onclick="toast('Inventario reconciliado')"><span class="material-symbols-outlined">sync</span>Reconciliar</button></div>
+        </div>
+        <div class="grid grid-3">
+          <div class="card kpi"><div class="kpi-top"><span class="kpi-label">Pasillo A</span><div class="kpi-icon violet"><span class="material-symbols-outlined">shelves</span></div></div><div class="kpi-value">42 <span class="unit">posiciones</span></div><div class="kpi-delta up">98% ocupación óptima</div></div>
+          <div class="card kpi"><div class="kpi-top"><span class="kpi-label">Pasillo B</span><div class="kpi-icon violet"><span class="material-symbols-outlined">shelves</span></div></div><div class="kpi-value">18 <span class="unit">posiciones</span></div><div class="kpi-delta flat">72% ocupación</div></div>
+          <div class="card kpi"><div class="kpi-top"><span class="kpi-label">Pasillo C</span><div class="kpi-icon violet"><span class="material-symbols-outlined">shelves</span></div></div><div class="kpi-value">30 <span class="unit">posiciones</span></div><div class="kpi-delta down">4 sin asignar</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Stock por ubicación</h3><button class="btn btn-soft btn-sm" onclick="go('reposiciones')"><span class="material-symbols-outlined">package_2</span>Reponer stock</button></div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th>Ubicación</th><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th><th>Nivel</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="mono strong">A1-01</td><td class="strong">Pantalla OLED iPhone 11</td><td class="num">2</td><td class="num">5</td><td><div class="stock-bar"><span style="width:20%;background:var(--error)"></span></div></td><td><button class="btn btn-soft btn-sm" onclick="openModal('modal-refill')">Reponer</button></td></tr>
+                <tr><td class="mono strong">A1-02</td><td class="strong">Batería Samsung A54</td><td class="num">1</td><td class="num">5</td><td><div class="stock-bar"><span style="width:10%;background:var(--error)"></span></div></td><td><button class="btn btn-soft btn-sm" onclick="openModal('modal-refill')">Reponer</button></td></tr>
+                <tr><td class="mono strong">A2-01</td><td class="strong">Módulo de carga USB-C</td><td class="num">14</td><td class="num">8</td><td><div class="stock-bar"><span style="width:100%;background:var(--success)"></span></div></td><td><button class="btn btn-soft btn-sm" onclick="openModal('modal-refill')">Reponer</button></td></tr>
+                <tr><td class="mono strong">B1-03</td><td class="strong">Placa madre Xiaomi</td><td class="num">7</td><td class="num">4</td><td><div class="stock-bar"><span style="width:90%;background:var(--success)"></span></div></td><td><button class="btn btn-soft btn-sm" onclick="openModal('modal-refill')">Reponer</button></td></tr>
+                <tr><td class="mono strong">A2-02</td><td class="strong">Conector Lightning</td><td class="num">3</td><td class="num">10</td><td><div class="stock-bar"><span style="width:30%;background:var(--warning)"></span></div></td><td><button class="btn btn-soft btn-sm" onclick="openModal('modal-refill')">Reponer</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REPOSICIONES ===== -->
+      <section class="screen" id="screen-reposiciones" hidden>
+        <div class="page-header">
+          <div><h1>Reposiciones de stock</h1><div class="lead">Registra entradas de inventario</div></div>
+          <div class="actions"><button class="btn btn-primary" onclick="openModal('modal-refill')"><span class="material-symbols-outlined">add</span>Nueva reposición</button></div>
+        </div>
+        <div class="grid grid-1-2">
+          <div class="card">
+            <div class="card-head"><h3>Nueva entrada</h3></div>
+            <div class="card-pad form-grid">
+              <div class="field full"><label>Producto</label><select class="select" style="width:100%"><option>Pantalla OLED iPhone 11</option><option>Batería Samsung A54</option><option>Módulo de carga USB-C</option></select></div>
+              <div class="field"><label>Cantidad</label><input class="input" type="number" placeholder="10"></div>
+              <div class="field"><label>Costo unitario</label><input class="input mono" placeholder="$52.000"></div>
+              <div class="field"><label>Proveedor</label><input class="input" placeholder="Proveedor"></div>
+              <div class="field"><label>N.º factura</label><input class="input mono" placeholder="FAC-1023"></div>
+            </div>
+            <div class="modal-foot" style="border:none"><button class="btn btn-primary" style="width:100%" onclick="toast('Reposición registrada')">Registrar entrada</button></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Historial</h3></div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>Fecha</th><th>Producto</th><th class="num">Cant.</th><th>Proveedor</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono muted">30 ago</td><td class="strong">Batería Samsung A54</td><td class="num">+12</td><td>TecnoParts Ltda.</td></tr>
+                  <tr><td class="mono muted">28 ago</td><td class="strong">Módulo de carga USB-C</td><td class="num">+20</td><td>Electro Sur</td></tr>
+                  <tr><td class="mono muted">25 ago</td><td class="strong">Vidrio templado</td><td class="num">+30</td><td>TecnoParts Ltda.</td></tr>
+                  <tr><td class="mono muted">21 ago</td><td class="strong">Pantalla OLED iPhone 11</td><td class="num">+8</td><td>Pantallas CL</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== CLIENTES Y ÓRDENES ===== -->
+      <section class="screen" id="screen-clientes" hidden>
+        <div class="page-header">
+          <div><h1>Clientes y órdenes</h1><div class="lead">8 clientes · 36 órdenes registradas</div></div>
+          <div class="actions"><button class="btn btn-ghost" onclick="toast('Listado de clientes exportado')"><span class="material-symbols-outlined">download</span>Exportar</button></div>
+        </div>
+        <div class="grid grid-2-1">
+          <div class="card">
+            <div class="card-head"><h3>Clientes</h3></div>
+            <div class="filter-bar">
+              <div class="input-group grow">
+                <span class="material-symbols-outlined" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:19px">search</span>
+                <input class="input" style="padding-left:38px" placeholder="Buscar por RUT o nombre…">
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>RUT</th><th>Cliente</th><th>Teléfono</th><th class="num">Órdenes</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">15.234.567-8</td><td class="strong">María González</td><td>+56 9 8234 1102</td><td class="num">6</td><td class="num"><button class="icon-btn" title="Ver órdenes" onclick="openModal('modal-client-orders')"><span class="material-symbols-outlined">receipt_long</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-edit-client')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                  <tr><td class="mono">18.765.432-1</td><td class="strong">Pedro Rojas</td><td>+56 9 6733 4487</td><td class="num">4</td><td class="num"><button class="icon-btn" title="Ver órdenes" onclick="openModal('modal-client-orders')"><span class="material-symbols-outlined">receipt_long</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-edit-client')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                  <tr><td class="mono">12.345.678-9</td><td class="strong">Juan Pérez</td><td>+56 9 5210 9981</td><td class="num">3</td><td class="num"><button class="icon-btn" title="Ver órdenes" onclick="openModal('modal-client-orders')"><span class="material-symbols-outlined">receipt_long</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-edit-client')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                  <tr><td class="mono">16.987.654-3</td><td class="strong">Ana Torres</td><td>+56 9 7412 3321</td><td class="num">5</td><td class="num"><button class="icon-btn" title="Ver órdenes" onclick="openModal('modal-client-orders')"><span class="material-symbols-outlined">receipt_long</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-edit-client')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                  <tr><td class="mono">19.111.222-k</td><td class="strong">Luis Soto</td><td>+56 9 8820 1456</td><td class="num">2</td><td class="num"><button class="icon-btn" title="Ver órdenes" onclick="openModal('modal-client-orders')"><span class="material-symbols-outlined">receipt_long</span></button><button class="icon-btn" title="Editar" onclick="openModal('modal-edit-client')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" title="Eliminar" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Órdenes recientes</h3></div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>Código</th><th>Cliente</th><th class="num">Total</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td class="mono strong">ORD-1042</td><td>María González</td><td class="num">$89.990</td><td><span class="badge badge-success"><span class="dot"></span>Entregado</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+                  <tr><td class="mono strong">ORD-1041</td><td>Juan Pérez</td><td class="num">$34.990</td><td><span class="badge badge-neutral"><span class="dot"></span>En reparación</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+                  <tr><td class="mono strong">ORD-1040</td><td>Ana Torres</td><td class="num">$24.990</td><td><span class="badge badge-warning"><span class="dot"></span>Pendiente</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+                  <tr><td class="mono strong">ORD-1039</td><td>Pedro Rojas</td><td class="num">$7.990</td><td><span class="badge badge-success"><span class="dot"></span>Entregado</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ADMIN ===== -->
+      <section class="screen" id="screen-admin" hidden>
+        <div class="page-header">
+          <div><h1>Administración de usuarios</h1><div class="lead">Gestión de cuentas y roles del sistema</div></div>
+          <div class="actions"><button class="btn btn-primary" onclick="openModal('modal-user-form')"><span class="material-symbols-outlined">person_add</span>Nuevo usuario</button></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell-main"><div class="avatar" style="width:32px;height:32px;font-size:13px">A</div><span class="strong">Alejandro Martínez</span></div></td><td>admin@demo.example</td><td><span class="badge badge-neutral">Administrador</span></td><td><span class="badge badge-success"><span class="dot"></span>Activo</span></td><td class="mono muted">hace 2 min</td><td class="num"><button class="icon-btn" title="Editar" onclick="openModal('modal-user-form')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td><div class="cell-main"><div class="avatar" style="width:32px;height:32px;font-size:13px">N</div><span class="strong">Natalia Ordenes</span></div></td><td>clerk@demo.example</td><td><span class="badge badge-neutral">Vendedor</span></td><td><span class="badge badge-success"><span class="dot"></span>Activo</span></td><td class="mono muted">hace 1 h</td><td class="num"><button class="icon-btn" title="Editar" onclick="openModal('modal-user-form')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+                <tr><td><div class="cell-main"><div class="avatar" style="width:32px;height:32px;font-size:13px">C</div><span class="strong">Carlos Fuentes</span></div></td><td>carlos@demo.example</td><td><span class="badge badge-neutral">Vendedor</span></td><td><span class="badge badge-warning"><span class="dot"></span>Suspendido</span></td><td class="mono muted">hace 12 días</td><td class="num"><button class="icon-btn" title="Editar" onclick="openModal('modal-user-form')"><span class="material-symbols-outlined">edit</span></button><button class="icon-btn" onclick="openModal('modal-delete')"><span class="material-symbols-outlined">delete</span></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="modal-overlay" id="modal-product" onclick="if(event.target===this)closeModal('modal-product')">
+  <div class="modal">
+    <div class="modal-head"><h3>Agregar producto</h3><button class="icon-btn" onclick="closeModal('modal-product')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body form-grid">
+      <div class="field full"><label>Nombre del producto</label><input class="input" id="prod-name" placeholder="Ej: Pantalla OLED iPhone 11"></div>
+      <div class="field"><label>Categoría</label><select class="select" style="width:100%"><option>Pantallas</option><option>Baterías</option><option>Conectores</option></select></div>
+      <div class="field"><label>Localización</label><input class="input mono" placeholder="A1-01"></div>
+      <div class="field"><label>Stock inicial</label><input class="input" type="number" placeholder="0"></div>
+      <div class="field"><label>Stock mínimo</label><input class="input" type="number" placeholder="5"></div>
+      <div class="field"><label>Precio de costo</label><input class="input mono" placeholder="$52.000"></div>
+      <div class="field"><label>Precio de venta</label><input class="input mono" placeholder="$89.990"></div>
+      <div class="field"><label>Descuento máx.</label><input class="input mono" placeholder="10%"></div>
+      <div class="field full"><label>Descripción</label><textarea class="input" placeholder="Descripción del producto…"></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancelar</button><button class="btn btn-primary" onclick="saveProduct()">Guardar producto</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-delete" onclick="if(event.target===this)closeModal('modal-delete')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-body" style="text-align:center">
+      <div class="kpi-icon red" style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%"><span class="material-symbols-outlined" style="font-size:26px">delete</span></div>
+      <h3 style="margin-bottom:8px">¿Eliminar este elemento?</h3>
+      <p class="section-note" style="margin:0 0 6px">Esta acción no se puede deshacer. El registro se eliminará de forma permanente.</p>
+    </div>
+    <div class="modal-foot" style="justify-content:center"><button class="btn btn-ghost" onclick="closeModal('modal-delete')">Cancelar</button><button class="btn btn-danger" onclick="closeModal('modal-delete');toast('Elemento eliminado')">Eliminar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-refill" onclick="if(event.target===this)closeModal('modal-refill')">
+  <div class="modal">
+    <div class="modal-head"><h3>Reponer stock</h3><button class="icon-btn" onclick="closeModal('modal-refill')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body form-grid">
+      <div class="field full"><label>Producto</label><select class="select" style="width:100%"><option>Pantalla OLED iPhone 11 — A1-01</option><option>Batería Samsung A54 — A1-02</option></select></div>
+      <div class="field"><label>Cantidad a reponer</label><input class="input" type="number" placeholder="10"></div>
+      <div class="field"><label>Costo unitario</label><input class="input mono" placeholder="$52.000"></div>
+      <div class="field full"><label>Proveedor</label><input class="input" placeholder="Proveedor"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modal-refill')">Cancelar</button><button class="btn btn-primary" onclick="completeRefill()">Registrar entrada</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-ticket" onclick="if(event.target===this)closeModal('modal-ticket')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><h3>Ticket <span id="ticket-code">ORD-1042</span></h3><button class="icon-btn" onclick="closeModal('modal-ticket')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body">
+      <div class="ticket">
+        <div class="t-head">
+          <div style="font-weight:700;font-size:14px">Manage Repair Store</div>
+          <div style="color:var(--muted);font-size:11px">Av. Principal 123 · Santiago, Chile</div>
+          <div style="color:var(--muted);font-size:11px">RUT: 76.543.210-9 · +56 2 2345 6789</div>
+        </div>
+        <div class="t-row"><span>Cliente</span><span id="ticket-client">María González</span></div>
+        <div class="t-row"><span>RUT</span><span id="ticket-rut">15.234.567-8</span></div>
+        <div class="t-row"><span>Fecha</span><span id="ticket-date">31/08/2026 10:42</span></div>
+        <div class="t-row"><span>Pantalla OLED iPhone 11</span><span>$89.990</span></div>
+        <div class="t-total t-row"><span>Total</span><span>$89.990</span></div>
+        <div class="qr-placeholder" id="ticket-qr">QR · ORD-1042</div>
+      </div>
+      <div class="modal-foot" style="border:none;padding:16px 0 0">
+        <button class="btn btn-ghost" style="flex:1" onclick="toast('Ticket enviado a impresora')"><span class="material-symbols-outlined">print</span>Imprimir</button>
+        <button class="btn btn-primary" style="flex:1" onclick="toast('Descargando ticket PDF…')"><span class="material-symbols-outlined">download</span>PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIÁLOGOS DE DOMINIO ===== -->
+<div class="modal-overlay" id="modal-edit-client" onclick="if(event.target===this)closeModal('modal-edit-client')">
+  <div class="modal">
+    <div class="modal-head"><h3>Editar cliente</h3><button class="icon-btn" onclick="closeModal('modal-edit-client')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body form-grid">
+      <div class="field"><label>RUT</label><div class="rut-wrap"><input class="input" id="edit-rut" placeholder="15.234.567-8" oninput="onRutInput(this)" maxlength="12"><span class="rut-ind"></span></div></div>
+      <div class="field"><label>Nombre</label><input class="input" placeholder="María González"></div>
+      <div class="field"><label>Teléfono</label><input class="input" placeholder="+56 9 8234 1102"></div>
+      <div class="field"><label>Email</label><input class="input" placeholder="maria@demo.example"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modal-edit-client')">Cancelar</button><button class="btn btn-primary" onclick="closeModal('modal-edit-client');toast('Cliente actualizado')">Guardar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-client-orders" onclick="if(event.target===this)closeModal('modal-client-orders')">
+  <div class="modal wide">
+    <div class="modal-head"><h3>Órdenes de María González</h3><button class="icon-btn" onclick="closeModal('modal-client-orders')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Código</th><th>Fecha</th><th class="num">Total</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="mono strong">ORD-1042</td><td class="mono muted">31/08</td><td class="num">$89.990</td><td><span class="badge badge-success"><span class="dot"></span>Entregado</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+            <tr><td class="mono strong">ORD-1030</td><td class="mono muted">18/08</td><td class="num">$24.990</td><td><span class="badge badge-success"><span class="dot"></span>Entregado</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+            <tr><td class="mono strong">ORD-1021</td><td class="mono muted">02/08</td><td class="num">$7.990</td><td><span class="badge badge-neutral"><span class="dot"></span>En reparación</span></td><td><button class="icon-btn" onclick="openModal('modal-ticket')"><span class="material-symbols-outlined">receipt_long</span></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-transactions" onclick="if(event.target===this)closeModal('modal-transactions')">
+  <div class="modal wide">
+    <div class="modal-head"><h3>Transacciones — Pantalla OLED iPhone 11</h3><button class="icon-btn" onclick="closeModal('modal-transactions')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body">
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th class="num">Cant.</th><th class="num">Stock final</th><th>Referencia</th></tr></thead>
+          <tbody>
+            <tr><td class="mono muted">31/08 10:42</td><td><span class="badge badge-error"><span class="dot"></span>Venta</span></td><td class="num">−1</td><td class="num">2</td><td class="mono">ORD-1042</td></tr>
+            <tr><td class="mono muted">21/08 15:10</td><td><span class="badge badge-success"><span class="dot"></span>Reposición</span></td><td class="num">+8</td><td class="num">3</td><td class="mono">REF-0032</td></tr>
+            <tr><td class="mono muted">14/08 11:20</td><td><span class="badge badge-error"><span class="dot"></span>Venta</span></td><td class="num">−1</td><td class="num">5</td><td class="mono">ORD-1008</td></tr>
+            <tr><td class="mono muted">01/08 09:00</td><td><span class="badge badge-success"><span class="dot"></span>Ingreso inicial</span></td><td class="num">+6</td><td class="num">6</td><td class="mono">SEED</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-product-exists" onclick="if(event.target===this)closeModal('modal-product-exists')">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-body" style="text-align:center">
+      <div class="kpi-icon amber" style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%"><span class="material-symbols-outlined" style="font-size:26px">warning</span></div>
+      <h3 style="margin-bottom:8px">Producto ya existe</h3>
+      <p class="section-note" style="margin:0">Ya existe un producto con ese nombre. Puedes editar el existente en vez de duplicarlo.</p>
+    </div>
+    <div class="modal-foot" style="justify-content:center"><button class="btn btn-ghost" onclick="closeModal('modal-product-exists')">Cancelar</button><button class="btn btn-primary" onclick="closeModal('modal-product-exists');openModal('modal-product')">Editar existente</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-refill-success" onclick="if(event.target===this)closeModal('modal-refill-success')">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-body" style="text-align:center">
+      <div class="kpi-icon teal" style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%"><span class="material-symbols-outlined" style="font-size:26px">check</span></div>
+      <h3 style="margin-bottom:8px">Reposición registrada</h3>
+      <p class="section-note" style="margin:0 0 4px">+10 Pantalla OLED iPhone 11 · stock actualizado a 12.</p>
+      <p class="section-note" style="margin:0">N° de entrada: REF-0034</p>
+    </div>
+    <div class="modal-foot" style="justify-content:center"><button class="btn btn-primary" onclick="closeModal('modal-refill-success')">Aceptar</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-user-form" onclick="if(event.target===this)closeModal('modal-user-form')">
+  <div class="modal">
+    <div class="modal-head"><h3>Nuevo usuario</h3><button class="icon-btn" onclick="closeModal('modal-user-form')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body form-grid">
+      <div class="field full"><label>Nombre</label><input class="input" placeholder="Nombre completo"></div>
+      <div class="field full"><label>Email</label><input class="input" placeholder="correo@demo.example"></div>
+      <div class="field"><label>Rol</label><select class="select" style="width:100%"><option>Vendedor</option><option>Administrador</option><option>Bodega</option></select></div>
+      <div class="field"><label>Contraseña</label><input class="input" type="password" placeholder="••••••••"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('modal-user-form')">Cancelar</button><button class="btn btn-primary" onclick="closeModal('modal-user-form');toast('Usuario creado')">Crear usuario</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-choice-client" onclick="if(event.target===this)closeModal('modal-choice-client')">
+  <div class="modal">
+    <div class="modal-head"><h3>Elegir cliente</h3><button class="icon-btn" onclick="closeModal('modal-choice-client')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="modal-body">
+      <div class="input-group" style="margin-bottom:12px">
+        <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)">search</span>
+        <input class="input" style="padding-left:40px" placeholder="Buscar por RUT o nombre…">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="demo-role" onclick="chooseClient('María González','15.234.567-8')"><span class="material-symbols-outlined">person</span><span><span class="dr-label">María González</span><br><span class="dr-email">15.234.567-8</span></span></button>
+        <button class="demo-role" onclick="chooseClient('Pedro Rojas','18.765.432-1')"><span class="material-symbols-outlined">person</span><span><span class="dr-label">Pedro Rojas</span><br><span class="dr-email">18.765.432-1</span></span></button>
+        <button class="demo-role" onclick="chooseClient('Juan Pérez','12.345.678-9')"><span class="material-symbols-outlined">person</span><span><span class="dr-label">Juan Pérez</span><br><span class="dr-email">12.345.678-9</span></span></button>
+        <button class="demo-role" onclick="chooseClient('Ana Torres','16.987.654-3')"><span class="material-symbols-outlined">person</span><span><span class="dr-label">Ana Torres</span><br><span class="dr-email">16.987.654-3</span></span></button>
+        <button class="demo-role" onclick="chooseClient('Sin cliente','')"><span class="material-symbols-outlined">person_off</span><span><span class="dr-label">Venta sin cliente</span><br><span class="dr-email">Consumidor final</span></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ROLES = {
+  admin:    { label:'Administrador', name:'Alejandro M.',   email:'admin@demo.example',   screens:['panel','ventas','registrar','productos','bodega','reposiciones','clientes','admin'] },
+  seller:   { label:'Vendedor',      name:'Natalia Ordenes', email:'clerk@demo.example', screens:['ventas'] },
+  warehouse:{ label:'Bodega',        name:'Carlos Fuentes',  email:'bodega@demo.example', screens:['bodega','productos','reposiciones'] },
+};
+let currentRole = null;
+
+const SCREENS = {
+  panel:['Panel','Resumen del taller'],
+  ventas:['Punto de venta','Busca productos y agrégalos al carrito'],
+  registrar:['Orden de ingreso','Registra cliente y genera la orden de servicio'],
+  productos:['Catálogo de productos','24 productos · 6 categorías'],
+  bodega:['Bodega','Ubicaciones y niveles de stock'],
+  reposiciones:['Reposiciones de stock','Registra entradas de inventario'],
+  clientes:['Clientes y órdenes','8 clientes · 36 órdenes'],
+  admin:['Administración','Usuarios y roles del sistema']
+};
+
+function login(role){
+  currentRole = role;
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('app').hidden=false;
+  applyRole();
+  go(ROLES[role].screens[0]);
+}
+function loginByEmail(){
+  const email = (document.getElementById('login-email').value||'').trim().toLowerCase();
+  let role = 'admin';
+  if(email.includes('clerk')) role='seller';
+  else if(email.includes('bodega')) role='warehouse';
+  login(role);
+}
+function applyRole(){
+  const r = ROLES[currentRole];
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    const roles = (n.dataset.roles||'').split(',');
+    n.style.display = roles.includes(currentRole) ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-group-label').forEach(lbl=>{
+    let el=lbl.nextElementSibling, any=false;
+    while(el && !el.classList.contains('nav-group-label')){
+      if(el.classList.contains('nav-item') && el.style.display!=='none'){ any=true; break; }
+      el=el.nextElementSibling;
+    }
+    lbl.style.display = any ? '' : 'none';
+  });
+  document.getElementById('user-name').textContent = r.name;
+  document.getElementById('user-role').textContent = r.label;
+  document.getElementById('user-avatar').textContent = r.name.charAt(0).toUpperCase();
+}
+function logout(){
+  currentRole = null;
+  document.getElementById('app').hidden=true;
+  document.getElementById('login-view').style.display='grid';
+  document.getElementById('sidebar').classList.remove('open');
+  toast('Sesión cerrada');
+}
+function go(screen){
+  const r = currentRole ? ROLES[currentRole] : null;
+  if(r && !r.screens.includes(screen)){ toast('Sin permisos para esta sección', 'warning'); return; }
+  document.querySelectorAll('.screen').forEach(s=>s.hidden=true);
+  const el=document.getElementById('screen-'+screen);
+  if(el) el.hidden=false;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.screen===screen));
+  document.getElementById('topbar-title').textContent=SCREENS[screen][0];
+  document.getElementById('topbar-sub').textContent=SCREENS[screen][1];
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo({top:0});
+}
+function toggleTheme(){
+  const html=document.documentElement;
+  const dark=html.dataset.theme==='dark';
+  html.dataset.theme=dark?'light':'dark';
+  document.getElementById('theme-btn').querySelector('.material-symbols-outlined').textContent=dark?'dark_mode':'light_mode';
+}
+function togglePass(){
+  const inp=document.getElementById('login-pass');
+  inp.type=inp.type==='password'?'text':'password';
+}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+
+function toast(msg, icon){
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML='<span class="material-symbols-outlined">'+(icon||'check_circle')+'</span>'+msg;
+  if(icon==='warning'){ t.querySelector('.material-symbols-outlined').style.color='var(--warning)'; }
+  document.getElementById('toast').appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),220); },2600);
+}
+
+/* --- POS cart --- */
+let cart={};
+let selectedClient=null;
+const fmt=new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0});
+function addToCart(name,price){
+  cart[name]=cart[name]||{price,qty:0};
+  cart[name].qty++;
+  renderCart();
+  toast(name+' agregado al carrito');
+}
+function changeQty(name,d){
+  if(!cart[name])return;
+  cart[name].qty+=d;
+  if(cart[name].qty<=0) delete cart[name];
+  renderCart();
+}
+function clearCart(){ cart={}; renderCart(); }
+function renderCart(){
+  const wrap=document.getElementById('cart-lines');
+  const items=Object.entries(cart);
+  const count=items.reduce((a,[,v])=>a+v.qty,0);
+  document.getElementById('cart-count').textContent=count+' ítems';
+  if(!items.length){
+    wrap.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">shopping_cart</span><br>Agrega productos para comenzar</div>';
+  } else {
+    wrap.innerHTML=items.map(([name,v])=>`
+      <div class="cart-line">
+        <div class="cl-name">${name}<div class="cl-meta">${fmt.format(v.price)} c/u</div></div>
+        <div class="qty"><button onclick="changeQty('${name.replace(/'/g,"\\'")}',-1)">−</button><span class="qty-n">${v.qty}</span><button onclick="changeQty('${name.replace(/'/g,"\\'")}',1)">+</button></div>
+        <div class="cl-price">${fmt.format(v.price*v.qty)}</div>
+      </div>`).join('');
+  }
+  const subtotal=items.reduce((a,[,v])=>a+v.price*v.qty,0);
+  document.getElementById('subtotal').textContent=fmt.format(subtotal);
+  document.getElementById('total').textContent=fmt.format(subtotal);
+}
+function chooseClient(name,rut){
+  selectedClient = name || null;
+  document.getElementById('cart-client-label').textContent = name ? ('Cliente: '+name) : 'Cliente: Sin cliente';
+  closeModal('modal-choice-client');
+  toast(name ? 'Cliente asignado: '+name : 'Venta sin cliente');
+}
+function checkout(){
+  const items=Object.entries(cart);
+  if(!items.length){ toast('El carrito está vacío', 'warning'); return; }
+  const client = selectedClient || 'Consumidor final';
+  cart={}; renderCart();
+  toast('Venta completada · '+client+' · ticket generado');
+}
+
+/* --- product filter --- */
+function filterProducts(q){
+  q=q.toLowerCase().trim();
+  document.querySelectorAll('#prod-table tbody tr').forEach(tr=>{
+    tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+/* --- RUT --- */
+function formatRut(v){
+  const d=v.replace(/[^0-9kK]/g,'').toUpperCase();
+  if(!d) return '';
+  const dv=d.slice(-1);
+  const body=d.slice(0,-1).replace(/^0+/,'');
+  return body.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'-'+dv;
+}
+function validRut(v){
+  const clean=(v||'').replace(/\./g,'').replace(/-/g,'').toUpperCase();
+  if(!/^\d{7,8}[0-9K]$/.test(clean)) return false;
+  const dv=clean.slice(-1), body=clean.slice(0,-1);
+  let sum=0, m=2;
+  for(let i=body.length-1;i>=0;i--){ sum+=parseInt(body[i],10)*m; m=m===7?2:m+1; }
+  const exp=11-(sum%11);
+  return (exp===11?'0':exp===10?'K':String(exp))===dv;
+}
+function onRutInput(el){
+  el.value=formatRut(el.value);
+  const ind=el.parentElement.querySelector('.rut-ind');
+  if(ind){
+    if(!el.value){ ind.textContent=''; ind.className='rut-ind'; }
+    else { const ok=validRut(el.value); ind.textContent=ok?'check_circle':'cancel'; ind.className='rut-ind '+(ok?'ok':'bad'); }
+  }
+  if(el.id==='client-rut'){
+    const hint=document.getElementById('rut-hint');
+    if(hint){
+      if(!el.value) hint.textContent='';
+      else { const ok=validRut(el.value); hint.textContent=ok?'RUT válido':'RUT inválido (módulo 11)'; hint.style.color=ok?'var(--success)':'var(--error)'; }
+    }
+  }
+}
+
+/* --- Orden de ingreso --- */
+const DEMO_CLIENTS = {
+  '70': { name:'María González', rut:'15.234.567-8', email:'maria@demo.example', phone:'9 8234 1102', address:'Av. Providencia 1234', city:'Santiago' },
+  '71': { name:'Pedro Rojas', rut:'18.765.432-1', email:'pedro@demo.example', phone:'9 6733 4487', address:'Los Leones 200', city:'Providencia' },
+};
+function findClient(){
+  const id=(document.getElementById('client-id').value||'').trim();
+  const c=DEMO_CLIENTS[id];
+  if(!c){ toast('Cliente no encontrado', 'warning'); return; }
+  document.getElementById('client-name').value=c.name;
+  document.getElementById('client-rut').value=c.rut;
+  document.getElementById('client-email').value=c.email;
+  document.getElementById('client-phone').value=c.phone;
+  document.getElementById('client-address').value=c.address;
+  document.getElementById('client-city').value=c.city;
+  onRutInput(document.getElementById('client-rut'));
+}
+function toggleEmpresa(){
+  const on=document.getElementById('empresa-toggle').checked;
+  document.getElementById('empresa-field').style.display = on ? 'block' : 'none';
+}
+function registerOrder(){
+  const name=document.getElementById('client-name').value.trim();
+  if(!name){ toast('Ingresa el nombre del cliente', 'warning'); return; }
+  const code='ORD-'+(1043+Math.floor(Math.random()*10));
+  const now=new Date();
+  document.getElementById('sum-client-id').textContent=document.getElementById('client-id').value||'—';
+  document.getElementById('sum-client-name').textContent=name;
+  document.getElementById('sum-order-code').textContent=code;
+  document.getElementById('sum-order-date').textContent=now.toLocaleDateString('es-CL')+' '+now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('btn-pdf').disabled=false;
+  toast('Orden registrada · '+code);
+}
+function downloadQR(){ toast('QR generado para la orden'); }
+function openTicket(){
+  const name=document.getElementById('sum-client-name').textContent;
+  const code=document.getElementById('sum-order-code').textContent;
+  const date=document.getElementById('sum-order-date').textContent;
+  if(name!=='—'){ document.getElementById('ticket-client').textContent=name; document.getElementById('ticket-rut').textContent=document.getElementById('client-rut').value||'—'; }
+  if(code!=='—'){ document.getElementById('ticket-code').textContent=code; document.getElementById('ticket-qr').textContent='QR · '+code; }
+  if(date!=='—') document.getElementById('ticket-date').textContent=date;
+  openModal('modal-ticket');
+}
+
+/* --- producto / reposición --- */
+const EXISTING=['pantalla oled iphone 11','batería samsung a54','módulo de carga usb-c','placa madre xiaomi','fuente de poder atx','conector lightning','vidrio templado','cámara trasera huawei'];
+function saveProduct(){
+  const name=(document.getElementById('prod-name').value||'').trim().toLowerCase();
+  if(EXISTING.includes(name)){ closeModal('modal-product'); openModal('modal-product-exists'); return; }
+  closeModal('modal-product');
+  toast('Producto guardado');
+}
+function completeRefill(){
+  closeModal('modal-refill');
+  openModal('modal-refill-success');
+}
+
+/* --- keyboard shortcut --- */
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); document.querySelector('.topbar-search input').focus(); }
+});
+</script>
+</body>
+</html>

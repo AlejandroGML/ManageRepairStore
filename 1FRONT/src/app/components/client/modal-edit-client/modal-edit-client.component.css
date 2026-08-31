@@ -38,7 +38,7 @@
 
 .btn-cancel {
     width: 120px;
-    background-color: #6c757d !important;
+    background-color: var(--color-text-muted) !important;
 }
 
 .company-field-row {

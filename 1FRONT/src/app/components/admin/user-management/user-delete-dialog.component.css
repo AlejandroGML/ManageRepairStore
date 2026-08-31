@@ -2,5 +2,5 @@
 .dialog-padded { padding: var(--space-base); }
 .pt-8 { padding-top: 8px; }
 .w-130 { width: 130px; }
-.btn-cancel { background-color: #6c757d !important; color: white !important; }
+.btn-cancel { background-color: var(--color-text-muted) !important; color: white !important; }
 .error-message { text-align: center; color: var(--color-error); margin: 12px 0; }

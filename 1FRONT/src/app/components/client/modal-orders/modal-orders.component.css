@@ -7,7 +7,7 @@ td {
   cursor: pointer;
 }
 .icon-edit:hover {
-  color: #285c21f6;
+  color: color-mix(in srgb, var(--color-success) 75%, #000);
 }
 .div-table {
   max-height: 75vh;

@@ -36,5 +36,5 @@
 
 .btn-cancel {
     width: 130px;
-    background-color: #6c757d !important;
+    background-color: var(--color-text-muted) !important;
 }

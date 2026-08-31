@@ -23,6 +23,11 @@
   --color-success: #{vars.$color-success};
   --color-error: #{vars.$color-error};
   --color-warning: #{vars.$color-warning};
+  --color-success-soft: #{vars.$color-success-soft};
+  --color-warning-soft: #{vars.$color-warning-soft};
+  --color-error-soft: #{vars.$color-error-soft};
+  --color-brand-mid: #{vars.$color-brand-mid};
+  --color-warning-dark: #{vars.$color-warning-dark};
 
   // Bootstrap variable overrides (so Bootstrap uses our theme)
   --bs-body-bg: var(--color-bg);

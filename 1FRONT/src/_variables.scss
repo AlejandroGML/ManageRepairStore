@@ -20,6 +20,11 @@ $color-border-dark: #3B3649;
 $color-success: #047857;
 $color-error: #DC2626;
 $color-warning: #F59E0B; // Semantic warnings only — never brand
+$color-success-soft: #ECFDF5;
+$color-warning-soft: #FFFBEB;
+$color-error-soft: #FEF2F2;
+$color-brand-mid: #4C3FA6; // Brand gradient midpoint (login panel, brand-mark)
+$color-warning-dark: #FBBF24; // Warning text on dark surfaces
 
 // Typography
 $font-body: 'Fira Sans', Roboto, sans-serif;
