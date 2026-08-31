@@ -1,0 +1,60 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Panel</h1>
+      <p class="page-lead">Resumen del estado del negocio.</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid" *ngIf="!loading; else skeleton">
+    <div class="card kpi" *ngFor="let kpi of kpis">
+      <span class="kpi-icon" [class]="kpi.tone">
+        <mat-icon [fontIcon]="kpi.icon"></mat-icon>
+      </span>
+      <div class="kpi-meta">
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-label">{{ kpi.label }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" *ngIf="!loading">
+    <div class="card-head">
+      <h2 class="card-title">Alertas de stock bajo</h2>
+      <span class="badge badge-warning" *ngIf="lowStock.length">Punto de reposición: 5</span>
+    </div>
+    <div class="table-wrap" *ngIf="lowStock.length; else emptyState">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="col-num">Stock</th>
+            <th class="col-num">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of lowStock">
+            <td>{{ p.name }}</td>
+            <td class="col-num mono">{{ p.stock }}</td>
+            <td class="col-num"><span class="badge badge-error">Reponer</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #emptyState>
+      <p class="empty-state">Sin alertas — el stock está en niveles saludables.</p>
+    </ng-template>
+  </div>
+</div>
+
+<ng-template #skeleton>
+  <div class="kpi-grid">
+    <div class="card kpi" *ngFor="let _ of [1, 2, 3, 4]">
+      <span class="kpi-icon violet"><mat-icon fontIcon="hourglass_empty"></mat-icon></span>
+      <div class="kpi-meta">
+        <span class="kpi-value">…</span>
+        <span class="kpi-label">Cargando</span>
+      </div>
+    </div>
+  </div>
+</ng-template>

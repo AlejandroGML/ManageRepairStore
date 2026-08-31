@@ -8,6 +8,7 @@ colors:
   primary-disabled: "#DDD6FE"
   primary-soft: "#EDE9FE"
   secondary: "#312E81"
+  sidebar-dark: "#15121d"
   accent: "#0F766E"
   text: "#1F2937"
   text-strong: "#111827"
@@ -104,6 +105,9 @@ components:
     rounded: "{rounded.lg}"
   sidebar:
     backgroundColor: "{colors.secondary}"
+    textColor: "{colors.on-dark}"
+  sidebar-dark:
+    backgroundColor: "{colors.sidebar-dark}"
     textColor: "{colors.on-dark}"
   table-row:
     backgroundColor: "{colors.surface}"

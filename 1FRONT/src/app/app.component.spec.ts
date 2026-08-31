@@ -12,7 +12,6 @@ import { AuthService } from './services/auth.service';
 describe('AppComponent', () => {
   let component: AppComponent;
   let fixture: ComponentFixture<AppComponent>;
-  let authService: AuthService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -26,7 +25,6 @@ describe('AppComponent', () => {
 
     fixture = TestBed.createComponent(AppComponent);
     component = fixture.componentInstance;
-    authService = TestBed.inject(AuthService);
     localStorage.clear();
     fixture.detectChanges();
   });
@@ -43,31 +41,8 @@ describe('AppComponent', () => {
     expect(component.title).toEqual('manage-repair-store');
   });
 
-  it('should set userLogged based on AuthService currentUser$ on init', () => {
-    const mockUser = { id: 1, name: 'Admin', email: 'admin@demo.example', role: 'admin' };
-    localStorage.setItem('current_user', JSON.stringify(mockUser));
-    localStorage.setItem('access_token', 'token');
-
-    // Re-create component to pick up localStorage
-    fixture.destroy();
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      imports: [AppComponent, RouterTestingModule.withRoutes([])],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        AuthService,
-      ],
-    });
-    fixture = TestBed.createComponent(AppComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    expect(component.userLogged).toBeDefined();
-    expect(component.userLogged?.email).toBe('admin@demo.example');
-  });
-
-  it('should have userLogged undefined when not authenticated', () => {
-    expect(component.userLogged).toBeUndefined();
+  it('should render a router outlet', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });

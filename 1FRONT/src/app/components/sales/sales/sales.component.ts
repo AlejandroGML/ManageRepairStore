@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatDialog } from '@angular/material/dialog';
 import { Product } from 'src/app/interface/warehouse';
 import { SalesApiService } from 'src/app/services/sales.api.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { ProductSearchModalComponent } from '../../product/product-search-modal/product-search-modal.component';
@@ -28,9 +29,10 @@ export class SalesComponent implements OnInit, OnDestroy {
   dataSource = new MatTableDataSource<SaleProduct>();
   totalSaleValue: number = 0;
   submitting = false;
-  @Input() userLogged: any;
+  get userLogged(): any { return this.authService.getCurrentUser(); }
 
   private readonly salesApi = inject(SalesApiService);
+  private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly dataSyncService = inject(DataSyncService);
   private readonly snackbar = inject(SnackbarService);

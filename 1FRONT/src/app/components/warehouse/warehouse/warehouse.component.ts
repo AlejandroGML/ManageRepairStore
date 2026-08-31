@@ -1,6 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { UserProfile } from 'src/app/interface/user-profile';
+import { AuthService } from 'src/app/services/auth.service';
 import { ProductComponent } from '../../product/product/product.component';
 import { RefillsComponent } from '../../product/refills/refills.component';
 
@@ -12,11 +13,16 @@ import { RefillsComponent } from '../../product/refills/refills.component';
   imports: [SHARED_IMPORTS, ProductComponent, RefillsComponent],
 })
 export class WarehouseComponent implements OnInit {
+  private readonly authService = inject(AuthService);
+
+  get userLogged(): UserProfile | undefined {
+    return this.authService.getCurrentUser() ?? undefined;
+  }
+
   readonly ID_WAREHOUSE_FOCUS = 'input-client';
   readonly TAB_PRODUCTS = 0;
   readonly TAB_SALES = 1;
   readonly TAB_REFILLS = 2;
-  @Input() userLogged: UserProfile | undefined = undefined;
 
   allowedSubTabs: number[] = []; // Subpestañas permitidas
 

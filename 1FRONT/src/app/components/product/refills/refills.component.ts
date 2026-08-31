@@ -1,8 +1,9 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatDialog } from '@angular/material/dialog';
 import { Product, RefillGroup } from 'src/app/interface/warehouse';
 import { SalesApiService } from 'src/app/services/sales.api.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { AdminApiService } from 'src/app/services/admin.api.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { ProductRefillModalComponent } from '../product-refill-modal/product-refill-modal.component';
@@ -23,7 +24,9 @@ interface RefillProduct extends Product {
   imports: [SHARED_IMPORTS],
 })
 export class RefillsComponent implements OnInit {
-  @Input() userLogged: any;
+  private readonly authService = inject(AuthService);
+
+  get userLogged(): any { return this.authService.getCurrentUser(); }
   displayedColumns: string[] = ['name', 'operation', 'quantity', 'assignedWorker', 'description', 'delete'];
   dataSource = new MatTableDataSource<RefillProduct>();
 

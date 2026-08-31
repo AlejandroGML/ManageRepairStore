@@ -1,9 +1,10 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
 import { ProductsApiService } from 'src/app/services/products.api.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { getApiUrl } from 'src/app/services/api-url';
 import { Product } from 'src/app/interface/warehouse';
 import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
@@ -27,7 +28,9 @@ import { SnackbarService } from 'src/app/services/snackbar.service';
   imports: [SHARED_IMPORTS],
 })
 export class ProductComponent implements OnInit {
-  @Input() userLogged: any;
+  private readonly authService = inject(AuthService);
+
+  get userLogged(): any { return this.authService.getCurrentUser(); }
 
   form: FormGroup;
   searchForm: FormGroup;

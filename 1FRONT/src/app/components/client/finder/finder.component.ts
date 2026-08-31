@@ -25,7 +25,7 @@ import * as XLSX from 'xlsx';
   imports: [SHARED_IMPORTS, LengthFilterPipe, NamePipe, RutPipe],
 })
 export class FinderComponent implements AfterViewInit {
-  @Input() clients: Client[]=[];
+  clients: Client[] = [];
   clientsFiltered: Client[]=[];
   filterOptions = [
     {value: 'code', viewValue: 'Número de aviso', placeHolder:'Ej: 1001'},
@@ -40,7 +40,6 @@ export class FinderComponent implements AfterViewInit {
   displayedColumns: string[] = ['id','name', 'rut', 'phone', 'city', 'address', 'company_name', 'pdf','actions'];
   dataSource = new MatTableDataSource<Client>([]);
   showEmptyRow : boolean = false;
-  @Output() removeUserEvent = new EventEmitter<number>();
   constructor(private clientsApi: ClientsApiService, private ordersApi: OrdersApiService, private loadingService: LoadingService,
     private dialog: MatDialog,private snackbarService: SnackbarService) {
     
@@ -187,7 +186,6 @@ export class FinderComponent implements AfterViewInit {
     }).afterClosed().subscribe((id:number)=>{
       if(id){
         this.dataSource = new MatTableDataSource(this.dataSource.data.filter(u=>u.id!==client.id));
-        this.removeUserEvent.emit(id);
         this.dialog.open(ModalConfirmComponent,{
           width: '90vw',
           maxWidth: '400px',

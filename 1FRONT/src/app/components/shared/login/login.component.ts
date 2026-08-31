@@ -1,6 +1,7 @@
 import { Component, Output, EventEmitter, inject, AfterViewInit } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { UserProfile } from 'src/app/interface/user-profile';
 import { AuthService } from 'src/app/services/auth.service';
 
@@ -19,8 +20,13 @@ export class LoginComponent implements AfterViewInit {
 
   private readonly authService = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   ngAfterViewInit() {
+    if (this.authService.getToken()) {
+      this.router.navigate(['/']);
+      return;
+    }
     setTimeout(() => {
       document.getElementById('input-email')?.focus();
     }, 400);
@@ -41,6 +47,7 @@ export class LoginComponent implements AfterViewInit {
       next: (response) => {
         this.loading = false;
         this.setLoggedEvent.emit(response.user);
+        this.router.navigate(['/']);
       },
       error: () => {
         this.loading = false;

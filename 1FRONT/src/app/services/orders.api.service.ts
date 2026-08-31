@@ -15,6 +15,9 @@ export class OrdersApiService {
   findOrderByUser(user: Client): Observable<Client> {
     return this.http.get<Client>(this.url + '/order/user/' + user.id);
   }
+  getAllOrders(): Observable<Client[]> {
+    return this.http.get<Client[]>(this.url + '/order/all');
+  }
   findOrderByCode(code: string): Observable<Client> {
     return this.http.get<Client>(this.url + '/order/code/' + code);
   }

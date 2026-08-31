@@ -32,7 +32,7 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   private readonly usersService = inject(UsersService);
   private readonly dialog = inject(MatDialog);
   private readonly snackbar = inject(SnackbarService);
-  private readonly dialogRef = inject(MatDialogRef<UserManagementComponent>);
+  private readonly dialogRef = inject(MatDialogRef<UserManagementComponent>, { optional: true });
   private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -109,6 +109,6 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   }
 
   close(): void {
-    this.dialogRef.close();
+    this.dialogRef?.close();
   }
 }

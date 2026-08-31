@@ -26,7 +26,7 @@ import { QrService } from 'src/app/services/qr.service';
 })
 
 export class RegisterComponent implements OnChanges{
-  @Input() clients: Client[]=[];
+  clients: Client[] = [];
   updatingUsers:boolean = false;
   readonly NOT_FOUND = -1;
   ordenIngreso!: OrdenIngreso;

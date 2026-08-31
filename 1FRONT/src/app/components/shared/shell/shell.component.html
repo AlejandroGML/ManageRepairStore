@@ -1,0 +1,58 @@
+<div class="shell">
+  <aside class="sidebar" [class.open]="sidebarOpen">
+    <div class="brand">
+      <span class="brand-mark">MRS</span>
+      <span class="brand-name">Manage Repair Store</span>
+    </div>
+
+    <nav class="nav" aria-label="Navegación principal">
+      <ng-container *ngFor="let group of navGroups">
+        <p class="nav-label" *ngIf="hasVisibleItems(group)">{{ group.label }}</p>
+        <a
+          *ngFor="let item of visibleItems(group)"
+          class="nav-link"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon class="nav-icon" [fontIcon]="item.icon"></mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      </ng-container>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <span class="user-avatar">{{ initials }}</span>
+        <div class="user-meta">
+          <strong>{{ user?.name }}</strong>
+          <span>{{ roleLabel }}</span>
+        </div>
+        <button class="logout-btn" (click)="logout()" matTooltip="Cerrar sesión" aria-label="Cerrar sesión">
+          <mat-icon fontIcon="logout"></mat-icon>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="backdrop" *ngIf="sidebarOpen" (click)="sidebarOpen = false"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" (click)="sidebarOpen = !sidebarOpen" aria-label="Abrir menú" matTooltip="Menú">
+        <mat-icon fontIcon="menu"></mat-icon>
+      </button>
+      <div class="topbar-titles">
+        <h1 class="topbar-title">{{ pageTitle }}</h1>
+        <span class="topbar-sub">{{ pageSub }}</span>
+      </div>
+      <div class="topbar-actions">
+        <app-theme-toggle></app-theme-toggle>
+      </div>
+    </header>
+
+    <main class="content" id="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
