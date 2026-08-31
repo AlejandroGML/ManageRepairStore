@@ -1,36 +1,27 @@
 import { Component, inject } from '@angular/core';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ThemeService } from '../../../services/theme.service';
 import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-theme-toggle',
   standalone: true,
-  imports: [MatSlideToggleModule, MatIconModule, AsyncPipe],
+  imports: [MatIconModule, MatTooltipModule, AsyncPipe],
   template: `
-    <div class="theme-toggle">
-      <mat-icon>light_mode</mat-icon>
-      <mat-slide-toggle
-        [checked]="(themeService.theme$ | async) === 'dark'"
-        (change)="themeService.toggle()"
-        aria-label="Alternar tema oscuro">
-      </mat-slide-toggle>
-      <mat-icon>dark_mode</mat-icon>
-    </div>
+    <button
+      class="icon-btn theme-btn"
+      (click)="themeService.toggle()"
+      [matTooltip]="(themeService.theme$ | async) === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+      attr.aria-label="{{ (themeService.theme$ | async) === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro' }}">
+      <mat-icon>{{ (themeService.theme$ | async) === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
   `,
   styles: [`
-    .theme-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 8px;
-    }
-    .theme-toggle mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-      color: var(--color-text);
+    .theme-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
     }
   `]
 })

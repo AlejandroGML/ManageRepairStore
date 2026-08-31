@@ -42,6 +42,7 @@
   font-weight: var(--font-bold);
   font-size: var(--text-base);
   line-height: 1.2;
+  color: var(--on-sidebar);
 }
 
 .nav {

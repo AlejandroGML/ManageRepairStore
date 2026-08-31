@@ -3,6 +3,7 @@ import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatDialog } from '@angular/material/dialog';
 import { Product } from 'src/app/interface/warehouse';
 import { SalesApiService } from 'src/app/services/sales.api.service';
+import { ProductsApiService } from 'src/app/services/products.api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -29,6 +30,9 @@ export class SalesComponent implements OnInit, OnDestroy {
   dataSource = new MatTableDataSource<SaleProduct>();
   totalSaleValue: number = 0;
   submitting = false;
+  /** Catálogo de productos para el POS (grid clickeable). */
+  catalog: Product[] = [];
+  catalogLoading = true;
   get userLogged(): any { return this.authService.getCurrentUser(); }
 
   private readonly salesApi = inject(SalesApiService);
@@ -36,12 +40,36 @@ export class SalesComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly dataSyncService = inject(DataSyncService);
   private readonly snackbar = inject(SnackbarService);
+  private readonly productsApi = inject(ProductsApiService);
   private readonly saleSubscriptions = new Subscription();
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadCatalog();
+  }
 
   ngOnDestroy(): void {
     this.saleSubscriptions.unsubscribe();
+  }
+
+  private loadCatalog(): void {
+    this.catalogLoading = true;
+    this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
+      this.catalog = products;
+      this.catalogLoading = false;
+    });
+  }
+
+  catalogStockTone(stock?: number): string {
+    if (stock === undefined || stock <= 3) return 'crit';
+    if (stock <= 8) return 'warn';
+    return 'ok';
+  }
+
+  /** Stock efectivo para mostrar en el catálogo (última transacción si falta). */
+  productStock(product: Product): number {
+    if (product.stock !== undefined) return product.stock;
+    const last = product.transactions?.[0];
+    return last?.finalStock ?? 0;
   }
 
   openProductSearch(): void {

@@ -19,6 +19,8 @@ export class ModalEditProductComponent implements OnInit {
   imageUrl: string | null = null;
   lastTransaction: Transaction | undefined;
   originalName: string;
+  /** true when opened in create mode (no product id) */
+  isCreateMode: boolean;
 
   constructor(
     private productsApi: ProductsApiService,
@@ -26,12 +28,15 @@ export class ModalEditProductComponent implements OnInit {
     public dialogRef: MatDialogRef<ModalEditProductComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { product: Product }
   ) {
-    this.lastTransaction = this.data.product.transactions?.[this.data.product.transactions.length - 1];
-    this.originalName = this.data.product.name;
-    
+    this.isCreateMode = !this.data.product?.id;
+    this.lastTransaction = this.isCreateMode
+      ? undefined
+      : this.data.product.transactions?.[this.data.product.transactions.length - 1];
+    this.originalName = this.data.product?.name ?? '';
+
     // Inicialización del formulario
     this.form = new FormGroup({
-      name: new FormControl(this.data.product.name, Validators.required),
+      name: new FormControl(this.data.product?.name ?? '', Validators.required),
       quantity: new FormControl(0, Validators.required),
       costPrice: new FormControl(this.lastTransaction?.costPrice || 0, Validators.required),
       sellingPrice: new FormControl(this.lastTransaction?.sellingPrice || 0, Validators.required),
@@ -44,12 +49,14 @@ export class ModalEditProductComponent implements OnInit {
       image: new FormControl(null)
     });
 
-    this.imageUrl = this.getImageUrl(this.data.product.image);
+    this.imageUrl = this.getImageUrl(this.data.product?.image);
   }
 
   ngOnInit(): void {
-    this.form.patchValue({ name: this.data.product.name });
-    this.imageUrl = this.getImageUrl(this.data.product.image);
+    if (!this.isCreateMode) {
+      this.form.patchValue({ name: this.data.product.name });
+      this.imageUrl = this.getImageUrl(this.data.product.image);
+    }
   }
   
   
@@ -65,20 +72,77 @@ export class ModalEditProductComponent implements OnInit {
   }
 
   saveChanges(): void {
-    const newName = this.form.get('name')?.value;
+    const newName = (this.form.get('name')?.value ?? '').toString().trim().toLowerCase();
 
-    // Si el nombre cambió, verificar que no exista en otro producto
-    if (newName !== this.originalName) {
+    // Duplicate check against the backend (create) or other products (edit)
+    if (newName !== this.originalName.toLowerCase()) {
       this.productsApi.checkProductNameExists(newName).subscribe(exists => {
         if (exists) {
           this.dialog.open(ModalProductExistsComponent, { width: '400px' });
         } else {
-          this.performUpdate(newName);
+          this.isCreateMode ? this.performCreate() : this.performUpdate(newName);
         }
       });
     } else {
-      this.performUpdate();
+      this.isCreateMode ? this.performCreate() : this.performUpdate();
     }
+  }
+
+  /** Create a brand-new product (replicates the old inline create flow). */
+  performCreate(): void {
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const v = this.form.value;
+    const quantity = Number(v.quantity) || 0;
+    const snapshotData = {
+      name: v.name,
+      image: v.image ? undefined : '',
+      operation: 'Nuevo Producto',
+      quantity,
+      costPrice: Number(v.costPrice) || 0,
+      sellingPrice: Number(v.sellingPrice) || 0,
+      maxDiscount: Number(v.maxDiscount ?? 0),
+      purchaseDiscount: Number(v.purchaseDiscount ?? 0),
+      location: v.location || '',
+      finalStock: quantity,
+      payMethod: ' ',
+      description: v.description || '',
+    };
+
+    const formData = new FormData();
+    formData.append('name', v.name);
+    formData.append('quantity', String(quantity));
+    formData.append('costPrice', String(v.costPrice ?? 0));
+    formData.append('sellingPrice', String(v.sellingPrice ?? 0));
+    formData.append('maxDiscount', String(v.maxDiscount ?? 0));
+    formData.append('purchaseDiscount', String(v.purchaseDiscount ?? 0));
+    formData.append('location', v.location || '');
+    formData.append('description', v.description || '');
+    formData.append('snapshotData', JSON.stringify(snapshotData));
+
+    if (v.image) {
+      formData.append('image', v.image);
+    }
+
+    formData.append('transactions', JSON.stringify([
+      {
+        operation: 'Nuevo Producto',
+        quantity,
+        costPrice: v.costPrice ?? 0,
+        sellingPrice: v.sellingPrice ?? 0,
+        maxDiscount: v.maxDiscount ?? 0,
+        location: v.location || '',
+        finalStock: quantity,
+        payMethod: ' ',
+      },
+    ]));
+
+    this.productsApi.createProduct(formData).subscribe(() => {
+      this.dialogRef.close('created');
+    });
   }
 
   performUpdate(newName?: string): void {

@@ -32,7 +32,6 @@ export class ProductComponent implements OnInit {
 
   get userLogged(): any { return this.authService.getCurrentUser(); }
 
-  form: FormGroup;
   searchForm: FormGroup;
   dataSource = new MatTableDataSource<Product>(); // Tabla principal
   displayedColumns: string[] = ['id', 'image', 'name', 'stock', 'location', 'sellingPrice', 'transaction', 'edit' , 'download'];
@@ -50,17 +49,6 @@ export class ProductComponent implements OnInit {
   ];
 
   constructor(private productsApi: ProductsApiService, private dialog: MatDialog, private dataSyncService: DataSyncService, private qrService: QrService, private loadingService: LoadingService, private snackbarService: SnackbarService) {
-    this.form = new FormGroup({
-      name: new FormControl('', Validators.required),
-      quantity: new FormControl('', Validators.required),
-      costPrice: new FormControl('', Validators.required),
-      sellingPrice: new FormControl('', Validators.required),
-      maxDiscount: new FormControl(''),
-      location: new FormControl('', Validators.required),
-      description: new FormControl(''),
-      image: new FormControl(null)
-    });
-
     this.searchForm = new FormGroup({
       id: new FormControl(''),
       name: new FormControl(''),
@@ -183,86 +171,17 @@ export class ProductComponent implements OnInit {
     });
   }
 
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input?.files && input.files.length > 0) {
-      const file = input.files[0];
-      this.form.patchValue({ image: file });
-      this.form.get('image')?.updateValueAndValidity();
-    }
-  }
-
-  addProduct(): void {
-    if (!this.form.valid) {
-      this.showValidationErrors();
-      return;
-    }
-  
-    const productName = this.form.value.name.trim().toLowerCase();
-    const productExists = this.dataSource.data.some(product => product.name.toLowerCase() === productName);
-  
-    if (productExists) {
-      this.dialog.open(ModalProductExistsComponent, {
-        width: '300px'
-      });
-      return;
-    }
-  
-    const snapshotData = {
-      name: this.form.value.name,
-      image: this.form.value.image,
-      operation: 'Nuevo Producto',
-      quantity: Number(this.form.value.quantity) || 0,
-      costPrice: Number(this.form.value.costPrice) || 0,
-      sellingPrice: Number(this.form.value.sellingPrice) || 0,
-      maxDiscount: Number(this.form.value.maxDiscount ?? 0),
-      purchaseDiscount: Number(this.form.value.purchaseDiscount ?? 0),
-      location: this.form.value.location || '',
-      finalStock: Number(this.form.value.quantity) || 0,
-      payMethod: ' ',
-      description: this.form.value.description || '',
-    };
-  
-    const formData = new FormData();
-    formData.append('name', this.form.value.name);
-    formData.append('quantity', (this.form.value.quantity ?? 0).toString());
-    formData.append('costPrice', (this.form.value.costPrice ?? 0).toString());
-    formData.append('sellingPrice', (this.form.value.sellingPrice ?? 0).toString());
-    formData.append('maxDiscount', (this.form.value.maxDiscount ?? 0).toString());
-    formData.append('purchaseDiscount', (this.form.value.purchaseDiscount ?? 0).toString());
-    formData.append('location', this.form.value.location || '');
-    formData.append('description', this.form.value.description || '');
-    formData.append('snapshotData', JSON.stringify(snapshotData));
-  
-    if (this.form.value.image) {
-      formData.append('image', this.form.value.image);
-    }
-  
-    formData.append('transactions', JSON.stringify([
-      {
-        operation: 'Nuevo Producto',
-        quantity: this.form.value.quantity ?? 0,
-        costPrice: this.form.value.costPrice ?? 0,
-        sellingPrice: this.form.value.sellingPrice ?? 0,
-        maxDiscount: this.form.value.maxDiscount ?? 0,
-        location: this.form.value.location || '',
-        finalStock: this.form.value.quantity ?? 0,
-        payMethod: ' '
-      }
-    ]));
-  
-    this.productsApi.createProduct(formData).subscribe(() => {
-      this.loadProductsWithLastTransaction();
-      this.form.reset();
-      this.openConfirmModal("Producto agregado correctamente");
+  /** Abre el modal de creación de producto (prototipo: "+ Agregar producto"). */
+  openAddProductModal(): void {
+    const dialogRef = this.dialog.open(ModalEditProductComponent, {
+      width: '600px',
+      data: { product: { name: '', transactions: [] } },
     });
-  }
-  
 
-  private showValidationErrors(): void {
-    Object.keys(this.form.controls).forEach((key) => {
-      const control = this.form.get(key);
-      control?.markAsTouched();
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'created' || result === 'updated') {
+        this.loadProductsWithLastTransaction();
+      }
     });
   }
 

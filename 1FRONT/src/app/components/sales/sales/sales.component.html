@@ -4,80 +4,111 @@
       <h1 class="page-title">Ventas</h1>
       <p class="page-lead">Punto de venta — agrega productos al carrito y completa la venta.</p>
     </div>
-    <button class="btn btn-primary search-product-button" (click)="openProductSearch()">
-      <mat-icon fontIcon="add_shopping_cart"></mat-icon> Buscar Producto
-    </button>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="generatePDF()">
+        <mat-icon fontIcon="picture_as_pdf"></mat-icon> Detalle PDF
+      </button>
+      <button class="btn btn-primary" (click)="openProductSearch()">
+        <mat-icon fontIcon="add_shopping_cart"></mat-icon> Buscar Producto
+      </button>
+    </div>
   </div>
 
-<mat-card class="card table-container">
-  <div class="card-head"><h2 class="card-title">Carrito de venta</h2></div>
-  <div class="table-responsive"><table mat-table [dataSource]="dataSource">
-    <!-- Columna Nombre del Producto -->
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef> Nombre Producto </th>
-      <td mat-cell *matCellDef="let item"> {{ item.name }} </td>
-    </ng-container>
+  <div class="pos-grid">
+    <!-- Catálogo -->
+    <div class="pos-catalog">
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">Catálogo</h2>
+        </div>
+        <div class="catalog-grid" *ngIf="!catalogLoading; else catalogEmpty">
+          <button
+            *ngFor="let product of catalog"
+            class="catalog-item"
+            [disabled]="productStock(product) <= 0"
+            (click)="addProductToSale(product)"
+            matTooltip="Agregar al carrito"
+          >
+            <span class="catalog-name">{{ product.name }}</span>
+            <span class="catalog-price mono">{{ product.sellingPrice | currency:'CLP':'symbol' }}</span>
+            <span class="badge" [class.badge-success]="productStock(product) > 8"
+              [class.badge-warning]="productStock(product) > 3 && productStock(product) <= 8"
+              [class.badge-error]="productStock(product) <= 3">
+              <span class="dot"></span> {{ productStock(product) }} u.
+            </span>
+          </button>
+        </div>
+        <ng-template #catalogEmpty>
+          <p class="empty-state" *ngIf="!catalogLoading">Catálogo vacío.</p>
+        </ng-template>
+      </div>
+    </div>
 
-    <!-- Columna Valor -->
-    <ng-container matColumnDef="sellingPrice">
-      <th mat-header-cell *matHeaderCellDef> Valor </th>
-      <td mat-cell *matCellDef="let item"> {{ item.sellingPrice | currency:'CLP':'symbol' }} </td>
-    </ng-container>
+    <!-- Carrito -->
+    <div class="pos-cart">
+      <mat-card class="card table-container">
+        <div class="card-head"><h2 class="card-title">Carrito de venta</h2></div>
+        <div class="table-responsive"><table mat-table [dataSource]="dataSource">
+          <!-- Columna Nombre del Producto -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef> Nombre </th>
+            <td mat-cell *matCellDef="let item"> {{ item.name }} </td>
+          </ng-container>
 
-    <!-- Columna Cantidad -->
-    <ng-container matColumnDef="quantity">
-      <th mat-header-cell *matHeaderCellDef> Cantidad </th>
-      <td mat-cell *matCellDef="let item; let i = index">
-        <mat-form-field>
-          <mat-label>Cantidad</mat-label>
-          <input matInput type="number" min="1" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
-        </mat-form-field>
-      </td>
-    </ng-container>
+          <!-- Columna Valor -->
+          <ng-container matColumnDef="sellingPrice">
+            <th mat-header-cell *matHeaderCellDef> Valor </th>
+            <td mat-cell *matCellDef="let item" class="mono"> {{ item.sellingPrice | currency:'CLP':'symbol' }} </td>
+          </ng-container>
 
-    <!-- Columna Descuento Máximo -->
-    <ng-container matColumnDef="purchaseDiscount">
-      <th mat-header-cell *matHeaderCellDef> Descuento </th>
-      <td mat-cell *matCellDef="let item; let i = index">
-        <mat-form-field>
-          <mat-label>Descuento</mat-label>
-          <input matInput type="number" min="0" [max]="item.maxDiscount" [(ngModel)]="item.purchaseDiscount" 
-                (ngModelChange)="applyDiscount(i, item.purchaseDiscount)" />
-        </mat-form-field>
-      </td>
-    </ng-container>
+          <!-- Columna Cantidad -->
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef> Cant. </th>
+            <td mat-cell *matCellDef="let item; let i = index">
+              <input class="input qty-input mono" type="number" min="1" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
+            </td>
+          </ng-container>
 
-    <!-- Columna Valor Total -->
-    <ng-container matColumnDef="finalValue">
-      <th mat-header-cell *matHeaderCellDef> Valor Total </th>
-      <td mat-cell *matCellDef="let item"> {{ item.finalValue | currency:'CLP':'symbol' }} </td>
-    </ng-container>
+          <!-- Columna Descuento -->
+          <ng-container matColumnDef="purchaseDiscount">
+            <th mat-header-cell *matHeaderCellDef> Desc. </th>
+            <td mat-cell *matCellDef="let item; let i = index">
+              <input class="input qty-input mono" type="number" min="0" [max]="item.maxDiscount" [(ngModel)]="item.purchaseDiscount" (ngModelChange)="applyDiscount(i, item.purchaseDiscount)" />
+            </td>
+          </ng-container>
 
+          <!-- Columna Valor Total -->
+          <ng-container matColumnDef="finalValue">
+            <th mat-header-cell *matHeaderCellDef> Total </th>
+            <td mat-cell *matCellDef="let item" class="mono"> {{ item.finalValue | currency:'CLP':'symbol' }} </td>
+          </ng-container>
 
-    <!-- Columna Eliminar -->
-    <ng-container matColumnDef="delete">
-      <th mat-header-cell *matHeaderCellDef> Eliminar </th>
-      <td mat-cell *matCellDef="let item; let i = index">
-        <button mat-icon-button color="warn" (click)="removeProductFromSale(i)">
-          <mat-icon>delete</mat-icon>
+          <!-- Columna Eliminar -->
+          <ng-container matColumnDef="delete">
+            <th mat-header-cell *matHeaderCellDef> </th>
+            <td mat-cell *matCellDef="let item; let i = index">
+              <button mat-icon-button class="icon-btn" (click)="removeProductFromSale(i)" matTooltip="Quitar">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table></div>
+      </mat-card>
+
+      <div class="total-sale-container">
+        <span>Valor Total de Venta</span>
+        <strong class="mono">{{ totalSaleValue | currency:'CLP':'symbol' }}</strong>
+      </div>
+
+      <div class="button-container">
+        <button class="btn btn-accent purchase-button" [disabled]="submitting || dataSource.data.length === 0" (click)="completeSale()">
+          <mat-icon fontIcon="check_circle"></mat-icon>
+          {{ submitting ? 'Procesando...' : 'Completar Venta' }}
         </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table></div>
-</mat-card>
-
-<div class="total-sale-container">
-  <span>Valor Total de Venta</span>
-  <strong class="mono">{{ totalSaleValue | currency:'CLP':'symbol' }}</strong>
-</div>
-
-<div class="button-container">
-  <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
-    <mat-icon fontIcon="check_circle"></mat-icon>
-    {{ submitting ? 'Procesando...' : 'Completar Venta' }}
-  </button>
-</div>
+      </div>
+    </div>
+  </div>
 </div>
