@@ -2,23 +2,24 @@
 // Source of truth: docs/DESIGN.md
 
 // Colors
-$color-primary: #E67A1B;
-$color-primary-dark: #D35400;
-$color-primary-light: #FDEBD0;
-$color-secondary: #2C3E50;
-$color-bg: #FFF5E6; // Warm creamy background (less saturated than pure white)
-$color-bg-dark: #1A1A2E;
+$color-primary: #6D28D9;
+$color-primary-dark: #5B21B6;
+$color-primary-light: #EDE9FE;
+$color-secondary: #312E81;
+$color-accent: #0F766E;
+$color-bg: #FAFAFE; // Subtle cool-tinted canvas
+$color-bg-dark: #17151F;
 $color-surface: #FFFFFF;
-$color-surface-dark: #252540;
+$color-surface-dark: #221E33;
 $color-text: #1F2937;
-$color-text-dark: #E5E7EB;
+$color-text-dark: #EDE9FE;
 $color-text-muted: #6B7280;
 $color-text-muted-dark: #9CA3AF;
 $color-border: #E5E7EB;
-$color-border-dark: #374151;
-$color-success: #10B981;
-$color-error: #EF4444;
-$color-warning: #F59E0B;
+$color-border-dark: #3B3649;
+$color-success: #047857;
+$color-error: #DC2626;
+$color-warning: #F59E0B; // Semantic warnings only — never brand
 
 // Typography
 $font-body: 'Fira Sans', Roboto, sans-serif;
