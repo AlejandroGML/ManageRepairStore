@@ -1,0 +1,22 @@
+.dialog-header-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+.icon-close {
+    cursor: pointer;
+    font-size: 28px;
+}
+.confirm-content {
+    text-align: center;
+}
+.icon-ok {
+    margin-top: -14px;
+    font-size: 42px;
+    width: 42px;
+    height: 42px;
+    color: #6a0d8d;
+}
+.btn-close-dialog {
+    height: 40px;
+    width: 120px;
+}

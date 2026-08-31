@@ -1,0 +1,16 @@
+<div mat-dialog-title>
+    <div class="dialog-header-actions">
+        <mat-icon class="icon-close" role="button" tabindex="0" (click)="close()" (keydown.enter)="close()" (keydown.space)="close()" aria-label="Cerrar">close</mat-icon>
+    </div>
+</div>
+
+<mat-dialog-content class="confirm-content">
+    <mat-icon class="icon-ok">check_circle_outline</mat-icon>
+    <h2>{{ data.message }}</h2>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center">
+    <button mat-fab extended class="btn-close-dialog" color="primary" (click)="close()">
+        Cerrar
+    </button>
+</mat-dialog-actions>

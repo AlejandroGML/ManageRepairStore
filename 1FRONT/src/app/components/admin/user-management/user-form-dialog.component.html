@@ -1,0 +1,62 @@
+<div class="dialog-padded">
+  <div class="row">
+    <div class="text-right">
+      <mat-icon class="icon-close" role="button" tabindex="0" (click)="close()" (keydown.enter)="close()" (keydown.space)="close()" aria-label="Cerrar">close</mat-icon><br><br>
+    </div>
+    <div class="title-wrapper">
+      <span class="title">{{ isEditMode ? 'Editar Usuario' : 'Nuevo Usuario' }}</span>
+    </div>
+  </div>
+
+  <form [formGroup]="form">
+    <mat-card class="card-pt">
+      <mat-form-field class="input-field">
+        <mat-label>Nombre</mat-label>
+        <input matInput placeholder="Nombre completo" formControlName="name" required>
+        <mat-error *ngIf="form.get('name')?.invalid">{{ form.get('name')?.hasError('required') ? 'El nombre es requerido' : '' }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="input-field">
+        <mat-label>Email</mat-label>
+        <input matInput placeholder="correo@ejemplo.cl" formControlName="email" required>
+        <mat-error *ngIf="form.get('email')?.invalid">
+          {{ form.get('email')?.hasError('required') ? 'El email es requerido' : 'Email no válido' }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="input-field">
+        <mat-label>{{ isEditMode ? 'Contraseña (dejar en blanco para no cambiar)' : 'Contraseña' }}</mat-label>
+        <input matInput type="password" formControlName="password" [required]="!isEditMode">
+        <mat-error *ngIf="form.get('password')?.invalid">
+          {{ form.get('password')?.hasError('required') ? 'La contraseña es requerida' : 'Mínimo 8 caracteres' }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="input-field">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="role" required>
+          <mat-option value="admin">Administrador</mat-option>
+          <mat-option value="seller">Vendedor</mat-option>
+          <mat-option value="warehouse">Bodega</mat-option>
+        </mat-select>
+        <mat-error *ngIf="form.get('role')?.invalid">El rol es requerido</mat-error>
+      </mat-form-field>
+    </mat-card>
+
+    <mat-card>
+      <div class="row pt-base">
+        <div class="col-4 offset-2 text-right">
+          <button class="w-130 send" type="button" (click)="save()" mat-raised-button color="primary">
+            <mat-icon>save</mat-icon> Guardar
+          </button>
+        </div>
+        <div class="col-4">
+          <button class="w-130 btn-cancel send" type="button" (click)="close()" mat-raised-button color="primary">
+            <mat-icon>close</mat-icon> Cancelar
+          </button>
+        </div>
+      </div>
+      <br>
+    </mat-card>
+  </form>
+</div>

@@ -1,0 +1,53 @@
+td {
+  font-size: 13px;
+}
+.icon-edit {
+  color: var(--color-success);
+  padding-right: 6px;
+  cursor: pointer;
+}
+.icon-edit:hover {
+  color: #285c21f6;
+}
+.div-table {
+  max-height: 75vh;
+  overflow: auto;
+}
+.icon-pdf {
+  font-size: 24px;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.icon-pdf:hover {
+  color: var(--color-primary-dark);
+}
+
+/* --- Dialog migration classes --- */
+.client-info-card {
+  margin-bottom: var(--space-sm);
+}
+.client-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-base);
+  justify-content: center;
+  padding: var(--space-sm) var(--space-base);
+  font-size: var(--text-sm);
+}
+.table-card {
+  padding: 0;
+  overflow-x: auto;
+}
+.hidden-pdf {
+  display: none;
+}
+
+/* Column widths — text columns get more space */
+.col-id-header { width: 45px; text-align: center; }
+.col-status-header { width: 85px; }
+.col-date-header { width: 80px; text-align: center; }
+.col-comment-header { min-width: 120px; }
+.col-description-header { min-width: 120px; }
+.col-obs-header { min-width: 120px; }
+.col-change-header { width: 65px; text-align: center; }
+.col-actions-header { width: 75px; text-align: center; }

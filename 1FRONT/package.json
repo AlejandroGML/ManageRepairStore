@@ -1,0 +1,55 @@
+{
+  "name": "manage-repair-store-front",
+  "version": "0.0.0",
+  "styles": [
+    "src/styles.css",
+    "node_modules/bootstrap/dist/css/bootstrap.min.css"
+  ],
+  "scripts": {
+    "ng": "./node_modules/.bin/ng",
+    "start": "./node_modules/.bin/ng serve",
+    "build": "./node_modules/.bin/ng build",
+    "watch": "./node_modules/.bin/ng build --watch --configuration development",
+    "test": "CHROME_BIN=${CHROME_BIN:-$HOME/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome} ./node_modules/.bin/ng test --browsers=ChromeHeadless",
+    "serve": "./node_modules/.bin/ng serve --open"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^21.2.15",
+    "@angular/cdk": "^21.2.13",
+    "@angular/common": "^21.2.15",
+    "@angular/compiler": "^21.2.15",
+    "@angular/core": "^21.2.15",
+    "@angular/forms": "^21.2.15",
+    "@angular/material": "^21.2.13",
+    "@angular/platform-browser": "^21.2.15",
+    "@angular/platform-browser-dynamic": "^21.2.15",
+    "@angular/router": "^21.2.15",
+    "bootstrap": "^5.3.8",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.2",
+    "tslib": "^2.8.1",
+    "xlsx": "^0.18.5",
+    "zone.js": "^0.16.2"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.2.13",
+    "@angular/cli": "^21.2.13",
+    "@angular/compiler-cli": "^21.2.15",
+    "@types/crypto-js": "^4.2.2",
+    "@types/jasmine": "~4.3.6",
+    "@types/qrcode": "^1.5.6",
+    "glob": "^13.0.6",
+    "jasmine-core": "~4.5.0",
+    "karma": "~6.4.4",
+    "karma-chrome-launcher": "~3.1.1",
+    "karma-coverage": "~2.2.1",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.0.0",
+    "typescript": "^5.9.3"
+  }
+}

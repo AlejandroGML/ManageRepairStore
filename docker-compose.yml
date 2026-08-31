@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mrs-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mrs_demo_local
+      POSTGRES_DB: manage_repair_store
+    ports:
+      - "5433:5432"
+    volumes:
+      - mrs_pgdata:/var/lib/postgresql/data
+
+volumes:
+  mrs_pgdata:

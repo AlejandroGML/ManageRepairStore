@@ -1,0 +1,11 @@
+<div>
+    <mat-tab-group (selectedIndexChange)="changeTab($event)">
+      <mat-tab label="Producto" *ngIf="allowedSubTabs.includes(TAB_PRODUCTS)">
+        <app-product [userLogged]="userLogged"></app-product>
+      </mat-tab>
+      <mat-tab label="Repuestos" *ngIf="allowedSubTabs.includes(TAB_REFILLS)">
+        <app-refills [userLogged]="userLogged"></app-refills>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+  

@@ -1,0 +1,146 @@
+<br>
+<!-- Buscador -->
+<div class="div-buscador">
+    <!-- Filtro  -->
+    <mat-card class="search-filter-card">
+        <mat-card-content>
+            <div class="row">
+                <div class="col-2 text-center">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Tipo de Búsqueda</mat-label>
+                        <mat-select [(value)]="filterSelected">
+                            <mat-option *ngFor="let option of filterOptions" [value]="option.value"
+                                (click)="selectOption()">
+                            {{option.viewValue}}
+                            </mat-option>
+                        </mat-select>
+                        </mat-form-field>
+                </div>
+                <div class="col-4">
+                    <form class="form-finder">
+                        <mat-form-field class="w-full">
+                          <mat-label>Buscar</mat-label>
+                          <input id="input-filter" matInput 
+                          autocomplete="off" name="filterValue"
+                          [(ngModel)]="filterValue"
+                          [maxLength]="filterOptions[iFilterSelected].value | lengthFilter"
+                          (keyup.enter)="findClientData()"
+                          [placeholder]="filterSelected ? filterOptions[iFilterSelected].placeHolder:'Ingresar'">
+                           <mat-icon matSuffix role="button" tabindex="0" (click)="filterValue = ''" (keydown.enter)="filterValue = ''" (keydown.space)="filterValue = ''" aria-label="Limpiar filtro">clear</mat-icon>
+                        </mat-form-field>
+                      </form>
+                </div>
+                <div class="col-3 text-center">
+                    <button mat-fab extended color="primary" (click)="findClientData()" class="search-btn">
+                        <mat-icon>find_in_page</mat-icon>
+                        Buscar
+                    </button>
+                </div>
+                <div class="col-3 text-center">
+                    <button mat-fab extended color="primary" (click)="exportToExcel()" class="search-btn" title="Exportar todos los clientes a Excel">
+                        <mat-icon>file_download</mat-icon>
+                        Exportar Lista Clientes
+                    </button>
+                </div>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div><br>
+
+<!-- Tabla con datos -->
+<div class="div-tabla">
+    <br>
+    <mat-card  *ngIf="!showEmptyRow && dataSource.data.length>0">
+        <mat-form-field class="filter-field-right" *ngIf="dataSource.data.length>5">
+            <mat-label>Filtrar</mat-label>
+            <input matInput (keyup)="applyFilter($event)" placeholder="Buscar cliente" #input>
+        </mat-form-field>
+        <div class="table-responsive"><table  mat-table [dataSource]="dataSource">
+            <!-- name Column -->
+            <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef> N° </th>
+                <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+            </ng-container>
+            <!-- name Column -->
+            <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef> Cliente </th>
+                <td mat-cell *matCellDef="let element"> {{element.name | name}} </td>
+            </ng-container>
+            <!-- rut Column -->
+            <ng-container matColumnDef="rut">
+                <th mat-header-cell *matHeaderCellDef> Rut </th>
+                <td class="col-rut" mat-cell *matCellDef="let element"> {{element.rut_normalizado ? (element.rut_normalizado | rut) : (element.rut_raw | rut)}} </td>
+            </ng-container>
+            <!-- phone Column -->
+            <ng-container matColumnDef="phone">
+                <th mat-header-cell *matHeaderCellDef> Teléfono </th>
+                <td class="col-phone" mat-cell *matCellDef="let element"> {{element.phone}} </td>
+            </ng-container>
+            <!-- city Column -->
+            <ng-container matColumnDef="city">
+                <th mat-header-cell *matHeaderCellDef> Ciudad </th>
+                <td mat-cell *matCellDef="let element"> {{element.city | name}} </td>
+            </ng-container>
+            <!-- address Column -->
+            <ng-container matColumnDef="address">
+                <th mat-header-cell *matHeaderCellDef> Dirección </th>
+                <td mat-cell *matCellDef="let element"> {{element.address | name}} </td>
+            </ng-container>
+            
+            <!-- company_name Column -->
+            <ng-container matColumnDef="company_name">
+                <th mat-header-cell *matHeaderCellDef> Empresa </th>
+                <td mat-cell *matCellDef="let element"> {{element.company_name || 'Sin empresa'}} </td>
+            </ng-container>
+
+            <!-- pdf Column -->
+            <ng-container matColumnDef="pdf">
+                <th mat-header-cell *matHeaderCellDef class="col-orders-header"> Ver Órdenes </th>
+                <td mat-cell *matCellDef="let element" class="text-center"> 
+                    <mat-icon class="icon-order ico-orders"
+                        role="button" tabindex="0"
+                        (click)="showOrderDetails(element)"
+                        (keydown.enter)="showOrderDetails(element)"
+                        (keydown.space)="showOrderDetails(element)"
+                        aria-label="Ver órdenes">description</mat-icon></td>
+            </ng-container>
+
+            <!-- Actions -->
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="col-actions-header">Acciones</th>
+                <td mat-cell *matCellDef="let element;let i = index" class="text-center">
+                    <mat-icon class="icon-order icon-edit"
+                        matTooltip="Editar Cliente"
+                        matTooltipPosition="above"
+                        role="button" tabindex="0"
+                        (click)="showModalEditUser(element)"
+                        (keydown.enter)="showModalEditUser(element)"
+                        (keydown.space)="showModalEditUser(element)"
+                        aria-label="Editar cliente">edit</mat-icon>
+                    <mat-icon class="icon-order icon-remove"
+                        matTooltip="Eliminar Cliente"
+                        matTooltipPosition="above"
+                        role="button" tabindex="0"
+                        (click)="showModalDeleteUser(element)"
+                        (keydown.enter)="showModalDeleteUser(element)"
+                        (keydown.space)="showModalDeleteUser(element)"
+                        aria-label="Eliminar cliente">delete_forever</mat-icon>
+                </td>
+            </ng-container>
+            
+            <tr mat-header-row *matHeaderRowDef="displayedColumns;sticky: true"></tr>
+            <tr class="tr-body tr-row" mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            
+            <!-- Row shown when there is no matching data. -->
+            <tr class="mat-row" *matNoDataRow>
+                <td class="text-center mat-cell" colspan="5">Sin coincidencias</td>
+            </tr>
+        </table></div>
+    </mat-card>
+    <mat-card *ngIf="showEmptyRow">
+        <div class="empty-message">
+            <h1>No se han encontrado resultados</h1>
+        </div>
+    </mat-card>
+    <br><br>
+</div>

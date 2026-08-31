@@ -1,0 +1,29 @@
+.form-card {
+  width: 100%;
+  padding: var(--space-base);
+}
+
+.status-selector-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.selector-label {
+  font-size: var(--text-lg);
+  white-space: nowrap;
+}
+
+.status-select {
+  flex: 1;
+}
+
+.comment-field {
+  width: 100%;
+}
+
+.cancel-btn {
+  background-color: #6c757d !important;
+  color: white !important;
+}

@@ -1,0 +1,13 @@
+<mat-form-field>
+  <mat-label>RUT</mat-label>
+  <input
+    matInput
+    [placeholder]="placeholder"
+    [value]="displayValue"
+    (input)="onInput($any($event).target.value)"
+    (blur)="onBlur()"
+    [disabled]="disabled"
+    autocomplete="off"
+  />
+  <mat-error *ngIf="rutError">{{ rutError }}</mat-error>
+</mat-form-field>

@@ -1,0 +1,37 @@
+@use '@angular/material' as mat;
+
+// Light theme — uses built-in orange palette (close to brand #E67A1B)
+$mrs-light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$orange-palette,
+  ),
+  typography: (
+    plain-family: 'Fira Sans, Roboto, sans-serif',
+    brand-family: 'Fira Sans, Roboto, sans-serif',
+    bold-weight: 700,
+    medium-weight: 500,
+    regular-weight: 400,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+// Dark theme
+$mrs-dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$orange-palette,
+  ),
+  typography: (
+    plain-family: 'Fira Sans, Roboto, sans-serif',
+    brand-family: 'Fira Sans, Roboto, sans-serif',
+    bold-weight: 700,
+    medium-weight: 500,
+    regular-weight: 400,
+  ),
+  density: (
+    scale: 0,
+  ),
+));

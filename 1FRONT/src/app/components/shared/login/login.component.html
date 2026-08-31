@@ -1,0 +1,28 @@
+<div class="login-wrapper">
+    <mat-card>
+        <mat-card-header>
+          <mat-card-title class="mat-card-title text-center">Iniciar sesión</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form (ngSubmit)="login()">
+            <mat-form-field class="login-field">
+              <mat-label>Email</mat-label>
+              <input id="input-email" matInput 
+                autocomplete="email"
+                placeholder="correo@ejemplo.cl" [(ngModel)]="email" name="email" type="email" required>
+            </mat-form-field>
+            <mat-form-field class="login-field">
+              <mat-label>Contraseña</mat-label>
+              <input matInput placeholder="Contraseña" [(ngModel)]="password" 
+                autocomplete="current-password"
+                (keyup.enter)="login()"
+              name="password" type="password" required>
+            </mat-form-field>
+          </form>
+        </mat-card-content>
+        <div class="login-actions">
+          <button *ngIf="!loading" mat-raised-button class="login-btn" (click)="login()" type="submit">Iniciar sesión</button>
+          <mat-spinner *ngIf="loading" diameter="32" class="login-spinner"></mat-spinner>
+        </div>
+    </mat-card>
+</div>

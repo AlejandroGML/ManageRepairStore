@@ -1,0 +1,6 @@
+/* --- Phase 4 inline style migration --- */
+.dialog-padded { padding: var(--space-base); }
+.pt-base { padding-top: var(--space-base); }
+.w-130 { width: 130px; }
+.btn-cancel { background-color: #6c757d !important; color: white !important; }
+.card-pt { padding-top: var(--space-base); }

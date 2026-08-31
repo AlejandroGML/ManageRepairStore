@@ -1,0 +1,176 @@
+<form [formGroup]="form" class="form-register">
+    <div class="row register-row">
+        <div class="col-12 col-md-7 register-left-col">
+            <mat-card>
+                <div class="row">
+                    <div class="col-4 offset-4">
+                        <mat-form-field id="field-id">
+                            <mat-label>N° Cliente</mat-label>
+                            <input id="input-id-client" matInput placeholder="Ej: 70" 
+                                formControlName="clientId" (keyup.enter)="findByClientId()"
+                                autocomplete="off" >
+                            <mat-icon class="search-icon" matSuffix role="button" tabindex="0" (click)="findByClientId()" (keydown.enter)="findByClientId()" (keydown.space)="findByClientId()" aria-label="Buscar">search</mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-6">
+                        <mat-form-field>
+                            <mat-label>Nombre</mat-label>
+                            <input id="input-client" matInput placeholder="Ej: Comercial Demo SpA" 
+                                autocomplete="off" formControlName="name"  required>
+                            <mat-error *ngIf="form.get('name')?.invalid">{{obtenerMensajeError(form.get('name')!)}}</mat-error>
+                        </mat-form-field>
+                        <div class="company-field-row">
+                            <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
+                                Empresa
+                            </mat-slide-toggle>
+                            <mat-form-field class="company-input">
+                                <mat-label>Nombre Empresa</mat-label>
+                                <input matInput placeholder="Ej: Comercial Demo SpA" 
+                                    autocomplete="off" formControlName="company_name">
+                            </mat-form-field>
+                        </div>
+                        <app-rut-input formControlName="rut" placeholder="Ej: 12.345.678-5"></app-rut-input>
+                        <mat-form-field>
+                            <mat-label>Correo Electrónico</mat-label>
+                            <input  matInput placeholder="Ej: info@demo.example" formControlName="email">
+                            <mat-error *ngIf="form.get('email')?.invalid">{{obtenerMensajeError(form.get('email')!)}}</mat-error>
+                        </mat-form-field> 
+                    </div>
+                    <div class="col-6">
+                        <mat-form-field>
+                            <mat-label>Dirección</mat-label>
+                            <input matInput placeholder="Ej: Av. Providencia 1234" formControlName="address" required>
+                            <mat-error *ngIf="form.get('address')?.invalid">{{obtenerMensajeError(form.get('address')!)}}</mat-error>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Comuna</mat-label>
+                            <input matInput placeholder="Ej: Santiago" formControlName="city" required>
+                            <mat-error *ngIf="form.get('city')?.invalid">{{obtenerMensajeError(form.get('city')!)}}</mat-error>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Teléfono</mat-label>
+                            <input matInput placeholder="Ej: 9 5555 1234" formControlName="phone" required>
+                            <mat-error *ngIf="form.get('phone')?.invalid">{{obtenerMensajeError(form.get('phone')!)}}</mat-error>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-12">
+                        <mat-form-field class="full-width-field">
+                            <mat-label>Descripción</mat-label>
+                            <textarea id="id-description" matInput formControlName="description" required></textarea>
+                            <mat-error *ngIf="form.get('description')?.invalid">{{obtenerMensajeError(form.get('description')!)}}</mat-error>
+                        </mat-form-field>
+        
+                        <mat-form-field class="full-width-field">
+                            <mat-label>Observaciones</mat-label>
+                            <textarea matInput formControlName="observation" required></textarea>
+                            <mat-error *ngIf="form.get('observation')?.invalid">{{obtenerMensajeError(form.get('observation')!)}}</mat-error>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </mat-card>
+        </div>
+        <div class="col-12 col-md-3 offset-md-1 register-sidebar-col">
+            <mat-card class="right-card text-center">
+                <h3>Orden de Ingreso</h3>
+                <div class="row">
+                    <div class="text-center register-action-area">
+                        <button class="send register-btn" type="button" (click)="registerOrder()" mat-raised-button color="primary">Registrar <mat-icon>add_box</mat-icon></button><br>
+                        <span id="clear-register">
+                            <mat-icon class="icon-clear"
+                              matTooltip="Limpiar datos"
+                              matTooltipPosition="above"
+                              role="button" tabindex="0"
+                              (click)="clearAllDataForm()"
+                              (keydown.enter)="clearAllDataForm()"
+                              (keydown.space)="clearAllDataForm()"
+                              aria-label="Limpiar datos">clear</mat-icon>
+                        </span>
+                    </div>
+                  </div>
+            </mat-card><br>
+
+            <!-- Datos Cliente // Descargar -->
+            <mat-card class="right-card sidebar-card">
+                <mat-list>
+                    <mat-list-item class="sidebar-title-item">
+                        <span class="text-13"><b>Último Ingreso</b></span>
+                    </mat-list-item>
+                    <mat-divider></mat-divider>
+                    <mat-list-item>
+                        <div class="row">
+                            <div class="col-4">
+                                <span class="text-13">N° Cliente:</span>
+                            </div>
+                            <div class="col-4">
+                                <b class="text-13">{{ordenIngreso.clientId ? ordenIngreso.clientId : ''}}</b>
+                            </div>
+                            <div class="col-4">
+                                <mat-icon class="icon-find" *ngIf="lastClientAdded"
+                                matTooltip="Cargar datos último ingreso"
+                                matTooltipPosition="above"
+                                role="button" tabindex="0"
+                                (click)="findByLastClient()"
+                                (keydown.enter)="findByLastClient()"
+                                (keydown.space)="findByLastClient()"
+                                aria-label="Cargar último ingreso">reply_all</mat-icon>
+                            </div>
+                        </div>
+                    </mat-list-item>
+                    <mat-divider></mat-divider>
+                    <mat-list-item>
+                        <div class="row">
+                            <div class="col-4">
+                                <span class="text-13"> Cliente: </span>
+                            </div>
+                            <div class="col-4">
+                                <b class="text-13">{{ordenIngreso.name ? (ordenIngreso.name | name) : ''}}</b>
+                            </div>
+                        </div>
+                    </mat-list-item>
+                    <mat-divider></mat-divider>
+                    <mat-list-item>
+                        <div class="row">
+                            <div class="col-4">
+                                <span class="text-13">N° Aviso:</span>
+                            </div>
+                            <div class="col-4">
+                                <b class="text-13">{{ordenIngreso.code ? ordenIngreso.code : ''}}</b>
+                            </div>
+                            <div class="col-4">
+                                <mat-icon class="icon-find" *ngIf="lastClientAdded"
+                                matTooltip="Descargar QR"
+                                matTooltipPosition="above"
+                                role="button" tabindex="0"
+                                (click)="downloadQR()"
+                                (keydown.enter)="downloadQR()"
+                                (keydown.space)="downloadQR()"
+                                aria-label="Descargar QR">cloud_download</mat-icon>
+                            </div>
+                        </div>
+                    </mat-list-item>
+                    <mat-divider></mat-divider>
+                    <mat-list-item>
+                        <div class="row">
+                            <div class="col-4">
+                                <span class="text-13">Fecha:</span>
+                            </div>
+                            <div class="col-8">
+                                <b class="text-13">{{ordenIngreso.date ? (ordenIngreso.date | date: 'dd-MM-yyyy hh:mm') : ''}}</b>
+                            </div>
+                        </div>
+                    </mat-list-item>
+                    <mat-divider></mat-divider>
+                    <mat-list-item class="last-entry-item">
+                        <button type="button" (click)="descargarPDF()"
+                        class="button-pdf"
+                        [ngClass]="enablePDF?'active':'disabled'"
+                        [disabled]="!enablePDF"
+                        mat-raised-button color="primary">Descargar <mat-icon>picture_as_pdf</mat-icon></button>
+                    </mat-list-item>
+                  </mat-list>
+            </mat-card>
+        </div>
+    </div>
+</form>
+<br><br>
+<app-pdf [ordenIngreso]="ordenIngreso"></app-pdf>

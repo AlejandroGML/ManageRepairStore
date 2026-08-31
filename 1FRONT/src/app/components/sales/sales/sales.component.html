@@ -1,0 +1,72 @@
+<div class="button-container">
+  <button mat-raised-button color="primary" class="search-product-button" (click)="openProductSearch()">Buscar Producto</button>
+</div>
+
+<mat-card class="table-container">
+  <div class="table-responsive"><table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <!-- Columna Nombre del Producto -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Nombre Producto </th>
+      <td mat-cell *matCellDef="let item"> {{ item.name }} </td>
+    </ng-container>
+
+    <!-- Columna Valor -->
+    <ng-container matColumnDef="sellingPrice">
+      <th mat-header-cell *matHeaderCellDef> Valor </th>
+      <td mat-cell *matCellDef="let item"> {{ item.sellingPrice | currency:'CLP':'symbol' }} </td>
+    </ng-container>
+
+    <!-- Columna Cantidad -->
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef> Cantidad </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <mat-form-field>
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" min="1" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
+        </mat-form-field>
+      </td>
+    </ng-container>
+
+    <!-- Columna Descuento Máximo -->
+    <ng-container matColumnDef="purchaseDiscount">
+      <th mat-header-cell *matHeaderCellDef> Descuento </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <mat-form-field>
+          <mat-label>Descuento</mat-label>
+          <input matInput type="number" min="0" [max]="item.maxDiscount" [(ngModel)]="item.purchaseDiscount" 
+                (ngModelChange)="applyDiscount(i, item.purchaseDiscount)" />
+        </mat-form-field>
+      </td>
+    </ng-container>
+
+    <!-- Columna Valor Total -->
+    <ng-container matColumnDef="finalValue">
+      <th mat-header-cell *matHeaderCellDef> Valor Total </th>
+      <td mat-cell *matCellDef="let item"> {{ item.finalValue | currency:'CLP':'symbol' }} </td>
+    </ng-container>
+
+
+    <!-- Columna Eliminar -->
+    <ng-container matColumnDef="delete">
+      <th mat-header-cell *matHeaderCellDef> Eliminar </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <button mat-icon-button color="warn" (click)="removeProductFromSale(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table></div>
+</mat-card>
+
+<div class="total-sale-container">
+  Valor Total de Venta: {{ totalSaleValue | currency:'CLP':'symbol' }}
+</div>
+
+<div class="button-container">
+  <button mat-raised-button color="primary" [disabled]="submitting" class="purchase-button" (click)="completeSale()">
+    {{ submitting ? 'Procesando...' : 'Realizar Venta' }}
+  </button>
+</div>

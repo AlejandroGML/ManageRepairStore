@@ -1,0 +1,85 @@
+/* Ajuste de márgenes y diseño de contenedor */
+mat-form-field {
+    width: 90%;
+    margin: 0 auto; /* Centrado en el campo de cantidad */
+  }
+  
+  .button-container {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+  }
+  
+  .search-product-button,
+  .purchase-button {
+    font-size: 13px;
+    padding: 8px 16px;
+    margin-top: 10px;
+  }
+  
+  /* Contenedor de la tabla con márgenes y centrado */
+  .table-container {
+    width: 90%;
+    margin: 20px auto; /* Centrado de la tabla */
+    max-height: 60vh;
+    padding: 10px; /* Margen interno para espaciar contenido */
+  }
+  
+  .product-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .product-image:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Texto para productos sin imagen */
+  .no-image-text {
+    font-size: 14px;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+  
+  /* Estilo del título de la tabla */
+  .table-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    text-align: center;
+    color: var(--color-text);
+  }
+  
+  /* Estilo para el total de venta */
+  .total-sale-container {
+    margin-top: 20px;
+    font-size: 18px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-text);
+  }
+  
+  /* Estilos para los encabezados de la tabla */
+  mat-header-cell {
+    font-weight: bold;
+    color: var(--color-text);
+    text-align: center;
+  }
+  
+  /* Estilos para las celdas de la tabla */
+  mat-cell {
+    text-align: center;
+    padding: 8px;
+  }
+  
+  /* Estilo del botón "Completar Refill" */
+  .purchase-button {
+    width: auto;
+    padding: 10px 20px;
+    font-weight: bold;
+  }
+  

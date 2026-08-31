@@ -1,0 +1,36 @@
+mat-form-field {
+  width: 90%;
+  margin: 16px auto;
+}
+
+.table-container {
+  margin-top: 20px;
+}
+
+.product-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.product-image:hover {
+  transform: scale(1.1);
+}
+
+.no-image-text {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.out-of-stock {
+  color: var(--color-error);
+}
+
+mat-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}

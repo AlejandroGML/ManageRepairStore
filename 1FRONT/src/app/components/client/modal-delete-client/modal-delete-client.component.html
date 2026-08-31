@@ -1,0 +1,19 @@
+<div mat-dialog-title>
+    <div class="dialog-header-actions">
+        <mat-icon class="icon-close" role="button" tabindex="0" (click)="close()" (keydown.enter)="close()" (keydown.space)="close()" aria-label="Cerrar">close</mat-icon>
+    </div>
+    <div class="title-wrapper">
+        <span class="title">Eliminar Cliente</span>
+        <img src="../../../../assets/icons/delete.svg" alt="" role="presentation" class="logo"><br>
+        <span class="text dialog-text">¿Está seguro que desea eliminar cliente y <br><b>todos sus registros?</b></span>
+    </div>
+</div>
+
+<mat-dialog-actions align="end">
+    <button class="btn-cancel" type="button" (click)="close()" mat-raised-button>
+        <mat-icon>close</mat-icon> Cerrar
+    </button>
+    <button class="btn-delete" type="button" (click)="deleteClient()" mat-raised-button color="warn">
+        <mat-icon>delete</mat-icon> Confirmar
+    </button>
+</mat-dialog-actions>

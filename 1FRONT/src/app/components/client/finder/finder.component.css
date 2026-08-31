@@ -1,0 +1,63 @@
+td{
+    font-size: 13px;
+}
+.div-buscador{
+    width: 60%;
+    margin-left: 20%;
+}
+.div-tabla{
+    width:90%;
+    margin-left: 5%;
+    max-height: 60vh;
+}
+.tr-body:hover{
+    background-color: rgb(93, 78, 60);
+}
+.icon-order{
+    cursor:pointer;
+    color: var(--color-primary);
+    position: relative;
+    left: -5%;
+}
+.icon-order:hover{
+    color: var(--color-primary);
+}
+.icon-edit{
+    color: var(--color-success);
+    padding-right:6px;
+}
+.icon-edit:hover{
+    color: #285c21f6;
+}
+.icon-remove{
+    padding-left:6px;
+    color: #6c757d !important;
+}
+.icon-remove:hover{
+    color: #4f5861 !important;
+}
+.empty-message{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fbd19e;
+    padding-top: 16px;
+    width: 90%;
+    margin-left: 5%;
+    margin-bottom: 6px;
+    margin-top: 7px;
+    border-radius: 8px;
+}
+/* --- Phase 4 inline style migration --- */
+.search-filter-card { height: 106px; }
+.search-btn { position: relative; top: 4px; }
+.export-btn { margin-left: 8px; }
+.filter-field-right { width: 30%; margin-left: 70%; }
+.col-rut { max-width: 78px; }
+.col-phone { max-width: 92px; }
+.col-orders-header { text-align: center; width: 70px; }
+.col-actions-header { text-align: center; width: 86px; }
+
+::ng-deep .mdc-text-field--outlined{
+    cursor: pointer;
+}

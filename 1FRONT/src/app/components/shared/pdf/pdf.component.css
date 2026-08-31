@@ -1,0 +1,71 @@
+
+#pdf-page{
+  width:901px !important;
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  z-index: -1;
+}
+.contenedor {
+  border: 2px solid black;
+  display: flex;
+  width: 100%;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+span {
+  margin: 0 10px;
+}
+.left {
+  width: 20%;
+  border-right: 1px solid black;
+}
+.right {
+  padding-left: 25px;
+  width: 60%;
+}
+.end{
+    width: 20%;
+}
+.text{
+  height: 14px;
+}
+.contenedor-0{
+  border-style: solid;
+  border-color: black;
+  border-width: 2px 2px 0px 2px;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.contenedor-2{
+  border-style: solid;
+  border-color: black;
+  border-width: 0px 2px 0px 2px;
+  display: flex;
+  width: 100%;
+}
+.contenedor-4{
+  border-style: solid;
+  border-color: black;
+  border-width: 0px 2px 2px 2px;
+  display: flex;
+  width: 100%;
+}
+
+/* --- Phase 4 inline style migration --- */
+.pdf-title { text-align: center; }
+.logo-img { margin-left: -24px; }
+.pdf-address { font-size: 16px; padding: 6px; }
+.pdf-section { width: 80%; margin-left: 10%; }
+.font-bold { font-weight: 600; }
+.mt-10 { margin-top: 10px; }
+.pdf-section-title { margin-top: 24px; text-align: center; }
+.text-left { text-align: left; }
+.pb-42 { padding-bottom: 42px; }
+.terms-text { text-align: justify; font-size: 13px; }
+.pl-16 { padding-left: 16px; }
+.signature-box { text-align: center; padding-top: 24px; padding-bottom: 4px; }
+.signature-line { border: 2px solid black; height: 92px; }
+.signature-text { font-size: 18px; padding: 12px; }

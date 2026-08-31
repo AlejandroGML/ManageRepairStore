@@ -1,0 +1,45 @@
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+
+# Angular build output
+1FRONT/dist/
+1FRONT/.angular/
+
+# NestJS build output
+2BACK/dist/
+2BACK/coverage/
+2BACK/uploads/
+2BACK/nohup.out
+
+# Shared compiled output (from tsc)
+shared/**/*.js
+shared/**/*.js.map
+shared/**/*.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tooling artifacts
+graphify-out/
+.atl/
+.graphify/
+
+# DB dumps
+*.sql
+.playwright-mcp/
+test-snapshot-*.png
+audit-*.png

@@ -1,0 +1,3 @@
+/* --- Phase 4 inline style migration --- */
+.flex-center-row { display: flex; align-items: center; gap: 10px; }
+.flex-1 { flex: 1; }

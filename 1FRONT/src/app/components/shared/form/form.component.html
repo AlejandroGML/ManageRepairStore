@@ -1,0 +1,17 @@
+<div>
+    <mat-tab-group (selectedIndexChange)="changeTab($event)">
+      <mat-tab label="Registrar Orden" *ngIf="allowedTabs.includes(TAB_REGISTER)">
+        <app-register [clients]="clients"></app-register>
+      </mat-tab>
+      <mat-tab label="Clientes y Ordenes" *ngIf="allowedTabs.includes(TAB_DETAILS)">
+        <app-finder [clients]="clients" (removeUserEvent)="removeUserById($event)"></app-finder>
+      </mat-tab>
+      <mat-tab label="Bodega" *ngIf="allowedTabs.includes(TAB_WAREHOUSE)">
+        <app-warehouse [userLogged]="userLogged"></app-warehouse>
+      </mat-tab>
+      <mat-tab label="Ventas" *ngIf="allowedTabs.includes(TAB_SALES)">
+        <app-sales [userLogged]="userLogged"></app-sales>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+  

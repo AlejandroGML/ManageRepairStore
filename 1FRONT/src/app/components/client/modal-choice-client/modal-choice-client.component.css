@@ -1,0 +1,42 @@
+.icon-close{
+    font-size: 28px;
+    cursor: pointer;
+}
+.dialog-header-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+.card-rut-info {
+    width: 90%;
+    margin-left: 5%;
+}
+.card-rut-body {
+    width: 80%;
+    margin-left: 10%;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+.div-table{
+    max-height: 60vh;
+    overflow: auto;
+}
+.card-table-wrapper {
+    width: 96%;
+    margin-left: 2%;
+    margin-bottom: 10px;
+}
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.tr-row {
+    cursor: pointer;
+}
+.col-rut-header {
+    width: 118px;
+}
+.btn-choice-close {
+    margin: 0 auto;
+    position: relative;
+    width: 120px;
+}

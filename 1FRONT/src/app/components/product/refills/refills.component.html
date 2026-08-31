@@ -1,0 +1,108 @@
+<div class="refill-controls">
+  <mat-form-field appearance="fill" class="selector-field">
+    <mat-label>Técnico Asignado</mat-label>
+    <mat-select [(ngModel)]="selectedTechnicianId">
+      <mat-option *ngIf="loadingTechnicians" disabled>
+        <mat-spinner diameter="20"></mat-spinner>
+      </mat-option>
+      <mat-option *ngIf="!loadingTechnicians" [value]="undefined">-- Sin asignar --</mat-option>
+      <mat-option *ngFor="let tech of technicians" [value]="tech.id">
+        {{ tech.name }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="selector-field">
+    <mat-label>Orden (opcional)</mat-label>
+    <mat-select [(ngModel)]="selectedOrderId">
+      <mat-option *ngIf="loadingOrders" disabled>
+        <mat-spinner diameter="20"></mat-spinner>
+      </mat-option>
+      <mat-option *ngIf="!loadingOrders" [value]="undefined">-- Sin orden --</mat-option>
+      <mat-option *ngFor="let order of orders" [value]="order.id">
+        #{{ order.id }} - {{ order.description }} ({{ order.clientName }})
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div class="button-container">
+  <button mat-raised-button color="primary" class="search-product-button" (click)="openProductSearch()">Buscar Producto</button>
+</div>
+
+<mat-card class="table-container">
+  <div class="table-responsive"><table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <!-- Columna Nombre del Producto -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Nombre Producto </th>
+      <td mat-cell *matCellDef="let item"> {{ item.name }} </td>
+    </ng-container>
+
+    <!-- Columna Operación -->
+    <ng-container matColumnDef="operation">
+      <th mat-header-cell *matHeaderCellDef> Operación </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <mat-form-field>
+          <mat-select [(ngModel)]="item.operation">
+            <mat-option value="entrega">Entrega</mat-option>
+            <mat-option value="devolución">Devolución</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+    </ng-container>
+
+    <!-- Columna Cantidad -->
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef> Cantidad </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <mat-form-field>
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" min="1" [(ngModel)]="item.quantity" />
+        </mat-form-field>
+      </td>
+    </ng-container>
+
+    <!-- Columna Técnico Asignado (por producto) -->
+    <ng-container matColumnDef="assignedWorker">
+      <th mat-header-cell *matHeaderCellDef> Técnico Asignado </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <mat-form-field appearance="fill">
+          <mat-label>Técnico Asignado</mat-label>
+          <input matInput type="text" [(ngModel)]="item.assignedWorker" placeholder="Técnico" />
+        </mat-form-field>
+      </td>
+    </ng-container>
+
+    <!-- Columna Descripción -->
+    <ng-container matColumnDef="description">
+      <th mat-header-cell *matHeaderCellDef> Descripción </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <mat-form-field>
+          <mat-label>Descripción</mat-label>
+          <input matInput type="text" [(ngModel)]="item.description" placeholder="Descripción" />
+        </mat-form-field>
+      </td>
+    </ng-container>
+
+    <!-- Columna Eliminar -->
+    <ng-container matColumnDef="delete">
+      <th mat-header-cell *matHeaderCellDef> Eliminar </th>
+      <td mat-cell *matCellDef="let item; let i = index">
+        <button mat-icon-button color="warn" (click)="removeProductFromRefill(i)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table></div>
+</mat-card>
+
+<div class="total-value" *ngIf="dataSource.data.length > 0">
+  <strong>Total: {{ totalRefillValue | currency:'CLP':'symbol':'1.0-0' }}</strong>
+</div>
+
+<div class="button-container">
+  <button mat-raised-button color="primary" class="purchase-button" (click)="completeRefill()" [disabled]="submitting">Realizar Operación</button>
+</div>

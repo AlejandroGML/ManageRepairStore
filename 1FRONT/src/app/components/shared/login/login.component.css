@@ -1,0 +1,35 @@
+.login-wrapper {
+  width: 90%;
+  max-width: 400px;
+  margin: 120px auto 0;
+}
+
+.login-wrapper mat-card {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  text-align: center;
+}
+
+.login-field {
+  width: 100%;
+  padding-top: 12px;
+}
+
+.login-btn {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  margin-top: 10px;
+}
+
+.login-actions {
+  width: 100%;
+  text-align: center;
+}
+
+.login-spinner {
+  margin: 0 auto;
+}
+
+::ng-deep .mat-mdc-card-header-text {
+  width: 100%;
+}

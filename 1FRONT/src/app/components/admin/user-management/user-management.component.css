@@ -1,0 +1,47 @@
+.user-management-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.user-table {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.header-actions {
+  margin-left: auto;
+}
+
+.activo-badge {
+  display: inline-block;
+  background-color: #e8f5e9;
+  color: var(--color-success);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.inactivo-badge {
+  display: inline-block;
+  background-color: #fbe9e7;
+  color: var(--color-error);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-muted);
+  font-size: 16px;
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

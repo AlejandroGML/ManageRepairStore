@@ -1,0 +1,88 @@
+<h2 mat-dialog-title>Resultados de la Búsqueda</h2>
+<mat-dialog-content>
+  <div class="mt-20">
+    <mat-card>
+      <table mat-table [dataSource]="products" class="mat-elevation-z8">
+
+        <!-- Columna de ID -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef> ID </th>
+          <td mat-cell *matCellDef="let product"> {{ product.id }} </td>
+        </ng-container>
+
+        <!-- Columna de Imagen -->
+        <ng-container matColumnDef="image">
+          <th mat-header-cell *matHeaderCellDef> Imagen </th>
+          <td mat-cell *matCellDef="let product">
+            <ng-container *ngIf="product.image; else noImage">
+                <img 
+                  [src]="getImageUrl(product.image)" 
+                  alt="Imagen del producto" 
+                  class="product-image"
+                  role="button" tabindex="0"
+                  (click)="openImageModal(product.image)"
+                  (keydown.enter)="openImageModal(product.image)"
+                  (keydown.space)="openImageModal(product.image)"
+                />
+            </ng-container>
+            <ng-template #noImage>
+              <span class="material-symbols-outlined no-image-btn" role="button" tabindex="0" (click)="openImageModal()" (keydown.enter)="openImageModal()" (keydown.space)="openImageModal()" aria-label="Ver imagen predeterminada">
+                X
+              </span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Columna de Nombre -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef> Nombre </th>
+          <td mat-cell *matCellDef="let product"> {{ product.name }} </td>
+        </ng-container>
+
+        <!-- Columna de Stock -->
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef> Stock </th>
+          <td mat-cell *matCellDef="let product"> {{ product.stock ?? 0 }} </td>
+        </ng-container>
+
+        <!-- Columna de Localización -->
+        <ng-container matColumnDef="location">
+          <th mat-header-cell *matHeaderCellDef> Localización </th>
+          <td mat-cell *matCellDef="let product"> {{ product.location }} </td>
+        </ng-container>
+
+        <!-- Columna de Valor de Venta -->
+        <ng-container matColumnDef="sellingPrice">
+          <th mat-header-cell *matHeaderCellDef> Valor de Venta </th>
+          <td mat-cell *matCellDef="let product"> {{ product.sellingPrice | currency:'CLP':'symbol' }} </td>
+        </ng-container>
+
+        <!-- Columna de Transacciones -->
+        <ng-container matColumnDef="transaction">
+          <th mat-header-cell *matHeaderCellDef> Transacciones </th>
+          <td mat-cell *matCellDef="let product">
+            <button mat-icon-button (click)="openTransactionModal(product)">
+              <mat-icon>history</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Columna de Editar Producto -->
+        <ng-container matColumnDef="edit">
+          <th mat-header-cell *matHeaderCellDef> Editar Producto </th>
+          <td mat-cell *matCellDef="let product">
+            <button mat-icon-button (click)="openEditProductModal(product)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

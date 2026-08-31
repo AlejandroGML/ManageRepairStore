@@ -1,0 +1,33 @@
+<div class="dialog-padded">
+  <div class="row">
+    <div class="text-right">
+      <mat-icon class="icon-close" role="button" tabindex="0" (click)="close()" (keydown.enter)="close()" (keydown.space)="close()" aria-label="Cerrar">close</mat-icon><br><br>
+    </div>
+    <div class="title-wrapper">
+      <span class="title">Desactivar Usuario</span>
+      <img src="../../../../assets/icons/delete.svg" alt="" role="presentation" class="logo"><br>
+      <div></div>
+      <span class="text text-center">
+        ¿Está seguro que desea desactivar al usuario <b>{{ user.name }}</b>?
+      </span>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
+  <div class="row pt-8">
+    <div class="col-4 offset-2 text-right">
+      <button class="w-130 send" type="button" (click)="deactivate()" mat-raised-button color="warn">
+        <mat-icon>block</mat-icon> Desactivar
+      </button>
+    </div>
+    <div class="col-4">
+      <button class="w-130 btn-cancel send" type="button" (click)="close()" mat-raised-button color="primary">
+        <mat-icon>close</mat-icon> Cancelar
+      </button>
+    </div>
+  </div>
+  <br>
+</div>

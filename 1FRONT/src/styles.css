@@ -1,0 +1,6 @@
+/* Minimal overrides only — Bootstrap and global styles are in styles.scss */
+html, body { height: 100%; }
+
+.admin-dialog .mat-mdc-dialog-surface {
+  padding: 0;
+}

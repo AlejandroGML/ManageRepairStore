@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>Transacciones de {{ data.product.name }}</h2>
+
+<mat-dialog-content>
+  <!-- Filtro de columnas con ancho ajustado -->
+  <mat-form-field appearance="fill" class="w-full">
+    <mat-label>Selecciona las columnas adicionales</mat-label>
+    <mat-select multiple [(value)]="selectedColumns" (selectionChange)="updateDisplayedColumns()">
+      <mat-option *ngFor="let column of optionalColumns" [value]="column.value">
+        {{ column.label }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <table mat-table [dataSource]="data.transactions" class="mat-elevation-z8">
+    <!-- Columna de ID (obligatoria) -->
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef> ID Transacción </th>
+      <td mat-cell *matCellDef="let transaction"> {{ transaction.id ?? 'Sin Dato' }} </td>
+    </ng-container>
+
+    <!-- Columna de Fecha (obligatoria) -->
+    <ng-container matColumnDef="createdAt">
+      <th mat-header-cell *matHeaderCellDef> Fecha </th>
+      <td mat-cell *matCellDef="let transaction">
+        {{ transaction.createdAt | date:'dd-MM-yyyy HH:mm:ss' }}
+      </td>
+    </ng-container>    
+
+    <!-- Columna de Operación (obligatoria) -->
+    <ng-container matColumnDef="operation">
+      <th mat-header-cell *matHeaderCellDef> Operación </th>
+      <td mat-cell *matCellDef="let transaction"> {{ transaction.operation || 'Sin Dato' }} </td>
+    </ng-container>
+
+    <!-- Columna de Imagen del Producto (obligatoria) -->
+    <ng-container matColumnDef="image">
+      <th mat-header-cell *matHeaderCellDef> Imagen </th>
+      <td mat-cell *matCellDef="let transaction">
+        <img [src]="getImageUrl(transaction.snapshotData?.image)" alt="Imagen del producto" class="product-image" />
+      </td>
+    </ng-container>    
+
+    <!-- Columna de Nombre del Producto (obligatoria) -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef> Nombre del Producto </th>
+      <td mat-cell *matCellDef="let transaction"> {{ transaction.snapshotData?.name || 'Sin Dato' }} </td>
+    </ng-container>
+
+    <!-- Columna de cantidad (obligatoria) -->
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef> Cantidad </th>
+      <td mat-cell *matCellDef="let transaction"> {{ transaction.quantity ?? 'Sin Dato' }} </td>
+    </ng-container>
+
+    <!-- Columna de Stock Final (obligatoria) -->
+    <ng-container matColumnDef="finalStock">
+      <th mat-header-cell *matHeaderCellDef> Stock Final</th>
+      <td mat-cell *matCellDef="let transaction"> {{ transaction.finalStock ?? 'Sin Dato' }} </td>
+    </ng-container>
+
+    <!-- Columnas opcionales basadas en el filtro -->
+    <ng-container *ngFor="let column of selectedColumns" [matColumnDef]="column">
+      <th mat-header-cell *matHeaderCellDef> {{ getColumnLabel(column) }} </th>
+      <td mat-cell *matCellDef="let transaction"> {{ transaction.snapshotData?.[column] ?? 'Sin Dato' }} </td>
+    </ng-container>
+
+    <!-- Fila de encabezado -->
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <!-- Fila de datos -->
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

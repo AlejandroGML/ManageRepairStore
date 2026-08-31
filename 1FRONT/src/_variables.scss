@@ -1,0 +1,52 @@
+// _variables.scss — Manage Repair Store Design Tokens
+// Source of truth: docs/DESIGN.md
+
+// Colors
+$color-primary: #E67A1B;
+$color-primary-dark: #D35400;
+$color-primary-light: #FDEBD0;
+$color-secondary: #2C3E50;
+$color-bg: #FFF5E6; // Warm creamy background (less saturated than pure white)
+$color-bg-dark: #1A1A2E;
+$color-surface: #FFFFFF;
+$color-surface-dark: #252540;
+$color-text: #1F2937;
+$color-text-dark: #E5E7EB;
+$color-text-muted: #6B7280;
+$color-text-muted-dark: #9CA3AF;
+$color-border: #E5E7EB;
+$color-border-dark: #374151;
+$color-success: #10B981;
+$color-error: #EF4444;
+$color-warning: #F59E0B;
+
+// Typography
+$font-body: 'Fira Sans', Roboto, sans-serif;
+$font-mono: 'Fira Code', monospace;
+$text-xs: 0.75rem;
+$text-sm: 0.875rem;
+$text-base: 1rem;
+$text-lg: 1.125rem;
+$text-xl: 1.5rem;
+$text-2xl: 2rem;
+$font-normal: 400;
+$font-medium: 500;
+$font-bold: 700;
+
+// Spacing
+$space-xs: 0.25rem;
+$space-sm: 0.5rem;
+$space-md: 0.75rem;
+$space-base: 1rem;
+$space-lg: 1.5rem;
+$space-xl: 2rem;
+
+// Border Radius
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+// Effects
+$transition-base: 200ms ease-in-out;
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);

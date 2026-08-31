@@ -1,0 +1,92 @@
+/* Ajuste de márgenes y diseño de contenedor */
+mat-form-field {
+  width: 90%;
+  margin-left: 5%;
+}
+
+.form-register {
+  margin-top: 16px;
+  margin-left: 2%; /* Márgen uniforme */
+  margin-right: 2%;
+}
+
+mat-card {
+  padding-top: 24px;
+  margin: 10px; /* Margen adicional para alineación uniforme */
+}
+
+.div-tabla {
+  width: 90%;
+  margin-left: 5%;
+  max-height: 60vh;
+  margin-top: 20px;
+}
+
+/* Ajuste del botón Agregar Producto */
+button.add-product-button {
+  font-size: 13px;
+  padding: 6px 12px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  width: auto; /* Ancho reducido para armonía */
+}
+
+/* Imagen de producto en tabla */
+.product-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.product-image:hover {
+  transform: scale(1.1);
+}
+
+/* Estilo de texto para cuando no hay imagen */
+.no-image-text {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Ajuste del botón Agregar Producto */
+button.add-product-button {
+  width: 20%;
+  margin-left: 5%;
+  font-size: 13px;
+  padding: 6px 12px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+/* Estilo del título de la tabla */
+.table-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+  color: var(--color-text);
+}
+
+/* Contenedor para el label e input de imagen */
+.image-upload-container {
+  display: flex;
+  align-items: center; /* Alinea verticalmente el label y el botón */
+  margin-left: 5%; /* Aplica un margen izquierdo para todo el contenedor */
+}
+
+/* Estilo del label de imagen */
+.image-upload-label {
+  font-weight: bold;
+  margin-right: 10px; /* Espacio entre el label y el botón */
+}
+
+/* --- Phase 4 inline style migration --- */
+.product-main-row { margin: 0; margin-left: 2%; }
+.no-padding { padding: 0; }
+.ml-10 { margin-left: 10px; }
+.no-image-btn { cursor: pointer; font-size: 32px; }
+.product-card { display: none; }

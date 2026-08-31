@@ -1,0 +1,59 @@
+.icon-close{
+    font-size: 28px;
+    cursor: pointer;
+}
+.dialog-header-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+.title-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.logo {
+    width: 92px;
+}
+
+.input-field{
+    margin-left: 5%;
+    width: 90%;
+}
+
+.card-form {
+    padding-top: 16px;
+}
+
+.btn-save {
+    width: 120px;
+}
+
+.btn-cancel {
+    width: 120px;
+    background-color: #6c757d !important;
+}
+
+.company-field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 5%;
+    width: 90%;
+}
+.company-field-row mat-slide-toggle {
+    flex-shrink: 0;
+    margin-bottom: 20px;
+}
+.company-input {
+    flex: 1;
+    margin-left: 0 !important;
+    width: 100% !important;
+}

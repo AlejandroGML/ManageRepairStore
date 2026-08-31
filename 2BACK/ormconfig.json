@@ -1,0 +1,10 @@
+{
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5433,
+    "username": "postgres",
+    "password": "mrs_demo_local",
+    "database": "manage_repair_store",
+    "entities": ["src/**/*.entity.ts"],
+    "synchronize": true
+  }
