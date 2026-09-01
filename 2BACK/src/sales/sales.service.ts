@@ -24,9 +24,13 @@ export class SalesService {
     private readonly stockService: StockService,
   ) {}
 
+  /** List all sales ordered by date desc (used by Panel KPIs). */
+  async listSales(): Promise<SaleEntity[]> {
+    return this.salesRepository.find({ order: { createdAt: 'DESC' } });
+  }
+
   // Crear una venta con las transacciones correspondientes
-  async createSale(transactions: TransactionEntity[], total: number) {
-    // Crear una nueva venta
+  async createSale(transactions: TransactionEntity[], total: number) {    // Crear una nueva venta
     const sale = new SaleEntity();
     sale.total = total;
 

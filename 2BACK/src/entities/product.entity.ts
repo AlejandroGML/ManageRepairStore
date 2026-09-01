@@ -19,6 +19,10 @@ export class ProductEntity {
   @Column({ type: 'int', default: 0 })
   stock: number = 0;
 
+  /** Punto de reposición (prototipo: columna MÍNIMO). */
+  @Column({ type: 'int', default: 5 })
+  minimum: number = 5;
+
   @OneToMany(() => TransactionEntity, (transaction) => transaction.product, { cascade: true })
   transactions?: TransactionEntity[];
 

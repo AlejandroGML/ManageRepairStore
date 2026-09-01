@@ -6,4 +6,5 @@ export interface Order {
   status?: string;
   comment?: string;
   clientId?: number;
+  total?: number;
 }

@@ -35,7 +35,8 @@ export class OrderMapperService {
       observation:order.observation,
       date:order.date,
       status: order.status as OrderStatus,
-      comment:order.comment
+      comment:order.comment,
+      total: order.total ?? 0,
     }
     return entity;
   }
@@ -45,6 +46,7 @@ export class OrderMapperService {
       id:order.id,
       status: order.status as OrderStatus,
       comment:order.comment,
+      total: 0,
     }
     return entity;
   }

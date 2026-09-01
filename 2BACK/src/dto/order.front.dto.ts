@@ -47,6 +47,9 @@ export class OrderFront {
   comment?: string;
 
   @IsOptional()
+  total?: number;
+
+  @IsOptional()
   @IsString()
   company_name?: string;
 

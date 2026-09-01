@@ -19,6 +19,14 @@ export class OrderEntity {
   @Column({default:''})
   comment?: string;
 
+  /** Total de la orden (prototipo: columna TOTAL en Clientes). */
+  @Column({ type: 'int', default: 0 })
+  total: number = 0;
+
+  /** Código de orden explícito (prototipo: ORD-1039..ORD-1042). */
+  @Column({ nullable: true })
+  code?: string;
+
   @ManyToOne(() => ClientEntity, order => order.orders)
   client?: ClientEntity;
 

@@ -257,6 +257,7 @@ export class ProductService {
     const products = await this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.transactions', 'transaction')
+      .leftJoinAndSelect('product.category', 'category')
       .orderBy('product.id', 'ASC') // Especifica que el ID es de la tabla `product`
       .addOrderBy('transaction.createdAt', 'DESC') // Asegura que las transacciones estén en orden descendente de fecha
       .getMany();
