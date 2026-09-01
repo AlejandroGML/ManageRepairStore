@@ -19,6 +19,7 @@ describe('ProductService', () => {
     name: 'test product',
     active: true,
     stock: 10,
+    minimum: 5,
     image: null,
     transactions: [],
     ...overrides,
@@ -248,6 +249,7 @@ describe('ProductService', () => {
         name: 'nuevo producto',
         active: true,
         stock: 0,
+        minimum: 5,
         transactions: [
           {
             operation: 'Nuevo Producto',
@@ -284,6 +286,7 @@ describe('ProductService', () => {
         name: 'producto sin stock',
         active: true,
         stock: 0,
+        minimum: 5,
         transactions: [
           {
             operation: 'Nuevo Producto',
@@ -329,6 +332,7 @@ describe('ProductService', () => {
         name: 'producto existente',
         active: true,
         stock: 0,
+        minimum: 5,
         transactions: [
           {
             operation: 'Nuevo Producto',
@@ -376,6 +380,7 @@ describe('ProductService', () => {
           name: 'p1',
           active: true,
           stock: 10,
+          minimum: 5,
           image: null,
           transactions: [
             {

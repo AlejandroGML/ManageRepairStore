@@ -20,6 +20,7 @@ describe('SalesService', () => {
     name: 'test product',
     active: true,
     stock: 10,
+    minimum: 5,
     image: null,
     transactions: [],
     ...overrides,

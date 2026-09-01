@@ -15,6 +15,8 @@ describe('OrderService', () => {
   const mockOrder = (overrides: Partial<OrderEntity> = {}): OrderEntity => ({
     description: 'fix leak',
     status: OrderStatus.PENDIENTE,
+    total: 0,
+    code: 'ORD-1',
     ...overrides,
   });
 
