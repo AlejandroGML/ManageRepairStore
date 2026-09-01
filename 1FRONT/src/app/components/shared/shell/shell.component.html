@@ -4,7 +4,7 @@
       <span class="brand-mark"><mat-icon fontIcon="handyman"></mat-icon></span>
       <span class="brand-text">
         <span class="brand-name">Manage Repair Store</span>
-        <span class="brand-sub">Gestión de taller · Chile</span>
+        <span class="brand-sub">Panel de gestión</span>
       </span>
     </div>
 
@@ -21,6 +21,9 @@
         >
           <mat-icon class="nav-icon" [fontIcon]="item.icon"></mat-icon>
           <span class="nav-text">{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="nav-badge">{{ item.badge }}</span>
+          }
         </a>
       </ng-container>
     </nav>
@@ -29,7 +32,7 @@
       <div class="user-chip">
         <span class="user-avatar">{{ initials }}</span>
         <div class="user-meta">
-          <strong>{{ user?.name }}</strong>
+          <strong>{{ displayName }}</strong>
           <span>{{ roleLabel }}</span>
         </div>
         <button class="logout-btn" (click)="logout()" matTooltip="Cerrar sesión" aria-label="Cerrar sesión">
@@ -47,7 +50,7 @@
         <mat-icon fontIcon="menu"></mat-icon>
       </button>
       <button class="collapse-btn" (click)="sidebarCollapsed = !sidebarCollapsed" aria-label="Colapsar menú" matTooltip="Colapsar menú">
-        <mat-icon [fontIcon]="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"></mat-icon>
+        <mat-icon [fontIcon]="sidebarCollapsed ? 'menu_open' : 'menu'"></mat-icon>
       </button>
       <div class="topbar-titles">
         <h1 class="topbar-title">{{ pageTitle }}</h1>
@@ -62,7 +65,6 @@
           placeholder="Buscar global (Ctrl+K)..."
           aria-label="Búsqueda global"
         />
-        <kbd>Ctrl K</kbd>
       </div>
       <div class="topbar-actions">
         <button class="icon-btn topbar-icon" matTooltip="Notificaciones" aria-label="Notificaciones">

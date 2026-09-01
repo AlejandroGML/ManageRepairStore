@@ -14,6 +14,7 @@ interface NavItem {
   label: string;
   icon: string;
   roles: string[];
+  badge?: number;
 }
 
 interface NavGroup {
@@ -52,7 +53,7 @@ export class ShellComponent implements OnInit {
       items: [
         { path: '/productos', label: 'Productos', icon: 'category', roles: ['admin', 'warehouse'] },
         { path: '/bodega', label: 'Bodega', icon: 'warehouse', roles: ['admin', 'warehouse'] },
-        { path: '/reposiciones', label: 'Reposiciones', icon: 'add_box', roles: ['admin', 'warehouse'] },
+        { path: '/reposiciones', label: 'Reposiciones', icon: 'add_box', roles: ['admin', 'warehouse'], badge: 3 },
       ],
     },
     {
@@ -66,16 +67,16 @@ export class ShellComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-      let route = this.router.routerState.root;
-      while (route.firstChild) {
-        route = route.firstChild;
-      }
-      const data = route.snapshot.data as { title?: string; sub?: string };
-      this.pageTitle = data.title ?? '';
-      this.pageSub = data.sub ?? '';
-      this.sidebarOpen = false;
-    });
+    // Título inicial: cubre recarga directa (el subscribe de NavigationEnd
+    // solo se registra después del primer evento de navegación).
+    this.applyRouteTitle();
+
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.applyRouteTitle();
+        this.sidebarOpen = false;
+      });
 
     // Ctrl+K focus global search
     document.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -84,6 +85,17 @@ export class ShellComponent implements OnInit {
         document.getElementById('global-search')?.focus();
       }
     });
+  }
+
+  /** Lee title/sub de la ruta activa más profunda (prototipo: topbar). */
+  private applyRouteTitle(): void {
+    let route = this.router.routerState.root;
+    while (route.firstChild) {
+      route = route.firstChild;
+    }
+    const data = route.snapshot.data as { title?: string; sub?: string };
+    this.pageTitle = data.title ?? '';
+    this.pageSub = data.sub ?? '';
   }
 
   get user(): UserProfile | undefined {
@@ -102,9 +114,16 @@ export class ShellComponent implements OnInit {
   get initials(): string {
     const name = this.user?.name ?? '';
     const parts = name.trim().split(/\s+/);
-    const first = parts[0]?.charAt(0) ?? '';
-    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
-    return (first + last).toUpperCase();
+    return (parts[0]?.charAt(0) ?? '').toUpperCase();
+  }
+
+  /** Nombre corto para el chip: "Alejandro M." (prototipo). */
+  get displayName(): string {
+    const name = this.user?.name ?? '';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return name;
+    const lastNameInitial = parts[parts.length - 1].charAt(0);
+    return `${parts[0]} ${lastNameInitial}.`;
   }
 
   visibleItems(group: NavGroup): NavItem[] {
