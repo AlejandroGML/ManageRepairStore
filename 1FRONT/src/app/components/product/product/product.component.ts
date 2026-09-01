@@ -1,14 +1,12 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatTableDataSource } from '@angular/material/table';
 import { ProductsApiService } from 'src/app/services/products.api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { getApiUrl } from 'src/app/services/api-url';
 import { Product } from 'src/app/interface/warehouse';
 import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
-import { MatPaginator } from '@angular/material/paginator';
 import { ImageModalComponent } from '../../shared/image-modal/image-modal.component';
 import { ModalEditProductComponent } from '../modal-edit-product/modal-edit-product.component';
 import { ModalViewTransactionsComponent } from '../modal-view-transactions/modal-view-transactions.component';
@@ -27,18 +25,28 @@ import { SnackbarService } from 'src/app/services/snackbar.service';
   standalone: true,
   imports: [SHARED_IMPORTS],
 })
-export class ProductComponent implements OnInit {
+export class ProductComponent implements OnInit, AfterViewInit {
   private readonly authService = inject(AuthService);
 
   get userLogged(): any { return this.authService.getCurrentUser(); }
 
   searchForm: FormGroup;
-  dataSource = new MatTableDataSource<Product>(); // Tabla principal
-  displayedColumns: string[] = ['id', 'image', 'name', 'stock', 'location', 'costPrice', 'sellingPrice', 'status', 'transaction', 'edit', 'delete'];
   allProducts: Product[] = [];
+  filteredProducts: Product[] = [];
   stockFilter: 'all' | 'stock' | 'low' = 'all';
+  categoryFilter: string = 'all';
+  categoryNames: string[] = [];
+  pageSize = 8;
+  pageIndex = 0;
 
-  @ViewChild(MatPaginator) paginator1!: MatPaginator;
+  get totalProducts(): number { return this.allProducts.length; }
+  get totalCategories(): number { return this.categoryNames.length; }
+  get filteredCount(): number { return this.filteredProducts.length; }
+  get pageCount(): number { return Math.max(1, Math.ceil(this.filteredCount / this.pageSize)); }
+  get startIndex(): number { return Math.min(this.pageIndex * this.pageSize, this.filteredCount); }
+  get endIndex(): number { return Math.min(this.startIndex + this.pageSize, this.filteredCount); }
+  get pageItems(): Product[] { return this.filteredProducts.slice(this.startIndex, this.endIndex); }
+  get pageNumbers(): number[] { return Array.from({ length: this.pageCount }, (_, i) => i); }
 
   // Variables para búsqueda
   searchCriteria: string = 'id';
@@ -76,16 +84,16 @@ export class ProductComponent implements OnInit {
     });
   }
 
-/** Tone for the stock bar: crit <= 3, warn <= 8, ok otherwise */
+/** Tone for the stock bar: crit <= 2, warn <= 6, ok otherwise */
   stockTone(stock?: number): string {
-    if (stock === undefined || stock <= 3) return 'crit';
-    if (stock <= 8) return 'warn';
+    if (stock === undefined || stock <= 2) return 'crit';
+    if (stock <= 6) return 'warn';
     return 'ok';
   }
 
   // Método para exportar datos a Excel
   exportToExcel(): void {
-    const productData = this.dataSource.data.map((product) => {
+    const productData = this.filteredProducts.map((product) => {
       // Obtén la transacción más reciente del producto
       const lastTransaction = product.transactions ? product.transactions[product.transactions.length - 1] : null;
       
@@ -107,12 +115,13 @@ export class ProductComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProductsWithLastTransaction();
-    this.dataSource.paginator = this.paginator1;
     // Escucha las notificaciones de actualización de transacción
     this.dataSyncService.transactionUpdated$.subscribe(() => {
       this.loadProductsWithLastTransaction(); // Recarga los productos
     });
   }
+
+  ngAfterViewInit(): void {}
 
   loadProductsWithLastTransaction(): void {
     this.productsApi.getProductsWithLastTransaction().subscribe((products: Product[]) => {
@@ -129,26 +138,54 @@ export class ProductComponent implements OnInit {
         };
       });
 
-      // Asigna el paginador después de cargar los datos
-      this.dataSource.paginator = this.paginator1;
-      this.applyStockFilter();
+      this.categoryNames = [...new Set(this.allProducts.map((p) => p.category?.name).filter((n): n is string => !!n))].sort();
+      this.applyFilters();
     });
   }
 
   /** Stock filter chips (prototype: Todos / Con stock / Stock bajo). */
   setStockFilter(filter: 'all' | 'stock' | 'low'): void {
     this.stockFilter = filter;
-    this.applyStockFilter();
+    this.applyFilters();
   }
 
-  private applyStockFilter(): void {
-    if (this.stockFilter === 'all') {
-      this.dataSource.data = [...this.allProducts];
-    } else if (this.stockFilter === 'stock') {
-      this.dataSource.data = this.allProducts.filter((p) => (p.stock ?? 0) > 0);
-    } else {
-      this.dataSource.data = this.allProducts.filter((p) => (p.stock ?? 0) <= 8);
+  private applyFilters(): void {
+    let list = [...this.allProducts];
+    if (this.categoryFilter !== 'all') {
+      list = list.filter((p) => p.category?.name === this.categoryFilter);
     }
+    if (this.stockFilter === 'stock') {
+      list = list.filter((p) => (p.stock ?? 0) > 0);
+    } else if (this.stockFilter === 'low') {
+      list = list.filter((p) => p.stock !== undefined && p.minimum !== undefined && p.stock < p.minimum);
+    }
+    this.filteredProducts = list;
+    this.pageIndex = 0;
+  }
+
+  /** Public alias para el template (ngModelChange). */
+  onCategoryChange(): void {
+    this.applyFilters();
+  }
+
+  goPage(page: number): void {
+    if (page >= 0 && page < this.pageCount) {
+      this.pageIndex = page;
+    }
+  }
+
+  /** Código de producto estilo prototipo: P-001, P-002... */
+  productCode(product: Product): string {
+    const id = product.id ?? 0;
+    return `P-${String(id).padStart(3, '0')}`;
+  }
+
+  /** Ícono por categoría (seed usa el nombre del ícono en product.image). */
+  productIcon(product: Product): string {
+    const img = product.image;
+    if (!img) return 'image';
+    if (/^(https?:)?\/\//.test(img) || img.includes('/') || img.startsWith('assets/')) return 'image';
+    return img;
   }
 
   // Método para obtener la URL completa de la imagen
@@ -223,16 +260,16 @@ export class ProductComponent implements OnInit {
     });
   }
 
-  /** Stock state badge for the ESTADO column (prototype). */
+  /** Stock state badge for the ESTADO column (prototype: ≤2 Crítico, 3-6 Bajo, ≥7 En stock). */
   stockBadgeClass(stock?: number): string {
-    if (stock === undefined || stock <= 3) return 'badge-error';
-    if (stock <= 8) return 'badge-warning';
+    if (stock === undefined || stock <= 2) return 'badge-error';
+    if (stock <= 6) return 'badge-warning';
     return 'badge-success';
   }
 
   stockBadgeLabel(stock?: number): string {
-    if (stock === undefined || stock <= 3) return 'Crítico';
-    if (stock <= 8) return 'Bajo';
+    if (stock === undefined || stock <= 2) return 'Crítico';
+    if (stock <= 6) return 'Bajo';
     return 'En stock';
   }
 

@@ -15,7 +15,7 @@ interface HistoryRow {
   date: string;
   product: string;
   qty: number;
-  total: number;
+  provider: string;
 }
 
 @Component({
@@ -28,8 +28,10 @@ interface HistoryRow {
 export class RefillsComponent implements OnInit {
   products: Product[] = [];
   selectedProductId: number | null = null;
-  quantity = 1;
+  quantity = 10;
   costPrice = 0;
+  provider = '';
+  invoice = '';
   submitting = false;
   history: HistoryRow[] = [];
 
@@ -45,8 +47,13 @@ export class RefillsComponent implements OnInit {
   }
 
   private loadCatalog(): void {
-    this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
+    this.productsApi.getProductsWithLastTransaction().subscribe((products: Product[]) => {
       this.products = products;
+      // Preselect the first product (prototype shows one preselected)
+      if (products.length > 0) {
+        this.selectedProductId = products[0].id ?? null;
+        this.onProductChange();
+      }
     });
   }
 
@@ -55,13 +62,28 @@ export class RefillsComponent implements OnInit {
       this.history = groups.flatMap((g) =>
         (g.transactions ?? []).map((tx) => ({
           id: g.id ?? 0,
-          date: g.createdAt ? new Date(g.createdAt).toLocaleDateString('es-CL') : '',
+          date: g.createdAt ? this.shortDate(new Date(g.createdAt)) : '',
           product: tx.product ? (tx.product as any).name ?? '—' : '—',
           qty: Math.abs(tx.quantity ?? 0),
-          total: Number(g.totalValue ?? 0),
+          provider: tx.description ?? '—',
         })),
       );
     });
+  }
+
+  /** Fecha corta estilo prototipo: "30 ago". */
+  private shortDate(d: Date): string {
+    return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).replace('.', '');
+  }
+
+  /** Formato moneda sin decimales para placeholders: "52.000". */
+  formatMoney(value: number): string {
+    return Math.round(value).toLocaleString('es-CL');
+  }
+
+  /** Focus al formulario de nueva entrada (botón "+ Nueva reposición"). */
+  focusForm(): void {
+    document.getElementById('new-entry')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   onProductChange(): void {
@@ -90,7 +112,7 @@ export class RefillsComponent implements OnInit {
             productId: this.selectedProductId,
             quantity: Math.abs(this.quantity),
             operation: 'Entrada Producto',
-            description: 'Reposición de stock',
+            description: `Reposición de stock${this.provider ? ' · ' + this.provider : ''}${this.invoice ? ' · FAC ' + this.invoice : ''}`,
             costPrice: this.costPrice,
           },
         ],
@@ -99,9 +121,12 @@ export class RefillsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.submitting = false;
-          this.selectedProductId = null;
-          this.quantity = 1;
+          this.selectedProductId = this.products[0]?.id ?? null;
+          this.quantity = 10;
           this.costPrice = 0;
+          this.provider = '';
+          this.invoice = '';
+          this.onProductChange();
           this.dialog.open(ModalRefillSuccessComponent, { width: '300px' });
           this.loadHistory();
           this.dataSyncService.notifyTransactionUpdate();

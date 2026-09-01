@@ -6,10 +6,12 @@ import { ProductsApiService } from 'src/app/services/products.api.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { Product } from 'src/app/interface/warehouse';
 
-interface LocationCard {
-  location: string;
-  count: number;
-  stockSum: number;
+interface AisleCard {
+  aisle: string;
+  positions: number;
+  deltaIcon: string;
+  deltaText: string;
+  deltaTone: 'up' | 'down' | 'flat';
 }
 
 interface StockRow {
@@ -20,8 +22,6 @@ interface StockRow {
   tone: 'ok' | 'warn' | 'crit';
 }
 
-const MIN_STOCK = 5;
-
 @Component({
   selector: 'app-warehouse',
   templateUrl: './warehouse.component.html',
@@ -30,7 +30,7 @@ const MIN_STOCK = 5;
   imports: [CommonModule, RouterModule, MatIconModule],
 })
 export class WarehouseComponent implements OnInit {
-  locationCards: LocationCard[] = [];
+  aisleCards: AisleCard[] = [];
   stockRows: StockRow[] = [];
   loading = true;
 
@@ -39,45 +39,49 @@ export class WarehouseComponent implements OnInit {
 
   ngOnInit(): void {
     this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
-      const byLocation = new Map<string, Product[]>();
-      for (const p of products) {
-        const loc = p.location || 'Sin asignar';
-        byLocation.set(loc, [...(byLocation.get(loc) ?? []), p]);
-      }
-
-      this.locationCards = [...byLocation.entries()].map(([location, items]) => ({
-        location,
-        count: items.length,
-        stockSum: items.reduce((s, p) => s + (p.stock ?? 0), 0),
-      }));
-
-      this.stockRows = [...byLocation.entries()].flatMap(([location, items]) =>
-        items.map((p) => ({
-          location,
+      // Filas stock por ubicación (orden por código de ubicación)
+      this.stockRows = products
+        .filter((p) => (p.location ?? '') !== '' && p.location !== 'Sin asignar' && p.location !== 'Sin Datos')
+        .map((p) => ({
+          location: p.location as string,
           productName: p.name,
           stock: p.stock ?? 0,
-          min: MIN_STOCK,
-          tone: this.toneFor(p.stock ?? 0),
-        })),
-      );
+          min: p.minimum ?? 5,
+          tone: this.toneFor(p.stock ?? 0, p.minimum ?? 5),
+        }))
+        .sort((a, b) => a.location.localeCompare(b.location));
+
+      // Tarjetas por pasillo (prefijo de ubicación: A/B/C)
+      const aisles = new Map<string, string[]>();
+      for (const row of this.stockRows) {
+        const aisle = row.location.charAt(0).toUpperCase();
+        aisles.set(aisle, [...(aisles.get(aisle) ?? []), row.location]);
+      }
+      this.aisleCards = ['A', 'B', 'C'].map((aisle) => {
+        const positions = aisles.get(aisle)?.length ?? 0;
+        return {
+          aisle,
+          positions,
+          deltaIcon: 'inventory_2',
+          deltaText: `${positions} posiciones usadas`,
+          deltaTone: 'flat' as const,
+        };
+      });
 
       this.loading = false;
     });
   }
 
-  private toneFor(stock: number): 'ok' | 'warn' | 'crit' {
-    if (stock <= 3) return 'crit';
-    if (stock <= MIN_STOCK) return 'warn';
+  private toneFor(stock: number, min: number): 'ok' | 'warn' | 'crit' {
+    const ratio = stock / Math.max(1, min);
+    if (ratio < 0.5) return 'crit';
+    if (ratio < 1) return 'warn';
     return 'ok';
   }
 
-  stockPct(stock: number): number {
-    return Math.min(100, Math.round((stock / 20) * 100));
-  }
-
-  occupancyPct(loc: LocationCard): number {
-    if (loc.count === 1) return 100;
-    return Math.round((loc.stockSum / (loc.count * 20)) * 100);
+  /** Nivel de la barra: stock/mínimo, tope 100%. */
+  stockPct(stock: number, min: number): number {
+    return Math.min(100, Math.round((stock / Math.max(1, min)) * 100));
   }
 
   reconcile(): void {

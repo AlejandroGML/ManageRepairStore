@@ -2,13 +2,18 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Reposiciones de stock</h1>
-      <p class="page-lead">Registra entradas de inventario y revisa el historial.</p>
+      <p class="page-lead">Registra entradas de inventario</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" (click)="focusForm()">
+        <mat-icon fontIcon="add"></mat-icon> Nueva reposición
+      </button>
     </div>
   </div>
 
   <div class="refill-grid">
     <!-- Nueva entrada -->
-    <div class="card new-entry">
+    <div class="card new-entry" id="new-entry">
       <div class="card-head">
         <h2 class="card-title">Nueva entrada</h2>
       </div>
@@ -22,17 +27,31 @@
         <div class="entry-row">
           <div class="entry-field">
             <label class="field-label" for="refill-qty">Cantidad</label>
-            <input id="refill-qty" class="input mono" type="number" min="1" [(ngModel)]="quantity" />
+            <input id="refill-qty" class="input mono" type="number" min="1" placeholder="10" [(ngModel)]="quantity" />
           </div>
           <div class="entry-field">
             <label class="field-label" for="refill-cost">Costo unitario</label>
-            <input id="refill-cost" class="input mono" type="number" min="0" [(ngModel)]="costPrice" />
+            <div class="currency-input">
+              <span class="currency-prefix">$</span>
+              <input id="refill-cost" class="input mono" type="number" min="0" [placeholder]="formatMoney(costPrice)" [(ngModel)]="costPrice" />
+            </div>
           </div>
         </div>
 
-        <button class="btn btn-primary btn-block" [disabled]="submitting || !selectedProductId" (click)="registerEntry()">
-          <mat-icon fontIcon="check_circle"></mat-icon>
-          {{ submitting ? 'Registrando...' : 'Registrar entrada' }}
+        <div class="entry-row">
+          <div class="entry-field">
+            <label class="field-label" for="refill-provider">Proveedor</label>
+            <input id="refill-provider" class="input" type="text" placeholder="Proveedor" [(ngModel)]="provider" />
+          </div>
+          <div class="entry-field">
+            <label class="field-label" for="refill-invoice">N.º factura</label>
+            <input id="refill-invoice" class="input mono" type="text" placeholder="FAC-1023" [(ngModel)]="invoice" />
+          </div>
+        </div>
+
+        <button class="btn btn-accent btn-block entry-submit" [disabled]="submitting || !selectedProductId" (click)="registerEntry()">
+          <mat-icon fontIcon="package_2"></mat-icon>
+          <span>{{ submitting ? 'Registrando...' : 'Registrar entrada' }}</span>
         </button>
       </div>
     </div>
@@ -42,30 +61,27 @@
       <div class="card-head">
         <h2 class="card-title">Historial</h2>
       </div>
-      @if (history.length) {
-        <div class="table-wrap">
-          <table class="data zebra">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Producto</th>
-                <th class="col-num">Cant.</th>
-                <th class="col-num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let h of history">
-                <td>{{ h.date }}</td>
-                <td>{{ h.product }}</td>
-                <td class="col-num"><span class="qty-pos mono">+{{ h.qty }}</span></td>
-                <td class="col-num mono">{{ h.total | currency:'CLP':'symbol-narrow' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="empty-state">Sin entradas registradas.</p>
-      }
+      <div class="table-wrap">
+        <table class="data zebra">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th class="col-num">Cant.</th>
+              <th>Proveedor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let h of history">
+              <td class="mono muted">{{ h.date }}</td>
+              <td>{{ h.product }}</td>
+              <td class="col-num mono">+{{ h.qty }}</td>
+              <td>{{ h.provider }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="empty-state" *ngIf="!history.length">Sin entradas registradas.</p>
     </div>
   </div>
 </div>

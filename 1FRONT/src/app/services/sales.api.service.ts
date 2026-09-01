@@ -26,6 +26,11 @@ export class SalesApiService {
     return this.http.get<RefillGroup[]>(`${this.url}/product/refills/history`);
   }
 
+  // Todas las ventas (KPI panel: total por día)
+  getSales(): Observable<Sale[]> {
+    return this.http.get<Sale[]>(`${this.url}/sales`);
+  }
+
   // Crear batch de venta atómico
   createSaleBatch(data: {
     products: Array<{ productId: number; quantity: number; sellingPrice: number; purchaseDiscount?: number; location?: string; description?: string }>;

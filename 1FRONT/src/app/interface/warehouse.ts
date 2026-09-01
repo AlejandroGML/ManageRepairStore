@@ -6,9 +6,11 @@ export interface Product {
   maxDiscount?: number;
   quantity: number;
   stock?: number;            // Server-side stock (replaces finalStock reads)
+  minimum?: number;          // Punto de reposición (prototipo: columna MÍNIMO)
   costPrice?: number;
   sellingPrice?: number;
   location?: string;
+  category?: { id?: number; name: string } | null;
   transactions: Transaction[];
 }
 

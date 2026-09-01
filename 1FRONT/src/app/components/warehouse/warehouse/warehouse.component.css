@@ -4,21 +4,22 @@
   flex-wrap: wrap;
 }
 
-.loc-grid {
+.aisle-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-base);
   margin-bottom: var(--space-lg);
 }
 
-.kpi-loc {
+/* KPI card del prototipo: label arriba-izq, icono arriba-der, valor, delta */
+.kpi {
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.loc-head {
+.kpi-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,25 +37,66 @@
 
 .kpi-icon.violet { background: var(--color-primary-light); color: var(--color-primary); }
 
-.loc-pct {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--color-success);
-}
-
-.loc-name {
-  font-size: 16px;
-  font-weight: var(--font-bold);
-  color: var(--color-text);
-}
-
-.loc-meta {
+.kpi-label {
   font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: var(--font-bold);
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value .unit {
+  font-size: 15px;
+  font-weight: 500;
   color: var(--color-text-muted);
 }
 
-.level-bar {
+.kpi-delta {
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-muted);
+}
+
+.kpi-delta .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.kpi-delta.up { color: var(--color-success); }
+.kpi-delta.down { color: var(--color-error); }
+.kpi-delta.flat { color: var(--color-text-muted); }
+
+.stock-bar {
   width: 90px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  overflow: hidden;
   display: inline-block;
   vertical-align: middle;
+}
+
+.stock-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.stock-bar span.ok { background: var(--color-success); }
+.stock-bar span.warn { background: var(--color-warning); }
+.stock-bar span.crit { background: var(--color-error); }
+
+@media (max-width: 900px) {
+  .aisle-grid {
+    grid-template-columns: 1fr;
+  }
 }

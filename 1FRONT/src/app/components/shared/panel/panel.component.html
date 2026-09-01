@@ -17,7 +17,6 @@
   @if (loading) {
     <div class="kpi-grid">
       <div class="card kpi" *ngFor="let _ of [1, 2, 3, 4]">
-        <span class="kpi-icon violet"><mat-icon fontIcon="hourglass_empty"></mat-icon></span>
         <span class="kpi-value">…</span>
       </div>
     </div>
@@ -25,13 +24,15 @@
     <div class="kpi-grid">
       <div class="card kpi" *ngFor="let kpi of kpis">
         <div class="kpi-top">
+          <span class="kpi-label">{{ kpi.label }}</span>
           <span class="kpi-icon" [class]="kpi.tone">
             <mat-icon [fontIcon]="kpi.icon"></mat-icon>
           </span>
         </div>
-        <span class="kpi-label">{{ kpi.label }}</span>
-        <span class="kpi-value">{{ kpi.value }}</span>
-        <span class="kpi-sub">{{ kpi.sub }}</span>
+        <span class="kpi-value mono">{{ kpi.value }}</span>
+        <span class="kpi-delta" [class]="kpi.deltaTone">
+          <mat-icon [fontIcon]="kpi.deltaIcon"></mat-icon> {{ kpi.deltaText }}
+        </span>
       </div>
     </div>
 
@@ -47,14 +48,16 @@
               <tr>
                 <th>Producto</th>
                 <th class="col-num">Stock</th>
-                <th class="col-num">Estado</th>
+                <th class="col-num">Mínimo</th>
+                <th>Estado</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let p of lowStock">
-                <td>{{ p.name }}</td>
+                <td class="strong">{{ p.name }}</td>
                 <td class="col-num mono">{{ p.stock }}</td>
-                <td class="col-num">
+                <td class="col-num mono">{{ p.minimum ?? '—' }}</td>
+                <td>
                   <span class="badge" [class]="stockBadgeClass(p.stock)">
                     <span class="dot"></span> {{ stockBadgeLabel(p.stock) }}
                   </span>
@@ -79,8 +82,9 @@
             </span>
             <div class="activity-meta">
               <strong>{{ a.title }}</strong>
-              <span>{{ a.time }}</span>
+              <span>{{ a.desc }}</span>
             </div>
+            <span class="activity-time">{{ a.time }}</span>
           </div>
         </div>
         <ng-template #noActivity>

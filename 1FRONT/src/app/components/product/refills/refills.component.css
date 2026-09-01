@@ -39,14 +39,32 @@
   font-weight: 600;
 }
 
-/* Zebra + green quantities (prototype history table) */
+/* Zebra history table (prototype) */
 table.data.zebra tbody tr:nth-child(even) {
   background: var(--color-bg);
 }
 
-.qty-pos {
-  color: var(--color-success);
-  font-weight: 600;
+.currency-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-input .currency-prefix {
+  position: absolute;
+  left: 12px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.currency-input .input {
+  padding-left: 26px;
+}
+
+.entry-submit {
+  justify-content: flex-start;
+  gap: 8px;
 }
 
 @media (max-width: 1000px) {
