@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,36 +26,38 @@ interface NavGroup {
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatTooltipModule, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, MatTooltipModule, ThemeToggleComponent],
 })
 export class ShellComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
 
   sidebarOpen = false;
+  sidebarCollapsed = false;
   pageTitle = '';
   pageSub = '';
+  globalSearch = '';
 
   readonly navGroups: NavGroup[] = [
     {
       label: 'Principal',
-      items: [{ path: '/panel', label: 'Panel', icon: 'dashboard', roles: ['admin', 'warehouse', 'seller'] }],
+      items: [
+        { path: '/panel', label: 'Panel', icon: 'dashboard', roles: ['admin', 'warehouse', 'seller'] },
+        { path: '/ventas', label: 'Ventas', icon: 'point_of_sale', roles: ['admin', 'seller'] },
+        { path: '/registrar', label: 'Registrar orden', icon: 'assignment_add', roles: ['admin'] },
+      ],
     },
     {
       label: 'Inventario',
       items: [
-        { path: '/productos', label: 'Productos', icon: 'inventory_2', roles: ['admin', 'warehouse'] },
+        { path: '/productos', label: 'Productos', icon: 'category', roles: ['admin', 'warehouse'] },
         { path: '/bodega', label: 'Bodega', icon: 'warehouse', roles: ['admin', 'warehouse'] },
         { path: '/reposiciones', label: 'Reposiciones', icon: 'add_box', roles: ['admin', 'warehouse'] },
       ],
     },
     {
       label: 'Gestión',
-      items: [
-        { path: '/ventas', label: 'Ventas', icon: 'point_of_sale', roles: ['admin', 'seller'] },
-        { path: '/registrar', label: 'Registrar Orden', icon: 'note_add', roles: ['admin'] },
-        { path: '/clientes', label: 'Clientes y Órdenes', icon: 'groups', roles: ['admin'] },
-      ],
+      items: [{ path: '/clientes', label: 'Clientes y órdenes', icon: 'groups', roles: ['admin'] }],
     },
     {
       label: 'Sistema',
@@ -72,6 +75,14 @@ export class ShellComponent implements OnInit {
       this.pageTitle = data.title ?? '';
       this.pageSub = data.sub ?? '';
       this.sidebarOpen = false;
+    });
+
+    // Ctrl+K focus global search
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        document.getElementById('global-search')?.focus();
+      }
     });
   }
 
@@ -102,6 +113,18 @@ export class ShellComponent implements OnInit {
 
   hasVisibleItems(group: NavGroup): boolean {
     return this.visibleItems(group).length > 0;
+  }
+
+  /** Global search: navigate to the screen whose label matches the query. */
+  runGlobalSearch(): void {
+    const q = this.globalSearch.trim().toLowerCase();
+    if (!q) return;
+    const allItems = this.navGroups.flatMap((g) => g.items);
+    const match = allItems.find((item) => item.label.toLowerCase().includes(q));
+    if (match) {
+      this.router.navigate([match.path]);
+    }
+    this.globalSearch = '';
   }
 
   logout(): void {

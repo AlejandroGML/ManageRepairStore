@@ -151,4 +151,12 @@ export class RefillService {
       await queryRunner.release();
     }
   }
+
+  /** List refill groups with their transactions (newest first). */
+  async getAllRefills(): Promise<RefillGroupEntity[]> {
+    return this.refillGroupRepository.find({
+      relations: { transactions: { product: true } },
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

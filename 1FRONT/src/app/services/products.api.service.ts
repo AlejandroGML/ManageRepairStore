@@ -52,7 +52,11 @@ export class ProductsApiService {
   }
 
   // Método para verificar si un nombre de producto ya existe
-  checkProductNameExists(name: string): Observable<boolean> {
-    return this.http.get<boolean>(`${this.url}/product/exists?name=${encodeURIComponent(name)}`);
+checkProductNameExists(name: string): Observable<boolean> {
+    return this.http.get<boolean>(this.url + '/product/exists?name=' + encodeURIComponent(name));
+  }
+  /** Soft delete: marks the product as inactive. */
+  deleteProduct(id: number): Observable<Product> {
+    return this.http.delete<Product>(this.url + '/product/delete/' + id);
   }
 }

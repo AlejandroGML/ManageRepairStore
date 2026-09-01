@@ -21,10 +21,11 @@ import { SnackbarService } from '../../../services/snackbar.service';
 })
 export class UserManagementComponent implements OnInit, AfterViewInit {
   readonly displayedColumns: string[] = [
+    'user',
     'email',
-    'name',
     'role',
     'active',
+    'lastAccess',
     'actions',
   ];
   users: SystemUser[] = [];
@@ -61,6 +62,24 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
       default:
         return role;
     }
+  }
+
+  userInitials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.charAt(0) ?? '';
+    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+    return (first + last).toUpperCase();
+  }
+
+  /** Relativo "hace X" basado en updatedAt (proxy del último acceso). */
+  lastAccess(user: SystemUser): string {
+    const date = (user as any).updatedAt ?? (user as any).createdAt;
+    if (!date) return '—';
+    const diffH = (Date.now() - new Date(date).getTime()) / 3600000;
+    if (diffH < 1) return 'hace un momento';
+    if (diffH < 24) return `hace ${Math.round(diffH)} h`;
+    if (diffH < 720) return `hace ${Math.round(diffH / 24)} d`;
+    return 'hace mucho';
   }
 
   openCreateDialog(): void {

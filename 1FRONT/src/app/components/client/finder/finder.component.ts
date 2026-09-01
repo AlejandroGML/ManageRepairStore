@@ -40,9 +40,40 @@ export class FinderComponent implements AfterViewInit {
   displayedColumns: string[] = ['id','name', 'rut', 'phone', 'city', 'address', 'company_name', 'pdf','actions'];
   dataSource = new MatTableDataSource<Client>([]);
   showEmptyRow : boolean = false;
+  /** Últimas órdenes de ingreso (todas las del sistema). */
+  recentOrders: { id: number; clientName: string; status: string; date: string }[] = [];
   constructor(private clientsApi: ClientsApiService, private ordersApi: OrdersApiService, private loadingService: LoadingService,
     private dialog: MatDialog,private snackbarService: SnackbarService) {
-    
+    this.loadRecentOrders();
+  }
+
+  private loadRecentOrders(): void {
+    this.ordersApi.getAllOrders().subscribe((clientsWithOrders) => {
+      const flat = clientsWithOrders.flatMap((c) =>
+        (c.orders ?? []).map((o) => ({
+          id: o.id,
+          clientName: c.name,
+          status: o.status ?? 'Pendiente',
+          date: o.date ? new Date(o.date).toLocaleDateString('es-CL') : '',
+        })),
+      );
+      this.recentOrders = flat.slice(-6).reverse();
+    });
+  }
+
+  /** Badge class por estado de orden (prototipo). */
+  statusBadgeClass(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'entregado':
+      case 'completado':
+        return 'badge-success';
+      case 'pendiente':
+        return 'badge-warning';
+      case 'cancelado':
+        return 'badge-error';
+      default:
+        return 'badge-neutral';
+    }
   }
 
   ngAfterViewInit(){

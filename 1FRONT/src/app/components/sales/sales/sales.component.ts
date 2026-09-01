@@ -32,6 +32,8 @@ export class SalesComponent implements OnInit, OnDestroy {
   submitting = false;
   /** Catálogo de productos para el POS (grid clickeable). */
   catalog: Product[] = [];
+  catalogFiltered: Product[] = [];
+  catalogQuery = '';
   catalogLoading = true;
   get userLogged(): any { return this.authService.getCurrentUser(); }
 
@@ -56,7 +58,25 @@ export class SalesComponent implements OnInit, OnDestroy {
     this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
       this.catalog = products;
       this.catalogLoading = false;
+      this.filterCatalog();
     });
+  }
+
+  filterCatalog(): void {
+    const q = this.catalogQuery.trim().toLowerCase();
+    this.catalogFiltered = q
+      ? this.catalog.filter((p) => p.name.toLowerCase().includes(q) || String(p.id).includes(q))
+      : this.catalog;
+  }
+
+  /** Descuento total acumulado (para el panel de totales del carrito). */
+  get totalDiscount(): number {
+    return this.dataSource.data.reduce((sum, item) => sum + (item.purchaseDiscount ?? 0), 0);
+  }
+
+  clearCart(): void {
+    this.dataSource.data = [];
+    this.updateTotalSaleValue();
   }
 
   catalogStockTone(stock?: number): string {

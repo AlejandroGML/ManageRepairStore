@@ -1,98 +1,54 @@
-/* Ajuste de márgenes y diseño de contenedor */
-mat-form-field {
-    width: 90%;
-    margin: 0 auto; /* Centrado en el campo de cantidad */
-  }
-  
-  .button-container {
-    display: flex;
-    justify-content: center;
-    margin: 15px 0;
-  }
-  
-  .search-product-button,
-  .purchase-button {
-    font-size: 13px;
-    padding: 8px 16px;
-    margin-top: 10px;
-  }
-  
-  /* Contenedor de la tabla con márgenes y centrado */
-  .table-container {
-    width: 90%;
-    margin: 20px auto; /* Centrado de la tabla */
-    max-height: 60vh;
-    padding: 10px; /* Margen interno para espaciar contenido */
-  }
-  
-  .product-image {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  
-  .product-image:hover {
-    transform: scale(1.1);
-  }
-  
-  /* Texto para productos sin imagen */
-  .no-image-text {
-    font-size: 14px;
-    color: var(--color-text-muted);
-    font-style: italic;
-  }
-  
-  /* Estilo del título de la tabla */
-  .table-title {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 16px;
-    text-align: center;
-    color: var(--color-text);
-  }
-  
-  /* Estilo para el total de venta */
-  .total-sale-container {
-    margin-top: 20px;
-    font-size: 18px;
-    text-align: center;
-    font-weight: bold;
-    color: var(--color-text);
-  }
-  
-  /* Estilos para los encabezados de la tabla */
-  mat-header-cell {
-    font-weight: bold;
-    color: var(--color-text);
-    text-align: center;
-  }
-  
-  /* Estilos para las celdas de la tabla */
-  mat-cell {
-    text-align: center;
-    padding: 8px;
-  }
-  
-  /* Estilo del botón "Completar Refill" */
-  .purchase-button {
-    width: auto;
-    padding: 10px 20px;
-    font-weight: bold;
-  }
-  
-/* ===== Port Phase 6 — refills restyle ===== */
-.page { padding-top: 4px; }
-.total-value {
-  display: flex;
-  justify-content: flex-end;
-  padding: var(--space-base) 0 var(--space-sm);
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+.refill-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--space-base);
+  align-items: start;
 }
-.total-value strong {
-  font-size: 20px;
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  padding: var(--space-base);
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.select,
+.input {
+  width: 100%;
+  height: 40px;
+}
+
+.entry-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.btn-block {
+  width: 100%;
+  height: 42px;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+/* Zebra + green quantities (prototype history table) */
+table.data.zebra tbody tr:nth-child(even) {
+  background: var(--color-bg);
+}
+
+.qty-pos {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+@media (max-width: 1000px) {
+  .refill-grid { grid-template-columns: 1fr; }
 }

@@ -2,15 +2,65 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Bodega</h1>
-      <p class="page-lead">Stock por ubicación — productos y reposiciones.</p>
+      <p class="page-lead">Ubicaciones y niveles de stock por pasillo.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost btn-sm" (click)="reconcile()">
+        <mat-icon fontIcon="sync"></mat-icon> Reconciliar
+      </button>
+      <button class="btn btn-primary" routerLink="/reposiciones">
+        <mat-icon fontIcon="add_box"></mat-icon> Reponer stock
+      </button>
     </div>
   </div>
-  <mat-tab-group (selectedIndexChange)="changeTab($event)" class="seg-tabs">
-    <mat-tab label="Producto" *ngIf="allowedSubTabs.includes(TAB_PRODUCTS)">
-      <app-product></app-product>
-    </mat-tab>
-    <mat-tab label="Repuestos" *ngIf="allowedSubTabs.includes(TAB_REFILLS)">
-      <app-refills></app-refills>
-    </mat-tab>
-  </mat-tab-group>
+
+  <!-- Resumen por ubicación -->
+  <div class="loc-grid" *ngIf="!loading">
+    <div class="card kpi-loc" *ngFor="let loc of locationCards">
+      <div class="loc-head">
+        <span class="kpi-icon violet"><mat-icon fontIcon="warehouse"></mat-icon></span>
+        <span class="loc-pct">{{ occupancyPct(loc) }}% ocupación</span>
+      </div>
+      <span class="loc-name">Pasillo {{ loc.location }}</span>
+      <span class="loc-meta">{{ loc.count }} posiciones · {{ loc.stockSum }} unidades</span>
+    </div>
+  </div>
+
+  <!-- Stock por ubicación -->
+  <div class="card">
+    <div class="card-head">
+      <h2 class="card-title">Stock por ubicación</h2>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Ubicación</th>
+            <th>Producto</th>
+            <th class="col-num">Stock</th>
+            <th class="col-num">Mínimo</th>
+            <th class="col-num">Nivel</th>
+            <th class="col-num">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of stockRows">
+            <td class="mono">{{ row.location }}</td>
+            <td>{{ row.productName }}</td>
+            <td class="col-num mono">{{ row.stock }}</td>
+            <td class="col-num mono">{{ row.min }}</td>
+            <td class="col-num">
+              <span class="stock-bar level-bar">
+                <span [class]="row.tone" [style.width.%]="stockPct(row.stock)"></span>
+              </span>
+            </td>
+            <td class="col-num">
+              <button class="btn btn-soft btn-sm" routerLink="/reposiciones">Reponer</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="empty-state" *ngIf="!loading && !stockRows.length">Sin productos registrados.</p>
+  </div>
 </div>

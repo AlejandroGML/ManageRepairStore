@@ -1,22 +1,7 @@
-.page-header {
+.page-actions {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-base);
-  margin-bottom: var(--space-lg);
-}
-
-.page-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: var(--font-bold);
-  color: var(--color-text);
-}
-
-.page-lead {
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
+  gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .kpi-grid {
@@ -27,21 +12,26 @@
 }
 
 .kpi {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kpi-top {
   display: flex;
   align-items: center;
-  gap: var(--space-base);
-  padding: var(--space-base);
+  justify-content: space-between;
 }
 
 .kpi-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  flex-shrink: 0;
 }
 
 .kpi-icon.violet { background: var(--color-primary-light); color: var(--color-primary); }
@@ -49,99 +39,83 @@
 .kpi-icon.amber { background: var(--color-warning-soft); color: var(--color-warning); }
 .kpi-icon.red { background: var(--color-error-soft); color: var(--color-error); }
 
-.kpi-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.kpi-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .kpi-value {
   font-size: 26px;
   font-weight: var(--font-bold);
+  letter-spacing: -0.02em;
   color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 
-.kpi-label {
-  font-size: var(--text-xs);
+.kpi-sub {
+  font-size: 12.5px;
   color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.card-head {
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-base);
+  align-items: start;
+}
+
+/* Activity feed */
+.activity-list {
+  padding: var(--space-xs) 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 20px;
+}
+
+.activity-item + .activity-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.activity-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-base);
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-.card-title {
-  margin: 0;
-  font-size: var(--text-base);
-  font-weight: var(--font-bold);
-  color: var(--color-text);
+.activity-icon.violet { background: var(--color-primary-light); color: var(--color-primary); }
+.activity-icon.teal { background: var(--color-success-soft); color: var(--color-accent); }
+.activity-icon.amber { background: var(--color-warning-soft); color: var(--color-warning); }
+
+.activity-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.badge-warning { background: var(--color-warning-soft); color: #B45309; }
-.badge-error { background: var(--color-error-soft); color: #B91C1C; }
-
-.table-wrap { overflow-x: auto; }
-
-table.data {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-}
-
-table.data th {
-  text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  padding: var(--space-sm) var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-}
-
-table.data td {
-  padding: var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-table.data tbody tr:hover { background: var(--color-primary-light); }
-
-.col-num { text-align: right; }
-
-.mono {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--space-xl) var(--space-base);
-  color: var(--color-text-muted);
+.activity-meta strong {
   font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.activity-meta span {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 1100px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .panel-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {

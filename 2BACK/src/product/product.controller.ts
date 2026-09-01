@@ -177,4 +177,12 @@ async createRefillBatch(@Body() body: {
   return this.refillService.createRefillBatch(body);
 }
 
+// Endpoint to list refill groups (history) — newest first
+@Get('/refills/history')
+@ApiOperation({ summary: 'List refill groups with transactions (newest first)' })
+@ApiResponse({ status: 200, description: 'Refill groups with product details', type: [RefillGroupEntity] })
+async getRefillsHistory(): Promise<RefillGroupEntity[]> {
+  return this.refillService.getAllRefills();
+}
+
 }

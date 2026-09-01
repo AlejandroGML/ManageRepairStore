@@ -29,6 +29,7 @@ export interface Transaction {
   description?: string;      // Agregar esta propiedad
   assignedWorker?: string;   // Agregar esta propiedad
   payMethod?: string;
+  product?: Product | null;  // Relación (refill history)
 }
 
 export interface RefillGroup {

@@ -50,3 +50,32 @@ mat-card-header {
 .page { padding-top: 4px; }
 .header-actions { display: flex; align-items: center; gap: var(--space-sm); }
 .close-btn { display: none; }
+
+/* ===== Port 8.5c — admin table ===== */
+.page-actions { display: flex; align-items: center; gap: var(--space-sm); }
+.close-btn { display: none; }
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.user-avatar-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--color-text);
+}

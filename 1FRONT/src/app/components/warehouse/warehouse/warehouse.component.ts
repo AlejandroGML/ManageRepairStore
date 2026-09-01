@@ -1,58 +1,86 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { SHARED_IMPORTS } from 'src/app/shared.imports';
-import { UserProfile } from 'src/app/interface/user-profile';
-import { AuthService } from 'src/app/services/auth.service';
-import { ProductComponent } from '../../product/product/product.component';
-import { RefillsComponent } from '../../product/refills/refills.component';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { ProductsApiService } from 'src/app/services/products.api.service';
+import { SnackbarService } from 'src/app/services/snackbar.service';
+import { Product } from 'src/app/interface/warehouse';
+
+interface LocationCard {
+  location: string;
+  count: number;
+  stockSum: number;
+}
+
+interface StockRow {
+  location: string;
+  productName: string;
+  stock: number;
+  min: number;
+  tone: 'ok' | 'warn' | 'crit';
+}
+
+const MIN_STOCK = 5;
 
 @Component({
   selector: 'app-warehouse',
   templateUrl: './warehouse.component.html',
   styleUrls: ['./warehouse.component.css'],
   standalone: true,
-  imports: [SHARED_IMPORTS, ProductComponent, RefillsComponent],
+  imports: [CommonModule, RouterModule, MatIconModule],
 })
 export class WarehouseComponent implements OnInit {
-  private readonly authService = inject(AuthService);
+  locationCards: LocationCard[] = [];
+  stockRows: StockRow[] = [];
+  loading = true;
 
-  get userLogged(): UserProfile | undefined {
-    return this.authService.getCurrentUser() ?? undefined;
-  }
-
-  readonly ID_WAREHOUSE_FOCUS = 'input-client';
-  readonly TAB_PRODUCTS = 0;
-  readonly TAB_SALES = 1;
-  readonly TAB_REFILLS = 2;
-
-  allowedSubTabs: number[] = []; // Subpestañas permitidas
+  private readonly productsApi = inject(ProductsApiService);
+  private readonly snackbar = inject(SnackbarService);
 
   ngOnInit(): void {
-    this.setAllowedSubTabs();
-  }
-
-  changeTab(selectedIndex: number) {
-    let idFocus = '';
-    selectedIndex === this.TAB_PRODUCTS ? idFocus = this.ID_WAREHOUSE_FOCUS : idFocus = 'input-filter';
-    setTimeout(() => {
-      document.getElementById(idFocus)?.click();
-    }, 300);
-  }
-
-  private setAllowedSubTabs() {
-    if (this.userLogged) {
-      switch (this.userLogged.role) {
-        case 'admin':
-          this.allowedSubTabs = [this.TAB_PRODUCTS, this.TAB_SALES, this.TAB_REFILLS];
-          break;
-        case 'warehouse':
-          this.allowedSubTabs = [this.TAB_PRODUCTS, this.TAB_REFILLS];
-          break;
-        case 'seller':
-          this.allowedSubTabs = [this.TAB_SALES];
-          break;
-        default:
-          this.allowedSubTabs = [];
+    this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
+      const byLocation = new Map<string, Product[]>();
+      for (const p of products) {
+        const loc = p.location || 'Sin asignar';
+        byLocation.set(loc, [...(byLocation.get(loc) ?? []), p]);
       }
-    }
+
+      this.locationCards = [...byLocation.entries()].map(([location, items]) => ({
+        location,
+        count: items.length,
+        stockSum: items.reduce((s, p) => s + (p.stock ?? 0), 0),
+      }));
+
+      this.stockRows = [...byLocation.entries()].flatMap(([location, items]) =>
+        items.map((p) => ({
+          location,
+          productName: p.name,
+          stock: p.stock ?? 0,
+          min: MIN_STOCK,
+          tone: this.toneFor(p.stock ?? 0),
+        })),
+      );
+
+      this.loading = false;
+    });
+  }
+
+  private toneFor(stock: number): 'ok' | 'warn' | 'crit' {
+    if (stock <= 3) return 'crit';
+    if (stock <= MIN_STOCK) return 'warn';
+    return 'ok';
+  }
+
+  stockPct(stock: number): number {
+    return Math.min(100, Math.round((stock / 20) * 100));
+  }
+
+  occupancyPct(loc: LocationCard): number {
+    if (loc.count === 1) return 100;
+    return Math.round((loc.stockSum / (loc.count * 20)) * 100);
+  }
+
+  reconcile(): void {
+    this.snackbar.success('Reconciliación ejecutada (demo)');
   }
 }

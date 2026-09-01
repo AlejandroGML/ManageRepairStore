@@ -1,19 +1,21 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { SHARED_IMPORTS } from 'src/app/shared.imports';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { Product, RefillGroup } from 'src/app/interface/warehouse';
 import { SalesApiService } from 'src/app/services/sales.api.service';
-import { AuthService } from 'src/app/services/auth.service';
-import { AdminApiService } from 'src/app/services/admin.api.service';
-import { MatTableDataSource } from '@angular/material/table';
-import { ProductRefillModalComponent } from '../product-refill-modal/product-refill-modal.component';
+import { ProductsApiService } from 'src/app/services/products.api.service';
 import { DataSyncService } from 'src/app/services/data-sync.service';
+import { SnackbarService } from 'src/app/services/snackbar.service';
 import { ModalRefillSuccessComponent } from '../modal-refill-success/modal-refill-success.component';
 
-interface RefillProduct extends Product {
-  quantity: number;
-  assignedWorker: string;
-  operation: string;
+interface HistoryRow {
+  id: number;
+  date: string;
+  product: string;
+  qty: number;
+  total: number;
 }
 
 @Component({
@@ -21,183 +23,93 @@ interface RefillProduct extends Product {
   templateUrl: './refills.component.html',
   styleUrls: ['./refills.component.css'],
   standalone: true,
-  imports: [SHARED_IMPORTS],
+  imports: [CommonModule, FormsModule, MatIconModule],
 })
 export class RefillsComponent implements OnInit {
-  private readonly authService = inject(AuthService);
-
-  get userLogged(): any { return this.authService.getCurrentUser(); }
-  displayedColumns: string[] = ['name', 'operation', 'quantity', 'assignedWorker', 'description', 'delete'];
-  dataSource = new MatTableDataSource<RefillProduct>();
-
+  products: Product[] = [];
+  selectedProductId: number | null = null;
+  quantity = 1;
+  costPrice = 0;
   submitting = false;
-  loadingTechnicians = true;
-  loadingOrders = true;
+  history: HistoryRow[] = [];
 
-  selectedTechnicianId?: number;
-  selectedOrderId?: number;
-  technicians: any[] = [];
-  orders: any[] = [];
-
-  private readonly dialog = inject(MatDialog);
   private readonly salesApi = inject(SalesApiService);
-  private readonly adminApi = inject(AdminApiService);
+  private readonly productsApi = inject(ProductsApiService);
   private readonly dataSyncService = inject(DataSyncService);
+  private readonly snackbar = inject(SnackbarService);
+  private readonly dialog = inject(MatDialog);
 
   ngOnInit(): void {
-    this.loadTechnicians();
-    this.loadOrders();
+    this.loadCatalog();
+    this.loadHistory();
   }
 
-  private loadTechnicians(): void {
-    this.loadingTechnicians = true;
-    this.adminApi.getActiveUsers().subscribe({
-      next: (users) => {
-        this.technicians = users.filter((u: any) => u.active !== false);
-        this.loadingTechnicians = false;
-      },
-      error: (err) => {
-        console.error('Error loading technicians:', err);
-        this.loadingTechnicians = false;
-      },
+  private loadCatalog(): void {
+    this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
+      this.products = products;
     });
   }
 
-  private loadOrders(): void {
-    this.loadingOrders = true;
-    this.adminApi.getAllOrders().subscribe({
-      next: (clients) => {
-        const openOrders: any[] = [];
-        if (Array.isArray(clients)) {
-          for (const client of clients) {
-            if (client.orders && Array.isArray(client.orders)) {
-              for (const order of client.orders) {
-                if (order.status !== 'Cerrada' && order.status !== 'closed') {
-                  openOrders.push({ ...order, clientName: client.name });
-                }
-              }
-            }
-          }
-        }
-        this.orders = openOrders;
-        this.loadingOrders = false;
-      },
-      error: (err) => {
-        console.error('Error loading orders:', err);
-        this.loadingOrders = false;
-      },
-    });
-  }
-
-  get totalRefillValue(): number {
-    return this.dataSource.data.reduce(
-      (sum, item) => sum + ((item.sellingPrice ?? 0) * Math.abs(item.quantity)),
-      0,
-    );
-  }
-
-  openProductSearch(): void {
-    const addedProductIds = this.dataSource.data.map((item: RefillProduct) => item.id);
-    const dialogRef = this.dialog.open(ProductRefillModalComponent, {
-      width: '70%',
-      data: { addedProductIds }
-    });
-
-    dialogRef.afterClosed().subscribe((selectedProduct: Product) => {
-      if (selectedProduct) {
-        this.addProductToRefill(selectedProduct);
-      }
-    });
-  }
-
-  addProductToRefill(product: Product): void {
-    const lastTransaction = product.transactions && product.transactions.length > 0 
-      ? product.transactions[product.transactions.length - 1] 
-      : null;
-
-    const refillProduct: RefillProduct = {
-      ...product,
-      quantity: 1,
-      assignedWorker: '',
-      operation: 'entrega',
-      costPrice: lastTransaction?.costPrice ?? product.costPrice ?? 0,
-      sellingPrice: lastTransaction?.sellingPrice ?? product.sellingPrice ?? 0,
-    };
-
-    this.dataSource.data = [...this.dataSource.data, refillProduct];
-  }
-
-  removeProductFromRefill(index: number): void {
-    const data = this.dataSource.data;
-    data.splice(index, 1);
-    this.dataSource.data = [...data];
-  }
-
-  completeRefill(): void {
-    // Validate technician assigned for each product or globally selected
-    if (!this.selectedTechnicianId) {
-      const missingTechnician = this.dataSource.data.some(
-        (product: RefillProduct) => !product.assignedWorker || product.assignedWorker.trim() === ''
+  private loadHistory(): void {
+    this.salesApi.getRefillsHistory().subscribe((groups: RefillGroup[]) => {
+      this.history = groups.flatMap((g) =>
+        (g.transactions ?? []).map((tx) => ({
+          id: g.id ?? 0,
+          date: g.createdAt ? new Date(g.createdAt).toLocaleDateString('es-CL') : '',
+          product: tx.product ? (tx.product as any).name ?? '—' : '—',
+          qty: Math.abs(tx.quantity ?? 0),
+          total: Number(g.totalValue ?? 0),
+        })),
       );
-      if (missingTechnician) {
-        alert('Por favor, asigne un técnico antes de realizar la operación.');
-        return;
-      }
-    }
+    });
+  }
 
-    if (this.dataSource.data.length === 0) {
-      alert('No hay productos para realizar la operación.');
+  onProductChange(): void {
+    const product = this.products.find((p) => p.id === this.selectedProductId);
+    if (!product) return;
+    const last = product.transactions?.[product.transactions.length - 1];
+    this.costPrice = last?.costPrice ?? product.costPrice ?? 0;
+  }
+
+  registerEntry(): void {
+    if (!this.selectedProductId) return;
+    if (!this.quantity || this.quantity <= 0) {
+      this.snackbar.error('Ingresa una cantidad válida');
+      return;
+    }
+    if (this.costPrice <= 0) {
+      this.snackbar.error('Ingresa un costo unitario válido');
       return;
     }
 
-    // Build batch payload
-    const batchProducts = this.dataSource.data.map((product: RefillProduct) => {
-      const lastTransaction = product.transactions && product.transactions.length > 0
-        ? product.transactions[product.transactions.length - 1]
-        : null;
-
-      return {
-        productId: product.id!,
-        quantity: product.operation === 'entrega' ? -Math.abs(product.quantity) : Math.abs(product.quantity),
-        operation: product.operation === 'entrega' ? 'Asignación Repuesto Producto' : 'Devolución Repuesto Producto',
-        description: product.description || '',
-        sellingPrice: product.sellingPrice ?? lastTransaction?.sellingPrice ?? 0,
-        costPrice: product.costPrice ?? lastTransaction?.costPrice ?? 0,
-      };
-    });
-
-    const totalValue = batchProducts.reduce(
-      (sum, p) => sum + ((p.sellingPrice ?? 0) * Math.abs(p.quantity ?? 0)),
-      0,
-    );
-
     this.submitting = true;
-    this.salesApi.createRefillBatch({
-      products: batchProducts,
-      technicianId: this.selectedTechnicianId,
-      orderId: this.selectedOrderId,
-      totalValue,
-    }).subscribe({
-      next: (refillGroup: RefillGroup) => {
-        this.submitting = false;
-        this.dataSource.data = [];
-        this.selectedTechnicianId = undefined;
-        this.selectedOrderId = undefined;
-        this.openSuccessModal();
-        this.dataSyncService.notifyTransactionUpdate();
-      },
-      error: (error) => {
-        this.submitting = false;
-        console.error('Error al realizar el refill batch:', error);
-        alert('Error al realizar la operación: ' + (error?.error?.message || error?.message || 'Error desconocido'));
-      },
-    });
-  }
-
-  // Método para abrir el diálogo de éxito
-  openSuccessModal(): void {
-    this.dialog.open(ModalRefillSuccessComponent, {
-      width: '300px'
-    });
+    this.salesApi
+      .createRefillBatch({
+        products: [
+          {
+            productId: this.selectedProductId,
+            quantity: Math.abs(this.quantity),
+            operation: 'Entrada Producto',
+            description: 'Reposición de stock',
+            costPrice: this.costPrice,
+          },
+        ],
+        totalValue: this.quantity * this.costPrice,
+      })
+      .subscribe({
+        next: () => {
+          this.submitting = false;
+          this.selectedProductId = null;
+          this.quantity = 1;
+          this.costPrice = 0;
+          this.dialog.open(ModalRefillSuccessComponent, { width: '300px' });
+          this.loadHistory();
+          this.dataSyncService.notifyTransactionUpdate();
+        },
+        error: (err) => {
+          this.submitting = false;
+          this.snackbar.error(err.error?.message || 'Error al registrar la entrada');
+        },
+      });
   }
 }

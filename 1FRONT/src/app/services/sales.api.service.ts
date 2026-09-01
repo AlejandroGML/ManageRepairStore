@@ -21,6 +21,11 @@ export class SalesApiService {
     return this.http.post<RefillGroup>(`${this.url}/product/refills/batch`, data);
   }
 
+  // Historial de reposiciones (refill groups, newest first)
+  getRefillsHistory(): Observable<RefillGroup[]> {
+    return this.http.get<RefillGroup[]>(`${this.url}/product/refills/history`);
+  }
+
   // Crear batch de venta atómico
   createSaleBatch(data: {
     products: Array<{ productId: number; quantity: number; sellingPrice: number; purchaseDiscount?: number; location?: string; description?: string }>;

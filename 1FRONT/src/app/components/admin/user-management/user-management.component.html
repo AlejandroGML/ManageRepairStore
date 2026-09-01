@@ -1,60 +1,72 @@
 <div class="user-management-container">
   <div class="page">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Administración</h1>
-      <p class="page-lead">Gestión de usuarios del sistema.</p>
-    </div>
-  </div>
-<mat-card class="card">
-    <div class="card-head">
-      <h2 class="card-title">Gestión de Usuarios</h2>
-      <div class="header-actions">
-        <button class="btn btn-primary" (click)="openCreateDialog()"><mat-icon fontIcon="person_add"></mat-icon> Nuevo Usuario</button>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Administración de usuarios</h1>
+        <p class="page-lead">Gestión de cuentas y roles del sistema.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" (click)="openCreateDialog()">
+          <mat-icon fontIcon="person_add"></mat-icon> Nuevo usuario
+        </button>
         <button *ngIf="dialogRef" mat-icon-button (click)="close()" matTooltip="Cerrar" class="close-btn">
           <mat-icon>close</mat-icon>
         </button>
       </div>
     </div>
 
-    <mat-card-content>
+    <mat-card class="card">
       <div class="table-responsive"><table mat-table [dataSource]="users" class="user-table">
+        <!-- User Column (avatar + name) -->
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let user">
+            <span class="user-cell">
+              <span class="user-avatar-sm">{{ userInitials(user.name) }}</span>
+              <span class="user-name">{{ user.name }}</span>
+            </span>
+          </td>
+        </ng-container>
+
         <!-- Email Column -->
         <ng-container matColumnDef="email">
           <th mat-header-cell *matHeaderCellDef>Email</th>
           <td mat-cell *matCellDef="let user">{{ user.email }}</td>
         </ng-container>
 
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Nombre</th>
-          <td mat-cell *matCellDef="let user">{{ user.name }}</td>
-        </ng-container>
-
         <!-- Role Column -->
         <ng-container matColumnDef="role">
           <th mat-header-cell *matHeaderCellDef>Rol</th>
-          <td mat-cell *matCellDef="let user">{{ getRoleLabel(user.role) }}</td>
+          <td mat-cell *matCellDef="let user">
+            <span class="badge badge-neutral">{{ getRoleLabel(user.role) }}</span>
+          </td>
         </ng-container>
 
         <!-- Active Status Column -->
         <ng-container matColumnDef="active">
           <th mat-header-cell *matHeaderCellDef>Estado</th>
           <td mat-cell *matCellDef="let user">
-            <span *ngIf="user.active" class="badge badge-success">Activo</span>
-            <span *ngIf="!user.active" class="badge badge-error">Inactivo</span>
+            <span class="badge" [class.badge-success]="user.active" [class.badge-warning]="!user.active">
+              <span class="dot"></span> {{ user.active ? 'Activo' : 'Suspendido' }}
+            </span>
           </td>
+        </ng-container>
+
+        <!-- Last Access Column -->
+        <ng-container matColumnDef="lastAccess">
+          <th mat-header-cell *matHeaderCellDef>Último acceso</th>
+          <td mat-cell *matCellDef="let user">{{ lastAccess(user) }}</td>
         </ng-container>
 
         <!-- Actions Column -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef>Acciones</th>
           <td mat-cell *matCellDef="let user">
-            <button mat-icon-button color="primary" (click)="openEditDialog(user)" matTooltip="Editar usuario">
+            <button mat-icon-button class="icon-btn" (click)="openEditDialog(user)" matTooltip="Editar usuario">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="openDeleteDialog(user)" matTooltip="Desactivar usuario">
-              <mat-icon>block</mat-icon>
+            <button mat-icon-button class="icon-btn" (click)="openDeleteDialog(user)" matTooltip="Eliminar usuario">
+              <mat-icon>delete</mat-icon>
             </button>
           </td>
         </ng-container>
@@ -62,11 +74,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table></div>
-
-      <div *ngIf="users.length === 0" class="empty-state">
-        No hay usuarios registrados.
-      </div>
-    </mat-card-content>
-  </mat-card>
-</div>
+      <p class="empty-state" *ngIf="users.length === 0">Sin usuarios registrados.</p>
+    </mat-card>
+  </div>
 </div>

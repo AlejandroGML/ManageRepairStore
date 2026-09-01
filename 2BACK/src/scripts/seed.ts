@@ -10,6 +10,8 @@ import { ProductEntity } from '../entities/product.entity';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { ClientGroupEntity } from '../entities/client-group.entity';
 import { ClientEntity } from '../entities/client.entity';
+import { LogEntity } from '../entities/log.entity';
+import { RefillGroupEntity } from '../entities/refill-group.entity';
 import { calcularDV } from '../services/rut.service';
 
 /**
@@ -49,30 +51,30 @@ interface DemoProduct {
 }
 
 const PRODUCTS: DemoProduct[] = [
-  { name: 'pantalla iphone 11', category: 'Pantallas', stock: 12, costPrice: 18000, sellingPrice: 28000 },
-  { name: 'pantalla samsung a54', category: 'Pantallas', stock: 8, costPrice: 22000, sellingPrice: 32000 },
-  { name: 'pantalla motorola g54', category: 'Pantallas', stock: 10, costPrice: 15000, sellingPrice: 24000 },
-  { name: 'pantalla xiaomi redmi note 12', category: 'Pantallas', stock: 6, costPrice: 14000, sellingPrice: 22000 },
-  { name: 'batería iphone 12', category: 'Baterías', stock: 15, costPrice: 9000, sellingPrice: 15000 },
-  { name: 'batería samsung s22', category: 'Baterías', stock: 9, costPrice: 11000, sellingPrice: 18000 },
-  { name: 'batería xiaomi redmi 10', category: 'Baterías', stock: 14, costPrice: 7000, sellingPrice: 12000 },
-  { name: 'batería huawei p30', category: 'Baterías', stock: 7, costPrice: 8000, sellingPrice: 13000 },
-  { name: 'conector de carga usb-c', category: 'Conectores', stock: 25, costPrice: 2500, sellingPrice: 5000 },
-  { name: 'conector de carga lightning', category: 'Conectores', stock: 20, costPrice: 3000, sellingPrice: 6000 },
-  { name: 'pines de carga samsung', category: 'Conectores', stock: 18, costPrice: 2000, sellingPrice: 4500 },
-  { name: 'flex de carga motorola', category: 'Conectores', stock: 11, costPrice: 2200, sellingPrice: 4800 },
-  { name: 'cable usb-c trenzado 1m', category: 'Accesorios', stock: 40, costPrice: 1200, sellingPrice: 3500 },
-  { name: 'cargador 20w usb-c', category: 'Accesorios', stock: 30, costPrice: 5000, sellingPrice: 9000 },
-  { name: 'audífonos bluetooth básicos', category: 'Accesorios', stock: 22, costPrice: 6000, sellingPrice: 10000 },
-  { name: 'funda silicona universal', category: 'Accesorios', stock: 35, costPrice: 800, sellingPrice: 2500 },
-  { name: 'kit destornilladores precisión', category: 'Herramientas', stock: 5, costPrice: 9500, sellingPrice: 16000 },
-  { name: 'estación de calor', category: 'Herramientas', stock: 3, costPrice: 35000, sellingPrice: 55000 },
-  { name: 'ventosa de succión', category: 'Herramientas', stock: 16, costPrice: 1800, sellingPrice: 4000 },
-  { name: 'cinta adhesiva b7000', category: 'Herramientas', stock: 28, costPrice: 900, sellingPrice: 2200 },
-  { name: 'tapa trasera iphone 11', category: 'Repuestos', stock: 9, costPrice: 6000, sellingPrice: 11000 },
-  { name: 'tapa trasera samsung a54', category: 'Repuestos', stock: 8, costPrice: 5500, sellingPrice: 10000 },
-  { name: 'vidrio cámara iphone 12', category: 'Repuestos', stock: 13, costPrice: 2500, sellingPrice: 6000 },
-  { name: 'módulo cámara xiaomi', category: 'Repuestos', stock: 6, costPrice: 10000, sellingPrice: 17000 },
+  { name: 'Pantalla iPhone 11', category: 'Pantallas', stock: 12, costPrice: 18000, sellingPrice: 28000 },
+  { name: 'Pantalla Samsung A54', category: 'Pantallas', stock: 8, costPrice: 22000, sellingPrice: 32000 },
+  { name: 'Pantalla Motorola G54', category: 'Pantallas', stock: 10, costPrice: 15000, sellingPrice: 24000 },
+  { name: 'Pantalla Xiaomi Redmi Note 12', category: 'Pantallas', stock: 6, costPrice: 14000, sellingPrice: 22000 },
+  { name: 'Batería iPhone 12', category: 'Baterías', stock: 15, costPrice: 9000, sellingPrice: 15000 },
+  { name: 'Batería Samsung S22', category: 'Baterías', stock: 9, costPrice: 11000, sellingPrice: 18000 },
+  { name: 'Batería Xiaomi Redmi 10', category: 'Baterías', stock: 14, costPrice: 7000, sellingPrice: 12000 },
+  { name: 'Batería Huawei P30', category: 'Baterías', stock: 7, costPrice: 8000, sellingPrice: 13000 },
+  { name: 'Conector de carga USB-C', category: 'Conectores', stock: 25, costPrice: 2500, sellingPrice: 5000 },
+  { name: 'Conector de carga Lightning', category: 'Conectores', stock: 20, costPrice: 3000, sellingPrice: 6000 },
+  { name: 'Pines de carga Samsung', category: 'Conectores', stock: 18, costPrice: 2000, sellingPrice: 4500 },
+  { name: 'Flex de carga Motorola', category: 'Conectores', stock: 11, costPrice: 2200, sellingPrice: 4800 },
+  { name: 'Cable USB-C trenzado 1m', category: 'Accesorios', stock: 40, costPrice: 1200, sellingPrice: 3500 },
+  { name: 'Cargador 20W USB-C', category: 'Accesorios', stock: 30, costPrice: 5000, sellingPrice: 9000 },
+  { name: 'Audífonos Bluetooth básicos', category: 'Accesorios', stock: 22, costPrice: 6000, sellingPrice: 10000 },
+  { name: 'Funda silicona universal', category: 'Accesorios', stock: 35, costPrice: 800, sellingPrice: 2500 },
+  { name: 'Kit destornilladores precisión', category: 'Herramientas', stock: 5, costPrice: 9500, sellingPrice: 16000 },
+  { name: 'Estación de calor', category: 'Herramientas', stock: 3, costPrice: 35000, sellingPrice: 55000 },
+  { name: 'Ventosa de succión', category: 'Herramientas', stock: 16, costPrice: 1800, sellingPrice: 4000 },
+  { name: 'Cinta adhesiva B7000', category: 'Herramientas', stock: 28, costPrice: 900, sellingPrice: 2200 },
+  { name: 'Tapa trasera iPhone 11', category: 'Repuestos', stock: 9, costPrice: 6000, sellingPrice: 11000 },
+  { name: 'Tapa trasera Samsung A54', category: 'Repuestos', stock: 8, costPrice: 5500, sellingPrice: 10000 },
+  { name: 'Vidrio cámara iPhone 12', category: 'Repuestos', stock: 13, costPrice: 2500, sellingPrice: 6000 },
+  { name: 'Módulo cámara Xiaomi', category: 'Repuestos', stock: 6, costPrice: 10000, sellingPrice: 17000 },
 ];
 
 interface DemoClient {
@@ -184,7 +186,7 @@ async function seed() {
     const userRepo = qr.manager.getRepository(UserEntity);
     const passwordHash = await bcrypt.hash('Demo1234!', 12);
     const admin = await userRepo.save(
-      userRepo.create({ name: 'Administrador', email: 'admin@demo.example', passwordHash, role: 'admin', active: true }),
+      userRepo.create({ name: 'Alejandro Martínez', email: 'admin@demo.example', passwordHash, role: 'admin', active: true }),
     );
     const clerk = await userRepo.save(
       userRepo.create({ name: 'Vendedor Demo', email: 'clerk@demo.example', passwordHash, role: 'seller', active: true }),
@@ -273,6 +275,59 @@ async function seed() {
       );
     }
     console.log(`  ✓ Clients: ${CLIENTS.length} (valid synthetic RUTs)`);
+
+    // 6) Recent activity logs (synthetic)
+    const logRepo = qr.manager.getRepository(LogEntity);
+    const now = new Date();
+    const hoursAgo = (h: number) => new Date(now.getTime() - h * 3600 * 1000);
+    const recentLogs = [
+      { userName: 'Alejandro Martínez', clientId: 1, clientName: 'Comercial Demo SpA', action: 'registró orden de ingreso', date: hoursAgo(2) },
+      { userName: 'Vendedor Demo', clientId: 4, clientName: 'Juan Pérez', action: 'realizó venta de 2 productos', date: hoursAgo(5) },
+      { userName: 'Bodega Demo', clientId: 0, clientName: '—', action: 'repuso stock: Pantalla iPhone 11', date: hoursAgo(9) },
+      { userName: 'Alejandro Martínez', clientId: 2, clientName: 'María Fernández', action: 'editó datos de cliente', date: hoursAgo(26) },
+      { userName: 'Vendedor Demo', clientId: 3, clientName: 'Taller Express Ltda', action: 'registró orden de ingreso', date: hoursAgo(48) },
+    ];
+    for (const l of recentLogs) {
+      await logRepo.save(logRepo.create({ ...l, createdAt: l.date } as any));
+    }
+    console.log(`  ✓ Recent activity logs: ${recentLogs.length}`);
+
+    // 7) Refill history (synthetic refill groups)
+    const refillRepo = qr.manager.getRepository(RefillGroupEntity);
+    const refills = [
+      { productName: 'Pantalla iPhone 11', qty: 10, cost: 18000, hours: 20 },
+      { productName: 'Batería Samsung S22', qty: 6, cost: 11000, hours: 44 },
+      { productName: 'Conector de carga USB-C', qty: 25, cost: 2500, hours: 68 },
+      { productName: 'Cinta adhesiva B7000', qty: 15, cost: 900, hours: 92 },
+    ];
+    for (const r of refills) {
+      const product = await productRepo.findOne({ where: { name: r.productName } });
+      if (!product) continue;
+      const group = await refillRepo.save(
+        refillRepo.create({
+          totalValue: r.qty * r.cost,
+          createdAt: hoursAgo(r.hours),
+          operator: bodega,
+        }),
+      );
+      await txRepo.save(
+        txRepo.create({
+          operation: 'Entrada Producto',
+          quantity: r.qty,
+          costPrice: r.cost,
+          location: 'Bodega Central Demo',
+          payMethod: 'Transferencia',
+          finalStock: (product.stock ?? 0) + r.qty,
+          description: 'Reposición de stock',
+          snapshotData: { name: product.name, quantity: r.qty, costPrice: r.cost },
+          createdAt: hoursAgo(r.hours),
+          product,
+          operator: bodega,
+          refillGroup: group,
+        }),
+      );
+    }
+    console.log(`  ✓ Refill history: ${refills.length} groups`);
 
     console.log('\n✅ Demo seed complete.');
     console.log('   Login: admin@demo.example / Demo1234!');

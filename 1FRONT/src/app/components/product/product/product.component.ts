@@ -34,7 +34,9 @@ export class ProductComponent implements OnInit {
 
   searchForm: FormGroup;
   dataSource = new MatTableDataSource<Product>(); // Tabla principal
-  displayedColumns: string[] = ['id', 'image', 'name', 'stock', 'location', 'sellingPrice', 'transaction', 'edit' , 'download'];
+  displayedColumns: string[] = ['id', 'image', 'name', 'stock', 'location', 'costPrice', 'sellingPrice', 'status', 'transaction', 'edit', 'delete'];
+  allProducts: Product[] = [];
+  stockFilter: 'all' | 'stock' | 'low' = 'all';
 
   @ViewChild(MatPaginator) paginator1!: MatPaginator;
 
@@ -114,7 +116,7 @@ export class ProductComponent implements OnInit {
 
   loadProductsWithLastTransaction(): void {
     this.productsApi.getProductsWithLastTransaction().subscribe((products: Product[]) => {
-      this.dataSource.data = products.map(product => {
+      this.allProducts = products.map(product => {
         const lastTransaction = product.transactions ? product.transactions[product.transactions.length - 1] : null;
         return {
           ...product,
@@ -129,7 +131,24 @@ export class ProductComponent implements OnInit {
 
       // Asigna el paginador después de cargar los datos
       this.dataSource.paginator = this.paginator1;
+      this.applyStockFilter();
     });
+  }
+
+  /** Stock filter chips (prototype: Todos / Con stock / Stock bajo). */
+  setStockFilter(filter: 'all' | 'stock' | 'low'): void {
+    this.stockFilter = filter;
+    this.applyStockFilter();
+  }
+
+  private applyStockFilter(): void {
+    if (this.stockFilter === 'all') {
+      this.dataSource.data = [...this.allProducts];
+    } else if (this.stockFilter === 'stock') {
+      this.dataSource.data = this.allProducts.filter((p) => (p.stock ?? 0) > 0);
+    } else {
+      this.dataSource.data = this.allProducts.filter((p) => (p.stock ?? 0) <= 8);
+    }
   }
 
   // Método para obtener la URL completa de la imagen
@@ -183,6 +202,38 @@ export class ProductComponent implements OnInit {
         this.loadProductsWithLastTransaction();
       }
     });
+  }
+
+  /** Soft delete with confirmation (prototype row action: eliminar). */
+  openDeleteProductModal(product: Product): void {
+    const dialogRef = this.dialog.open(ModalConfirmComponent, {
+      width: '90vw',
+      maxWidth: '400px',
+      data: { message: `¿Eliminar "${product.name}"? Se marcará como inactivo.` },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed && product.id) {
+        this.productsApi.deleteProduct(product.id).subscribe(() => {
+          this.snackbarService.success('Producto eliminado');
+          this.loadProductsWithLastTransaction();
+        });
+      }
+    });
+  }
+
+  /** Stock state badge for the ESTADO column (prototype). */
+  stockBadgeClass(stock?: number): string {
+    if (stock === undefined || stock <= 3) return 'badge-error';
+    if (stock <= 8) return 'badge-warning';
+    return 'badge-success';
+  }
+
+  stockBadgeLabel(stock?: number): string {
+    if (stock === undefined || stock <= 3) return 'Crítico';
+    if (stock <= 8) return 'Bajo';
+    return 'En stock';
   }
 
   onSelectOption(): void {

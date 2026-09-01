@@ -1,8 +1,11 @@
-<div class="shell">
+<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed">
   <aside class="sidebar" [class.open]="sidebarOpen">
     <div class="brand">
-      <span class="brand-mark">MRS</span>
-      <span class="brand-name">Manage Repair Store</span>
+      <span class="brand-mark"><mat-icon fontIcon="handyman"></mat-icon></span>
+      <span class="brand-text">
+        <span class="brand-name">Manage Repair Store</span>
+        <span class="brand-sub">Gestión de taller · Chile</span>
+      </span>
     </div>
 
     <nav class="nav" aria-label="Navegación principal">
@@ -14,9 +17,10 @@
           [routerLink]="item.path"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
+          [matTooltip]="sidebarCollapsed ? item.label : ''"
         >
           <mat-icon class="nav-icon" [fontIcon]="item.icon"></mat-icon>
-          <span>{{ item.label }}</span>
+          <span class="nav-text">{{ item.label }}</span>
         </a>
       </ng-container>
     </nav>
@@ -39,14 +43,31 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="menu-btn" (click)="sidebarOpen = !sidebarOpen" aria-label="Abrir menú" matTooltip="Menú">
+      <button class="menu-btn" (click)="sidebarOpen = !sidebarOpen; sidebarCollapsed = false" aria-label="Abrir menú" matTooltip="Menú">
         <mat-icon fontIcon="menu"></mat-icon>
+      </button>
+      <button class="collapse-btn" (click)="sidebarCollapsed = !sidebarCollapsed" aria-label="Colapsar menú" matTooltip="Colapsar menú">
+        <mat-icon [fontIcon]="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"></mat-icon>
       </button>
       <div class="topbar-titles">
         <h1 class="topbar-title">{{ pageTitle }}</h1>
         <span class="topbar-sub">{{ pageSub }}</span>
       </div>
+      <div class="global-search">
+        <mat-icon fontIcon="search" class="gs-icon"></mat-icon>
+        <input
+          id="global-search"
+          [(ngModel)]="globalSearch"
+          (keyup.enter)="runGlobalSearch()"
+          placeholder="Buscar global (Ctrl+K)..."
+          aria-label="Búsqueda global"
+        />
+        <kbd>Ctrl K</kbd>
+      </div>
       <div class="topbar-actions">
+        <button class="icon-btn topbar-icon" matTooltip="Notificaciones" aria-label="Notificaciones">
+          <mat-icon fontIcon="notifications_none"></mat-icon>
+        </button>
         <app-theme-toggle></app-theme-toggle>
       </div>
     </header>
