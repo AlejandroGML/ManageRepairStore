@@ -1,63 +1,90 @@
-import { Component, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { ClientsApiService } from 'src/app/services/clients.api.service';
 import { OrdersApiService } from 'src/app/services/orders.api.service';
 import { LoadingService } from 'src/app/services/loading.service';
-import {MatTableDataSource} from '@angular/material/table';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { ModalOrdersComponent } from '../modal-orders/modal-orders.component';
 import { MatDialog } from '@angular/material/dialog';
+import { ModalOrdersComponent } from '../modal-orders/modal-orders.component';
 import { ModalEditClientComponent } from '../modal-edit-client/modal-edit-client.component';
 import { ModalDeleteClientComponent } from '../modal-delete-client/modal-delete-client.component';
 import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
-import { Client } from 'src/app/interface/client';
+import { Client, Order } from 'src/app/interface/client';
 import { SnackbarService } from 'src/app/services/snackbar.service';
-import { LengthFilterPipe } from 'src/app/pipes/length-filter.pipe';
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
 import * as XLSX from 'xlsx';
 
+interface ClientRow extends Client {
+  orderCount: number;
+}
+
+interface OrderRow {
+  code: string;
+  clientName: string;
+  total: number;
+  status: string;
+}
 @Component({
   selector: 'app-finder',
   templateUrl: './finder.component.html',
   styleUrls: ['./finder.component.css'],
   standalone: true,
-  imports: [SHARED_IMPORTS, LengthFilterPipe, NamePipe, RutPipe],
+  imports: [SHARED_IMPORTS, NamePipe, RutPipe],
 })
-export class FinderComponent implements AfterViewInit {
-  clients: Client[] = [];
-  clientsFiltered: Client[]=[];
-  filterOptions = [
-    {value: 'code', viewValue: 'Número de aviso', placeHolder:'Ej: 1001'},
-    {value: 'id', viewValue: 'N° Cliente', placeHolder:'70'},
-    {value: 'rut', viewValue: 'Rut', placeHolder:'Ej: 12345678-k'},
-    {value: 'name', viewValue: 'Nombre', placeHolder:'Ej: Comercial Demo SpA'},
-    {value: 'address', viewValue: 'Dirección', placeHolder:'Ej: Av. Providencia 1234'},
-  ];
-  iFilterSelected:number = 0;
-  filterSelected: 'code' | 'id' | 'rut' | 'name' | 'address'  = 'code';
-  filterValue:string = '';
-  displayedColumns: string[] = ['id','name', 'rut', 'phone', 'city', 'address', 'company_name', 'pdf','actions'];
-  dataSource = new MatTableDataSource<Client>([]);
-  showEmptyRow : boolean = false;
-  /** Últimas órdenes de ingreso (todas las del sistema). */
-  recentOrders: { id: number; clientName: string; status: string; date: string }[] = [];
-  constructor(private clientsApi: ClientsApiService, private ordersApi: OrdersApiService, private loadingService: LoadingService,
-    private dialog: MatDialog,private snackbarService: SnackbarService) {
-    this.loadRecentOrders();
+export class FinderComponent implements OnInit {
+  private readonly clientsApi = inject(ClientsApiService);
+  private readonly ordersApi = inject(OrdersApiService);
+  private readonly loadingService = inject(LoadingService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackbarService = inject(SnackbarService);
+
+  clients: ClientRow[] = [];
+  ordersTable: OrderRow[] = [];
+  totalOrders = 0;
+  clientSearch = '';
+
+  ngOnInit(): void {
+    this.loadData();
   }
 
-  private loadRecentOrders(): void {
+  private loadData(): void {
     this.ordersApi.getAllOrders().subscribe((clientsWithOrders) => {
-      const flat = clientsWithOrders.flatMap((c) =>
-        (c.orders ?? []).map((o) => ({
-          id: o.id,
-          clientName: c.name,
-          status: o.status ?? 'Pendiente',
-          date: o.date ? new Date(o.date).toLocaleDateString('es-CL') : '',
-        })),
-      );
-      this.recentOrders = flat.slice(-6).reverse();
+      const counts = new Map<number, number>();
+      const orders: OrderRow[] = [];
+      for (const c of clientsWithOrders) {
+        const list = c.orders ?? [];
+        if (c.id !== undefined) counts.set(c.id, list.length);
+        for (const o of list) {
+          orders.push({
+            code: (o as any).code ?? this.orderCode(o.id),
+            clientName: c.name,
+            total: o.total ?? 0,
+            status: o.status ?? 'Pendiente',
+          });
+        }
+      }
+      orders.sort((a, b) => b.code.localeCompare(a.code));
+      this.totalOrders = orders.length;
+      this.ordersTable = orders.slice(0, 6);
+
+      this.clientsApi.getAllClients().subscribe((allClients) => {
+        this.clients = allClients.map((c) => ({ ...c, orderCount: counts.get(c.id ?? 0) ?? 0 }));
+      });
+    });
+  }
+
+  /** Código de orden estilo prototipo: ORD-1039, ORD-1040... */
+  orderCode(id?: number): string {
+    return `ORD-${1038 + (id ?? 0)}`;
+  }
+
+  get filteredClients(): ClientRow[] {
+    const q = this.clientSearch.trim().toLowerCase().replace(/[.-]/g, '');
+    if (!q) return this.clients;
+    return this.clients.filter((c) => {
+      const name = (c.name ?? '').toLowerCase();
+      const rut = (c.rut_raw ?? '').toLowerCase().replace(/[.-]/g, '');
+      return name.includes(q) || rut.includes(q);
     });
   }
 
@@ -76,164 +103,65 @@ export class FinderComponent implements AfterViewInit {
     }
   }
 
-  ngAfterViewInit(){
-    
+  /** Estado con tilde (prototipo: "En reparación"). */
+  statusLabel(status: string): string {
+    return status === 'En reparacion' ? 'En reparación' : status;
   }
 
-  selectOption() {
-    this.filterValue = '';
-    document.getElementById('input-filter')?.click();
-    this.iFilterSelected = this.filterOptions.findIndex((opt:any) => opt.value === this.filterSelected);
-    this.dataSource = new MatTableDataSource();
-  }
-
-  findClientData() {
-    if(!this.filterValue || (this.filterSelected=='id' && isNaN(Number(this.filterValue)) == true) || 
-    (this.filterSelected=='code' && isNaN(Number(this.filterValue)) == true)){
-      this.snackbarService.openSnackBar('Es necesario ingresar un valor válido');
-      return;
-    }
-
+  showOrderDetails(client: Client): void {
     this.loadingService.setLoading(true);
-    let findValue = this.filterValue;//Quitar puntos y guion al rut para comparar
-    switch(this.filterSelected){
-      case 'code'://N° de Orden
-        this.ordersApi.findOrderByCode(this.filterValue).subscribe(data=>{
-          if(!data){
-            this.showEmptyRow = true;
-            this.loadingService.setLoading(false);
-            return;
-          }
-          this.dataSource = new MatTableDataSource([data] as Client[]);
-          this.showEmptyRow = this.dataSource.data.length===0;
-          this.openOrderModal(data);
-          this.loadingService.setLoading(false);
-        },(err)=>{
-          this.loadingService.setLoading(false);
-          this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
-          });
-        break;
-      case 'id'://ID de Usuario
-        if(isNaN(Number(this.filterValue)))return;
-        this.clientsApi.findUserById(Number(this.filterValue)).subscribe(data=>{
-          if(!data){
-            this.showEmptyRow = true;
-            this.loadingService.setLoading(false);
-            return;
-          }
-          const user : Client[] = [];
-          user.push(data);
-          this.dataSource = new MatTableDataSource(user);
-          this.showEmptyRow = this.dataSource.data.length===0;
-          this.loadingService.setLoading(false);
-        },(err)=>{
-          this.loadingService.setLoading(false);
-          this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
-        });
-        break;
-      case 'rut'://RUT de Usuario
-          this.clientsApi.findUserByRut(findValue.toLowerCase().replace(/[.-]/g, '').trim()).subscribe((users)=>{
-          if(users)this.clientsFiltered = users;
-          this.dataSource = new MatTableDataSource(this.clientsFiltered);
-          this.showEmptyRow = this.dataSource.data.length===0;
-          this.loadingService.setLoading(false);
-        },(err)=>{
-          this.loadingService.setLoading(false);
-          this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
-        });
-      break;
-      case 'name':
-          this.clientsApi.findUserByName(findValue).subscribe((users)=>{
-          if(users)this.clientsFiltered = users;
-          
-          this.dataSource = new MatTableDataSource(this.clientsFiltered);
-          this.showEmptyRow = this.dataSource.data.length===0;
-          this.loadingService.setLoading(false);
-        },(err)=>{
-          this.loadingService.setLoading(false);
-          this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
-        });
-      break
-      case 'address':
-          this.clientsApi.findUserByAddress(findValue).subscribe((users)=>{
-          if(users)this.clientsFiltered = users;
-          if(users.length>200){
-            this.snackbarService.openSnackBar('Demasiadas coincidencias. Cambiar dirección.');
-            this.loadingService.setLoading(false);
-            return;
-          }
-          this.dataSource = new MatTableDataSource(this.clientsFiltered);
-          this.showEmptyRow = this.dataSource.data.length===0;
-          this.loadingService.setLoading(false);
-        },(err)=>{
-          this.loadingService.setLoading(false);
-          this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
-        });
-        break;
-      default:
-        this.dataSource.filter = '';
-        break;
-    }
-  }
-  applyFilter(event: Event) {
-    let filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-  }
-  showOrderDetails(client:Client){
-    this.loadingService.setLoading(true);
-    this.ordersApi.findOrderByUser(client).subscribe((data)=>{
+    this.ordersApi.findOrderByUser(client).subscribe((data) => {
       this.openOrderModal(data);
       this.loadingService.setLoading(false);
-    },error=>{
+    }, () => {
       this.loadingService.setLoading(false);
       this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
     });
   }
-  showModalEditUser(client:Client):void{
-    const copy = {...client};
+
+  showModalEditUser(client: Client): void {
+    const copy = { ...client };
     this.dialog.open(ModalEditClientComponent, {
       width: '90vw',
       maxWidth: '720px',
       maxHeight: '90vh',
-      data:copy,
-      disableClose:true
-    }).afterClosed().subscribe((newClient:Client)=>{
-      if(newClient){
-        let index = this.dataSource.data.findIndex(u=>u.id===newClient.id);
-        let indexU = this.clients.findIndex(u=>u.id===newClient.id);
-        this.dataSource.data[index]=newClient;
-        this.clients[indexU]=newClient;
-        this.dataSource = new MatTableDataSource(this.dataSource.data);
+      data: copy,
+      disableClose: true,
+    }).afterClosed().subscribe((newClient: Client) => {
+      if (newClient) {
+        this.loadData();
       }
     });
   }
-  showModalDeleteUser(client:Client):void{
+
+  showModalDeleteUser(client: Client): void {
     this.dialog.open(ModalDeleteClientComponent, {
       width: '90vw',
       maxWidth: '400px',
       maxHeight: '90vh',
-      data:client,
-      disableClose:true
-    }).afterClosed().subscribe((id:number)=>{
-      if(id){
-        this.dataSource = new MatTableDataSource(this.dataSource.data.filter(u=>u.id!==client.id));
-        this.dialog.open(ModalConfirmComponent,{
+      data: client,
+      disableClose: true,
+    }).afterClosed().subscribe((id: number) => {
+      if (id) {
+        this.dialog.open(ModalConfirmComponent, {
           width: '90vw',
           maxWidth: '400px',
           maxHeight: '90vh',
-          data: {message: 'Cliente eliminado exitosamente'},
-          disableClose:true
+          data: { message: 'Cliente eliminado exitosamente' },
+          disableClose: true,
         });
+        this.loadData();
       }
     });
   }
-  openOrderModal(client:Client){
+
+  openOrderModal(client: Client): void {
     this.dialog.open(ModalOrdersComponent, {
       width: '95vw',
       maxWidth: '1100px',
       maxHeight: '90vh',
-      data:client,
-      disableClose:true
+      data: client,
+      disableClose: true,
     });
   }
 
@@ -267,7 +195,7 @@ export class FinderComponent implements AfterViewInit {
       error: () => {
         this.loadingService.setLoading(false);
         this.snackbarService.openSnackBar('Error al obtener clientes. Intente nuevamente.');
-      }
+      },
     });
   }
 }

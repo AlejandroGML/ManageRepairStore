@@ -1,157 +1,35 @@
-td{
-    font-size: 13px;
-}
-.div-buscador{
-    width: 60%;
-    margin-left: 20%;
-}
-.div-tabla{
-    width:90%;
-    margin-left: 5%;
-    max-height: 60vh;
-}
-.tr-body:hover{
-    background-color: var(--color-primary-light);
-}
-.icon-order{
-    cursor:pointer;
-    color: var(--color-primary);
-    position: relative;
-    left: -5%;
-}
-.icon-order:hover{
-    color: var(--color-primary);
-}
-.icon-edit{
-    color: var(--color-success);
-    padding-right:6px;
-}
-.icon-edit:hover{
-    color: color-mix(in srgb, var(--color-success) 75%, #000);
-}
-.icon-remove{
-    padding-left:6px;
-    color: var(--color-text-muted) !important;
-}
-.icon-remove:hover{
-    color: var(--color-text) !important;
-}
-.empty-message{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--color-warning-soft);
-    padding-top: 16px;
-    width: 90%;
-    margin-left: 5%;
-    margin-bottom: 6px;
-    margin-top: 7px;
-    border-radius: 8px;
-}
-/* --- Phase 4 inline style migration --- */
-.search-filter-card { height: 106px; }
-.search-btn { position: relative; top: 4px; }
-.export-btn { margin-left: 8px; }
-.filter-field-right { width: 30%; margin-left: 70%; }
-.col-rut { max-width: 78px; }
-.col-phone { max-width: 92px; }
-.col-orders-header { text-align: center; width: 70px; }
-.col-actions-header { text-align: center; width: 86px; }
-
-::ng-deep .mdc-text-field--outlined{
-    cursor: pointer;
-}
-/* ===== Port Phase 7 — finder restyle ===== */
-.page { padding-top: 4px; }
-
-/* ===== Port 8.5b — finder layout 2 columnas ===== */
-.page-actions { display: flex; gap: var(--space-sm); }
-
-.filter-select { min-width: 180px; }
-
-.search-input-wrap {
-  position: relative;
-  flex: 1;
-  min-width: 240px;
-  max-width: 420px;
-}
-
-.search-input-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-  color: var(--color-text-muted);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 38px;
-  padding-left: 38px;
-}
-
 .finder-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1.6fr 1fr;
   gap: var(--space-base);
   align-items: start;
-  margin-top: var(--space-base);
 }
 
-.table-filter {
-  height: 32px;
-  font-size: 13px;
+.client-search {
   width: 220px;
 }
 
-/* Recent orders */
-.ro-list { padding: var(--space-xs) 0; }
-
-.ro-item {
-  padding: var(--space-sm) 20px;
+.client-search .search-input {
+  height: 34px;
 }
 
-.ro-item + .ro-item { border-top: 1px solid var(--color-border); }
-
-.ro-main {
-  display: flex;
+.cell-icon {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-}
-
-.ro-code {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-primary-dark);
-}
-
-.ro-client {
-  font-size: 13.5px;
-  color: var(--color-text);
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ro-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  margin-top: 4px;
-}
-
-.ro-date {
-  font-size: 12px;
+  justify-content: center;
+  margin-right: 6px;
   color: var(--color-text-muted);
+  vertical-align: middle;
+}
+
+.cell-icon .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 @media (max-width: 1100px) {
-  .finder-grid { grid-template-columns: 1fr; }
+  .finder-grid {
+    grid-template-columns: 1fr;
+  }
 }

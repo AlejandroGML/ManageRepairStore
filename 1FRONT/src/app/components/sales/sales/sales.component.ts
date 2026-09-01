@@ -34,6 +34,8 @@ export class SalesComponent implements OnInit, OnDestroy {
   catalog: Product[] = [];
   catalogFiltered: Product[] = [];
   catalogQuery = '';
+  categoryFilter = 'all';
+  categoryNames: string[] = [];
   catalogLoading = true;
   get userLogged(): any { return this.authService.getCurrentUser(); }
 
@@ -55,8 +57,10 @@ export class SalesComponent implements OnInit, OnDestroy {
 
   private loadCatalog(): void {
     this.catalogLoading = true;
-    this.productsApi.getProductsWithLastTransaction().subscribe((products) => {
+    this.productsApi.getProductsWithLastTransaction().subscribe((products: Product[]) => {
+
       this.catalog = products;
+      this.categoryNames = [...new Set(products.map((p) => p.category?.name).filter((n): n is string => !!n))].sort();
       this.catalogLoading = false;
       this.filterCatalog();
     });
@@ -64,9 +68,41 @@ export class SalesComponent implements OnInit, OnDestroy {
 
   filterCatalog(): void {
     const q = this.catalogQuery.trim().toLowerCase();
-    this.catalogFiltered = q
+    let list = q
       ? this.catalog.filter((p) => p.name.toLowerCase().includes(q) || String(p.id).includes(q))
       : this.catalog;
+    if (this.categoryFilter !== 'all') {
+      list = list.filter((p) => p.category?.name === this.categoryFilter);
+    }
+    this.catalogFiltered = list;
+  }
+
+  /** Public alias para el template (ngModelChange del select). */
+  onCategoryChange(): void {
+    this.filterCatalog();
+  }
+
+  /** Ícono por categoría (seed: nombre del ícono en product.image). */
+  productIcon(product: Product): string {
+    const img = product.image;
+    if (!img) return 'image';
+    if (/^(https?:)?\/\//.test(img) || img.includes('/') || img.startsWith('assets/')) return 'image';
+    return img;
+  }
+
+  /** Badge del tile: "X en stock" con tono según stock. */
+  tileStockClass(stock: number): string {
+    if (stock <= 2) return 'badge-error';
+    if (stock <= 6) return 'badge-warning';
+    return 'badge-success';
+  }
+
+  lastTicket(): void {
+    this.snackbar.info('Ticket reimpreso');
+  }
+
+  scanProduct(): void {
+    this.snackbar.info('Lector de código QR abierto');
   }
 
   /** Descuento total acumulado (para el panel de totales del carrito). */
@@ -203,7 +239,7 @@ applyDiscount(index: number, discount: number): void {
           this.snackbar.success('Venta realizada correctamente');
           this.dataSyncService.notifyTransactionUpdate();
         },
-        error: (err) => {
+        error: (err: any) => {
           this.submitting = false;
           this.snackbar.error(err.error?.message || 'Error al realizar la venta');
         }

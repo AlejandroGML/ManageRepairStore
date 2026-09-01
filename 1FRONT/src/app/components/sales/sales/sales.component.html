@@ -2,58 +2,73 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Punto de venta</h1>
-      <p class="page-lead">Agrega productos al carrito y completa la venta.</p>
+      <p class="page-lead">Busca productos y agrégalos al carrito</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-ghost btn-sm" (click)="openProductSearch()">
-        <mat-icon fontIcon="search"></mat-icon> Buscar producto
+      <button class="btn btn-ghost btn-sm" (click)="lastTicket()">
+        <mat-icon fontIcon="receipt_long"></mat-icon> Último ticket
       </button>
     </div>
   </div>
 
   <div class="pos-grid">
     <!-- Catálogo -->
-    <div class="card pos-catalog">
-      <div class="card-head">
-        <h2 class="card-title">Catálogo</h2>
-        <div class="catalog-search">
-          <mat-icon fontIcon="search" class="cs-icon"></mat-icon>
-          <input
-            class="input cs-input"
-            placeholder="Buscar por nombre o código..."
-            [(ngModel)]="catalogQuery"
-            (ngModelChange)="filterCatalog()"
-          />
+    <div class="pos-catalog">
+      <div class="card">
+        <div class="filter-bar">
+          <div class="catalog-search">
+            <mat-icon fontIcon="search" class="cs-icon"></mat-icon>
+            <input
+              class="input cs-input"
+              placeholder="Buscar por nombre o código…"
+              [(ngModel)]="catalogQuery"
+              (ngModelChange)="filterCatalog()"
+            />
+          </div>
+          <select class="select" [(ngModel)]="categoryFilter" (ngModelChange)="onCategoryChange()">
+            <option value="all">Todas las categorías</option>
+            <option *ngFor="let c of categoryNames" [value]="c">{{ c }}</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" (click)="scanProduct()">
+            <mat-icon fontIcon="qr_code_scanner"></mat-icon> Escanear
+          </button>
         </div>
+        <div class="card-pad catalog-grid" *ngIf="!catalogLoading && catalogFiltered.length; else catalogState">
+          <button
+            *ngFor="let product of catalogFiltered"
+            class="product-tile"
+            [disabled]="productStock(product) <= 0"
+            (click)="addProductToSale(product)"
+          >
+            <div class="pt-top">
+              <div class="thumb">
+                <mat-icon [fontIcon]="productIcon(product)"></mat-icon>
+              </div>
+              <div>
+                <div class="pt-name">{{ product.name }}</div>
+                <div class="pt-cat">{{ product.category?.name ?? '—' }}</div>
+              </div>
+            </div>
+            <div class="pt-price mono">{{ product.sellingPrice | currency:'CLP':'symbol-narrow':'1.0-0' }}</div>
+            <div class="pt-stock">
+              <span class="badge" [class]="tileStockClass(productStock(product))">
+                <span class="dot"></span> {{ productStock(product) }} en stock
+              </span>
+            </div>
+          </button>
+        </div>
+        <ng-template #catalogState>
+          <p class="empty-state" *ngIf="!catalogLoading">Sin resultados para "{{ catalogQuery }}".</p>
+          <p class="empty-state" *ngIf="catalogLoading">Cargando catálogo…</p>
+        </ng-template>
       </div>
-      <div class="catalog-grid" *ngIf="!catalogLoading && catalogFiltered.length; else catalogState">
-        <button
-          *ngFor="let product of catalogFiltered"
-          class="catalog-item"
-          [disabled]="productStock(product) <= 0"
-          (click)="addProductToSale(product)"
-          matTooltip="Agregar al carrito"
-        >
-          <span class="catalog-name">{{ product.name }}</span>
-          <span class="catalog-price mono">{{ product.sellingPrice | currency:'CLP':'symbol-narrow' }}</span>
-          <span class="badge" [class.badge-success]="productStock(product) > 8"
-            [class.badge-warning]="productStock(product) > 3 && productStock(product) <= 8"
-            [class.badge-error]="productStock(product) <= 3">
-            <span class="dot"></span> {{ productStock(product) }} u.
-          </span>
-        </button>
-      </div>
-      <ng-template #catalogState>
-        <p class="empty-state" *ngIf="!catalogLoading">Sin resultados para "{{ catalogQuery }}".</p>
-        <p class="empty-state" *ngIf="catalogLoading">Cargando catálogo…</p>
-      </ng-template>
     </div>
 
     <!-- Carrito -->
     <div class="card pos-cart">
       <div class="card-head">
         <h2 class="card-title">Carrito</h2>
-        <span class="cart-count">{{ dataSource.data.length }} {{ dataSource.data.length === 1 ? 'item' : 'items' }}</span>
+        <span class="cart-count">{{ dataSource.data.length }} ítems</span>
       </div>
 
       @if (dataSource.data.length === 0) {
@@ -95,13 +110,16 @@
           <div class="ct-row ct-grand"><span>Total</span><span class="mono">{{ totalSaleValue | currency:'CLP':'symbol-narrow' }}</span></div>
         </div>
 
-        <div class="cart-actions">
-          <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
-            <mat-icon fontIcon="check_circle"></mat-icon>
-            {{ submitting ? 'Procesando...' : 'Completar Venta' }}
-          </button>
-          <button class="btn btn-ghost" (click)="clearCart()">Vaciar carrito</button>
+        <div class="cart-client">
+          <mat-icon fontIcon="person" class="cc-icon"></mat-icon>
+          <button class="btn btn-ghost btn-sm cc-btn">Cliente: Sin cliente</button>
         </div>
+
+        <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
+          <mat-icon fontIcon="check_circle"></mat-icon>
+          {{ submitting ? 'Procesando...' : 'Completar venta' }}
+        </button>
+        <button class="btn btn-ghost clear-button" (click)="clearCart()">Vaciar carrito</button>
       }
     </div>
   </div>

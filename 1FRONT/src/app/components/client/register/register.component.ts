@@ -90,7 +90,8 @@ export class RegisterComponent implements OnChanges{
     this.ordersApi.registerOrder(value).subscribe((clientAdded:Client)=>{
       if (!clientAdded.orders?.length) return;
       this.ordenIngreso.date = new Date(clientAdded.orders[0].date);
-      this.ordenIngreso.code = clientAdded.orders[clientAdded.orders.length-1].id;
+      const lastOrder = clientAdded.orders[clientAdded.orders.length - 1];
+      this.ordenIngreso.code = (lastOrder as any).code ?? lastOrder.id;
       this.ordenIngreso.clientId = clientAdded.id;
       this.ordenIngreso.name = clientAdded.name;
       this.ordenIngreso.rut = clientAdded.rut_raw;

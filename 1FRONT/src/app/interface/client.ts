@@ -15,6 +15,7 @@ export interface Order {
   id: number;
   status?: string;
   comment?: string;
+  total?: number;
 }
 
 export interface Log {

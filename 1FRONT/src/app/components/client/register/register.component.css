@@ -1,157 +1,157 @@
-mat-form-field {
-    width: 90%;
-    margin-left: 5%;
+.form-register {
+  margin-top: var(--space-base);
 }
 
+.register-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-base);
+  align-items: start;
+}
 
-mat-card {
-    padding-top: 24px;
+.register-left {
+  padding: var(--space-base) 20px;
 }
-#field-id:nth-child(2){
-    height: 0px !important;
+
+.register-left .card-head {
+  margin-bottom: var(--space-base);
 }
-.box {
-    padding-top: 1.3%;
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-base);
+  margin-bottom: var(--space-base);
 }
-.send {
-    margin-top: 15px;
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-.form-register{
-    margin-top: 16px;
+
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
 }
-.register-row {
-    margin: 0;
-    margin-left: 2%;
+
+.field-error {
+  font-size: 12px;
+  color: var(--color-error);
+  margin-top: 4px;
 }
-.register-left-col {
-    padding: 0;
+
+.textarea {
+  height: auto;
+  min-height: 72px;
+  resize: vertical;
+  padding: 10px 12px;
 }
-.register-sidebar-col {
-    margin-top: 20px;
+
+/* Fila de búsqueda: input + botón Buscar */
+.search-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
 }
-.full-width-field {
-    margin-left: 2.5%;
-    width: 95.5%;
+
+.search-row .field-group {
+  max-width: 320px;
 }
-.right-card{
-    padding-left: 24px;
-    padding-right: 24px;
+
+.search-btn {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
-.right-card.text-center,
-.text-center {
-    text-align: center;
+
+.toggle-group {
+  justify-content: center;
 }
-.right-card h3 {
-    margin-bottom: -2px;
+
+/* Panel derecho */
+.register-sidebar {
+  position: sticky;
+  top: 80px;
 }
-.register-action-area {
-    height: 80px;
+
+.right-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
+
+.right-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.summary-row b {
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 4px 0;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.summary-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
 .register-btn {
-    margin-top: 10px;
-    margin-bottom: 16px;
-}
-.sidebar-card {
-    height: 322px;
-    padding-top: 0;
-    margin-top: 6px;
-}
-.sidebar-title-item {
-    text-align: center;
-}
-.last-entry-item {
-    width: 100%;
-    text-align: center;
-    height: 64px;
-}
-.search-icon {
-    cursor: pointer;
-}
-.icon-clear{
-    position: relative;
-    top: 18px;
-    left: 12px;
-    cursor: pointer;
-    color: var(--color-error);
-    margin-left: 10px;
-}
-.button-pdf{
-    font-size: 13px;
-    border-radius: 6px;
-}
-.active{
-    background-color: var(--color-primary)!important;
-}
-.icon-find{
-    position: relative;
-    top: 6px;
-    left: 12px;
-    cursor: pointer;
-    color: var(--color-primary);
-}
-.icon-find:hover{
-    color: var(--color-primary);
-}
-.disabled{
-    cursor: not-allowed !important;
-}
-.text-13{
-    font-size: 13px;
-}
-#clear-register{
-    position: relative;
-    top: -64px;
-    left: 41%;
-}
-::ng-deep .mat-mdc-form-field-infix{
-    padding-top: 20px !important;
-    padding-bottom: 6px !important;
-    min-height: 42px !important;
+  width: 100%;
+  justify-content: center;
+  margin-top: 6px;
 }
 
-/* Empresa toggle + input row */
-.company-field-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: 5%;
-    width: 90%;
-}
-.company-field-row mat-slide-toggle {
-    flex-shrink: 0;
-    margin-bottom: 20px;
-}
-.company-input {
-    flex: 1;
-    width: 100% !important;
-    margin-left: 0 !important;
+.clear-link {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-decoration: underline;
 }
 
-/* Responsive: collapse right panel below form on mobile */
-@media (max-width: 767.98px) {
-    .register-sidebar-col {
-        margin-top: 0;
-    }
-    .right-card {
-        margin-left: 0;
-    }
-    .sidebar-card {
-        height: auto;
-    }
+.clear-link:hover {
+  color: var(--color-primary);
 }
 
-@media (max-width: 375px) {
-    .register-row {
-        flex-direction: column;
-    }
-    .register-left-col,
-    .register-sidebar-col {
-        width: 100%;
-        padding: 8px;
-    }
-    mat-form-field {
-        width: 100%;
-    }
+@media (max-width: 1000px) {
+  .register-grid {
+    grid-template-columns: 1fr;
+  }
+  .register-sidebar {
+    position: static;
+  }
+  .field-row {
+    grid-template-columns: 1fr;
+  }
 }
-/* ===== Port Phase 5 — register restyle ===== */
-.page { padding-top: 4px; }

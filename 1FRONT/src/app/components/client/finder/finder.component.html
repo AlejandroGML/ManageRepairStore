@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Clientes y órdenes</h1>
-      <p class="page-lead">Registro de clientes, RUT e historial de órdenes.</p>
+      <p class="page-lead">{{ clients.length }} clientes · {{ totalOrders }} órdenes registradas</p>
     </div>
     <div class="page-actions">
       <button class="btn btn-ghost btn-sm" (click)="exportToExcel()">
@@ -11,133 +11,96 @@
     </div>
   </div>
 
-  <!-- Búsqueda -->
-  <mat-card class="card search-card">
-    <mat-card-content>
-      <div class="filter-bar">
-        <select class="select filter-select" [(ngModel)]="filterSelected" [ngModelOptions]="{standalone: true}" (ngModelChange)="selectOption()">
-          <option *ngFor="let option of filterOptions" [value]="option.value">{{ option.viewValue }}</option>
-        </select>
-        <div class="search-input-wrap">
-          <mat-icon fontIcon="search" class="search-input-icon"></mat-icon>
-          <input
-            id="input-filter"
-            class="input search-input"
-            [(ngModel)]="filterValue"
-            [ngModelOptions]="{standalone: true}"
-            [placeholder]="filterSelected ? filterOptions[iFilterSelected].placeHolder : 'Buscar...'"
-            [maxLength]="filterOptions[iFilterSelected].value | lengthFilter"
-            (keyup.enter)="findClientData()"
-          />
-        </div>
-        <button class="btn btn-primary" (click)="findClientData()">
-          <mat-icon fontIcon="search"></mat-icon> Buscar
-        </button>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Grid: clientes + órdenes recientes -->
   <div class="finder-grid">
-    <mat-card class="card" *ngIf="!showEmptyRow && dataSource.data.length>0">
+    <!-- Clientes -->
+    <div class="card">
       <div class="card-head">
         <h2 class="card-title">Clientes</h2>
-        <input class="input table-filter" (keyup)="applyFilter($event)" placeholder="Filtrar resultados..." #input *ngIf="dataSource.data.length>5" />
+        <div class="search-input-wrap client-search">
+          <mat-icon fontIcon="search" class="search-input-icon"></mat-icon>
+          <input
+            class="input search-input"
+            placeholder="Buscar por RUT o nombre..."
+            [(ngModel)]="clientSearch"
+            [ngModelOptions]="{standalone: true}"
+          />
+        </div>
       </div>
-      <div class="table-responsive"><table mat-table [dataSource]="dataSource">
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef> N° </th>
-          <td mat-cell *matCellDef="let element"> {{element.id}} </td>
-        </ng-container>
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef> Cliente </th>
-          <td mat-cell *matCellDef="let element"> {{element.name | name}} </td>
-        </ng-container>
-        <ng-container matColumnDef="rut">
-          <th mat-header-cell *matHeaderCellDef> Rut </th>
-          <td class="col-rut" mat-cell *matCellDef="let element"> {{element.rut_normalizado ? (element.rut_normalizado | rut) : (element.rut_raw | rut)}} </td>
-        </ng-container>
-        <ng-container matColumnDef="phone">
-          <th mat-header-cell *matHeaderCellDef> Teléfono </th>
-          <td class="col-phone" mat-cell *matCellDef="let element"> {{element.phone}} </td>
-        </ng-container>
-        <ng-container matColumnDef="city">
-          <th mat-header-cell *matHeaderCellDef> Ciudad </th>
-          <td mat-cell *matCellDef="let element"> {{element.city | name}} </td>
-        </ng-container>
-        <ng-container matColumnDef="address">
-          <th mat-header-cell *matHeaderCellDef> Dirección </th>
-          <td mat-cell *matCellDef="let element"> {{element.address | name}} </td>
-        </ng-container>
-        <ng-container matColumnDef="company_name">
-          <th mat-header-cell *matHeaderCellDef> Empresa </th>
-          <td mat-cell *matCellDef="let element"> {{element.company_name || 'Sin empresa'}} </td>
-        </ng-container>
-        <ng-container matColumnDef="pdf">
-          <th mat-header-cell *matHeaderCellDef class="col-orders-header"> Ver Órdenes </th>
-          <td mat-cell *matCellDef="let element" class="text-center">
-            <mat-icon class="icon-order ico-orders"
-              role="button" tabindex="0"
-              (click)="showOrderDetails(element)"
-              (keydown.enter)="showOrderDetails(element)"
-              (keydown.space)="showOrderDetails(element)"
-              aria-label="Ver órdenes">description</mat-icon></td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="col-actions-header">Acciones</th>
-          <td mat-cell *matCellDef="let element;let i = index" class="text-center">
-            <mat-icon class="icon-order icon-edit"
-              matTooltip="Editar Cliente"
-              matTooltipPosition="above"
-              role="button" tabindex="0"
-              (click)="showModalEditUser(element)"
-              (keydown.enter)="showModalEditUser(element)"
-              (keydown.space)="showModalEditUser(element)"
-              aria-label="Editar cliente">edit</mat-icon>
-            <mat-icon class="icon-order icon-remove"
-              matTooltip="Eliminar Cliente"
-              matTooltipPosition="above"
-              role="button" tabindex="0"
-              (click)="showModalDeleteUser(element)"
-              (keydown.enter)="showModalDeleteUser(element)"
-              (keydown.space)="showModalDeleteUser(element)"
-              aria-label="Eliminar cliente">delete</mat-icon>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr class="tr-body tr-row" mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        <tr class="mat-row" *matNoDataRow>
-          <td class="text-center mat-cell" colspan="9">Sin coincidencias</td>
-        </tr>
-      </table></div>
-    </mat-card>
-
-    <mat-card class="card" *ngIf="showEmptyRow">
-      <div class="empty-state">No se han encontrado resultados</div>
-    </mat-card>
+      <div class="table-responsive">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>RUT</th>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th class="col-num">Órdenes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let client of filteredClients">
+              <td class="mono">{{ client.rut_normalizado ? (client.rut_normalizado | rut) : (client.rut_raw | rut) }}</td>
+              <td class="strong">{{ client.name | name }}</td>
+              <td>{{ client.phone }}</td>
+              <td class="col-num mono">{{ client.orderCount }}</td>
+              <td class="col-num">
+                <button class="icon-btn" (click)="showOrderDetails(client)" matTooltip="Ver órdenes" aria-label="Ver órdenes">
+                  <mat-icon fontIcon="receipt_long"></mat-icon>
+                </button>
+                <button class="icon-btn" (click)="showModalEditUser(client)" matTooltip="Editar" aria-label="Editar cliente">
+                  <mat-icon fontIcon="edit"></mat-icon>
+                </button>
+                <button class="icon-btn" (click)="showModalDeleteUser(client)" matTooltip="Eliminar" aria-label="Eliminar cliente">
+                  <mat-icon fontIcon="delete"></mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredClients.length">
+              <td colspan="5" class="empty-state">Sin clientes que coincidan.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Órdenes recientes -->
-    <div class="card recent-orders">
+    <div class="card">
       <div class="card-head">
         <h2 class="card-title">Órdenes recientes</h2>
       </div>
-      <div class="ro-list" *ngIf="recentOrders.length; else noOrders">
-        <div class="ro-item" *ngFor="let o of recentOrders">
-          <div class="ro-main">
-            <span class="ro-code mono">ORD-{{ o.id }}</span>
-            <span class="ro-client">{{ o.clientName }}</span>
-          </div>
-          <div class="ro-meta">
-            <span class="badge" [class]="statusBadgeClass(o.status)">
-              <span class="dot"></span> {{ o.status }}
-            </span>
-            <span class="ro-date">{{ o.date }}</span>
-          </div>
-        </div>
+      <div class="table-responsive">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente</th>
+              <th class="col-num">Total</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of ordersTable">
+              <td class="mono strong">{{ o.code }}</td>
+              <td>{{ o.clientName }}</td>
+              <td class="col-num mono">{{ o.total | currency:'CLP':'symbol-narrow':'1.0-0' }}</td>
+              <td>
+                <span class="badge" [class]="statusBadgeClass(o.status)">
+                  <span class="dot"></span> {{ statusLabel(o.status) }}
+                </span>
+              </td>
+              <td class="col-num">
+                <button class="icon-btn" matTooltip="Ver ticket" aria-label="Ver ticket">
+                  <mat-icon fontIcon="receipt_long"></mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!ordersTable.length">
+              <td colspan="5" class="empty-state">Sin órdenes registradas.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <ng-template #noOrders>
-        <p class="empty-state">Sin órdenes registradas.</p>
-      </ng-template>
     </div>
   </div>
 </div>

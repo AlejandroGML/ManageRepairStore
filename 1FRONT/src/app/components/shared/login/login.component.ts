@@ -16,6 +16,7 @@ export class LoginComponent implements AfterViewInit {
   email: string = '';
   password: string = '';
   loading: boolean = false;
+  showPassword = false;
   @Output() setLoggedEvent = new EventEmitter<UserProfile>();
 
   private readonly authService = inject(AuthService);
@@ -44,6 +45,19 @@ export class LoginComponent implements AfterViewInit {
     this.email = account.email;
     this.password = account.password;
     this.login();
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  forgotPassword(event: Event): void {
+    event.preventDefault();
+    this.snackBar.open('Contacta al administrador para restablecer tu contraseña', 'Cerrar', {
+      duration: 3000,
+      horizontalPosition: 'right',
+      verticalPosition: 'top',
+    });
   }
 
   login(): void {

@@ -1,183 +1,134 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Registrar Orden</h1>
-      <p class="page-lead">Orden de ingreso — busca el cliente por N° o RUT y registra la reparación.</p>
+      <h1 class="page-title">Orden de ingreso</h1>
+      <p class="page-lead">Registra el cliente y genera la orden de servicio</p>
     </div>
   </div>
-<form [formGroup]="form" class="form-register">
-    <div class="row register-row">
-        <div class="col-12 col-md-7 register-left-col">
-            <mat-card class="card card-pad">
-                <div class="row">
-                    <div class="col-4 offset-4">
-                        <mat-form-field id="field-id">
-                            <mat-label>N° Cliente</mat-label>
-                            <input id="input-id-client" matInput placeholder="Ej: 70" 
-                                formControlName="clientId" (keyup.enter)="findByClientId()"
-                                autocomplete="off" >
-                            <mat-icon class="search-icon" matSuffix role="button" tabindex="0" (click)="findByClientId()" (keydown.enter)="findByClientId()" (keydown.space)="findByClientId()" aria-label="Buscar">search</mat-icon>
-                        </mat-form-field>
-                    </div>
-                    <div class="col-6">
-                        <mat-form-field>
-                            <mat-label>Nombre</mat-label>
-                            <input id="input-client" matInput placeholder="Ej: Comercial Demo SpA" 
-                                autocomplete="off" formControlName="name"  required>
-                            <mat-error *ngIf="form.get('name')?.invalid">{{obtenerMensajeError(form.get('name')!)}}</mat-error>
-                        </mat-form-field>
-                        <div class="company-field-row">
-                            <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
-                                Empresa
-                            </mat-slide-toggle>
-                            <mat-form-field class="company-input">
-                                <mat-label>Nombre Empresa</mat-label>
-                                <input matInput placeholder="Ej: Comercial Demo SpA" 
-                                    autocomplete="off" formControlName="company_name">
-                            </mat-form-field>
-                        </div>
-                        <app-rut-input formControlName="rut" placeholder="Ej: 12.345.678-5"></app-rut-input>
-                        <mat-form-field>
-                            <mat-label>Correo Electrónico</mat-label>
-                            <input  matInput placeholder="Ej: info@demo.example" formControlName="email">
-                            <mat-error *ngIf="form.get('email')?.invalid">{{obtenerMensajeError(form.get('email')!)}}</mat-error>
-                        </mat-form-field> 
-                    </div>
-                    <div class="col-6">
-                        <mat-form-field>
-                            <mat-label>Dirección</mat-label>
-                            <input matInput placeholder="Ej: Av. Providencia 1234" formControlName="address" required>
-                            <mat-error *ngIf="form.get('address')?.invalid">{{obtenerMensajeError(form.get('address')!)}}</mat-error>
-                        </mat-form-field>
-                        <mat-form-field>
-                            <mat-label>Comuna</mat-label>
-                            <input matInput placeholder="Ej: Santiago" formControlName="city" required>
-                            <mat-error *ngIf="form.get('city')?.invalid">{{obtenerMensajeError(form.get('city')!)}}</mat-error>
-                        </mat-form-field>
-                        <mat-form-field>
-                            <mat-label>Teléfono</mat-label>
-                            <input matInput placeholder="Ej: 9 5555 1234" formControlName="phone" required>
-                            <mat-error *ngIf="form.get('phone')?.invalid">{{obtenerMensajeError(form.get('phone')!)}}</mat-error>
-                        </mat-form-field>
-                    </div>
-                    <div class="col-12">
-                        <mat-form-field class="full-width-field">
-                            <mat-label>Descripción</mat-label>
-                            <textarea id="id-description" matInput formControlName="description" required></textarea>
-                            <mat-error *ngIf="form.get('description')?.invalid">{{obtenerMensajeError(form.get('description')!)}}</mat-error>
-                        </mat-form-field>
-        
-                        <mat-form-field class="full-width-field">
-                            <mat-label>Observaciones</mat-label>
-                            <textarea matInput formControlName="observation" required></textarea>
-                            <mat-error *ngIf="form.get('observation')?.invalid">{{obtenerMensajeError(form.get('observation')!)}}</mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
-            </mat-card>
-        </div>
-        <div class="col-12 col-md-3 offset-md-1 register-sidebar-col">
-            <mat-card class="card right-card text-center">
-                <h3>Orden de Ingreso</h3>
-                <div class="row">
-                    <div class="text-center register-action-area">
-                        <button class="btn btn-primary register-btn" type="button" (click)="registerOrder()"><mat-icon fontIcon="add_box"></mat-icon> Registrar</button><br>
-                        <span id="clear-register">
-                            <mat-icon class="icon-clear"
-                              matTooltip="Limpiar datos"
-                              matTooltipPosition="above"
-                              role="button" tabindex="0"
-                              (click)="clearAllDataForm()"
-                              (keydown.enter)="clearAllDataForm()"
-                              (keydown.space)="clearAllDataForm()"
-                              aria-label="Limpiar datos">clear</mat-icon>
-                        </span>
-                    </div>
-                  </div>
-            </mat-card><br>
 
-            <!-- Datos Cliente // Descargar -->
-            <mat-card class="card right-card sidebar-card">
-                <mat-list>
-                    <mat-list-item class="sidebar-title-item">
-                        <span class="text-13"><b>Último Ingreso</b></span>
-                    </mat-list-item>
-                    <mat-divider></mat-divider>
-                    <mat-list-item>
-                        <div class="row">
-                            <div class="col-4">
-                                <span class="text-13">N° Cliente:</span>
-                            </div>
-                            <div class="col-4">
-                                <b class="text-13">{{ordenIngreso.clientId ? ordenIngreso.clientId : ''}}</b>
-                            </div>
-                            <div class="col-4">
-                                <mat-icon class="icon-find" *ngIf="lastClientAdded"
-                                matTooltip="Cargar datos último ingreso"
-                                matTooltipPosition="above"
-                                role="button" tabindex="0"
-                                (click)="findByLastClient()"
-                                (keydown.enter)="findByLastClient()"
-                                (keydown.space)="findByLastClient()"
-                                aria-label="Cargar último ingreso">reply_all</mat-icon>
-                            </div>
-                        </div>
-                    </mat-list-item>
-                    <mat-divider></mat-divider>
-                    <mat-list-item>
-                        <div class="row">
-                            <div class="col-4">
-                                <span class="text-13"> Cliente: </span>
-                            </div>
-                            <div class="col-4">
-                                <b class="text-13">{{ordenIngreso.name ? (ordenIngreso.name | name) : ''}}</b>
-                            </div>
-                        </div>
-                    </mat-list-item>
-                    <mat-divider></mat-divider>
-                    <mat-list-item>
-                        <div class="row">
-                            <div class="col-4">
-                                <span class="text-13">N° Aviso:</span>
-                            </div>
-                            <div class="col-4">
-                                <b class="text-13">{{ordenIngreso.code ? ordenIngreso.code : ''}}</b>
-                            </div>
-                            <div class="col-4">
-                                <mat-icon class="icon-find" *ngIf="lastClientAdded"
-                                matTooltip="Descargar QR"
-                                matTooltipPosition="above"
-                                role="button" tabindex="0"
-                                (click)="downloadQR()"
-                                (keydown.enter)="downloadQR()"
-                                (keydown.space)="downloadQR()"
-                                aria-label="Descargar QR">cloud_download</mat-icon>
-                            </div>
-                        </div>
-                    </mat-list-item>
-                    <mat-divider></mat-divider>
-                    <mat-list-item>
-                        <div class="row">
-                            <div class="col-4">
-                                <span class="text-13">Fecha:</span>
-                            </div>
-                            <div class="col-8">
-                                <b class="text-13">{{ordenIngreso.date ? (ordenIngreso.date | date: 'dd-MM-yyyy hh:mm') : ''}}</b>
-                            </div>
-                        </div>
-                    </mat-list-item>
-                    <mat-divider></mat-divider>
-                    <mat-list-item class="last-entry-item">
-                        <button type="button" (click)="descargarPDF()"
-                        class="btn btn-soft button-pdf"
-                        [ngClass]="enablePDF?'active':'disabled'"
-                        [disabled]="!enablePDF"><mat-icon fontIcon="picture_as_pdf"></mat-icon> Descargar</button>
-                    </mat-list-item>
-                  </mat-list>
-            </mat-card>
+  <form [formGroup]="form" class="form-register">
+    <div class="register-grid">
+      <!-- Datos del cliente -->
+      <mat-card class="card card-pad register-left">
+        <div class="card-head">
+          <h2 class="card-title">Datos del cliente</h2>
         </div>
+
+        <div class="field-row search-row">
+          <div class="field-group">
+            <label class="field-label" for="input-id-client">N° Cliente</label>
+            <input
+              id="input-id-client"
+              class="input"
+              placeholder="Ej: 70"
+              formControlName="clientId"
+              (keyup.enter)="findByClientId()"
+              autocomplete="off"
+            />
+          </div>
+          <button class="btn btn-soft search-btn" type="button" (click)="findByClientId()">
+            <mat-icon fontIcon="search"></mat-icon> Buscar
+          </button>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="input-client">Nombre</label>
+            <input id="input-client" class="input" placeholder="Ej: Comercial Demo SpA" autocomplete="off" formControlName="name" />
+            <span class="field-error" *ngIf="form.get('name')?.invalid">{{ obtenerMensajeError(form.get('name')!) }}</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="input-address">Dirección</label>
+            <input id="input-address" class="input" placeholder="Ej: Av. Providencia 1234" formControlName="address" />
+            <span class="field-error" *ngIf="form.get('address')?.invalid">{{ obtenerMensajeError(form.get('address')!) }}</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="input-rut">RUT</label>
+            <app-rut-input formControlName="rut" placeholder="Ej: 12.345.678-5"></app-rut-input>
+            <span class="field-error" *ngIf="form.get('rut')?.invalid">{{ obtenerMensajeError(form.get('rut')!) }}</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="input-phone">Teléfono</label>
+            <input id="input-phone" class="input" placeholder="Ej: 9 5555 1234" formControlName="phone" />
+            <span class="field-error" *ngIf="form.get('phone')?.invalid">{{ obtenerMensajeError(form.get('phone')!) }}</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group toggle-group">
+            <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
+              Es empresa (razón social)
+            </mat-slide-toggle>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="input-company">Nombre Empresa</label>
+            <input id="input-company" class="input" placeholder="Ej: Comercial Demo SpA" autocomplete="off" formControlName="company_name" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="input-email">Correo</label>
+            <input id="input-email" class="input" placeholder="Ej: info@demo.example" formControlName="email" />
+            <span class="field-error" *ngIf="form.get('email')?.invalid">{{ obtenerMensajeError(form.get('email')!) }}</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="input-city">Comuna</label>
+            <input id="input-city" class="input" placeholder="Ej: Santiago" formControlName="city" />
+            <span class="field-error" *ngIf="form.get('city')?.invalid">{{ obtenerMensajeError(form.get('city')!) }}</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="id-description">Descripción</label>
+          <textarea id="id-description" class="input textarea" placeholder="Descripción del equipo / reparación…" formControlName="description"></textarea>
+          <span class="field-error" *ngIf="form.get('description')?.invalid">{{ obtenerMensajeError(form.get('description')!) }}</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="id-observation">Observaciones</label>
+          <textarea id="id-observation" class="input textarea" placeholder="Observaciones…" formControlName="observation"></textarea>
+          <span class="field-error" *ngIf="form.get('observation')?.invalid">{{ obtenerMensajeError(form.get('observation')!) }}</span>
+        </div>
+      </mat-card>
+
+      <!-- Panel derecho: resumen de la orden -->
+      <div class="register-sidebar">
+        <mat-card class="card right-card">
+          <h3 class="right-title">Orden de ingreso</h3>
+
+          <div class="summary-row"><span>N° Cliente</span><b class="mono">{{ ordenIngreso.clientId ? ordenIngreso.clientId : '—' }}</b></div>
+          <div class="summary-row"><span>Cliente</span><b>{{ ordenIngreso.name ? (ordenIngreso.name | name) : '—' }}</b></div>
+          <div class="summary-row"><span>N° Aviso</span><b class="mono">{{ ordenIngreso.code || '—' }}</b></div>
+          <div class="summary-row"><span>Fecha</span><b class="mono">{{ ordenIngreso.date ? (ordenIngreso.date | date: 'dd-MM-yyyy HH:mm') : '—' }}</b></div>
+
+          <p class="summary-hint">Registra la orden para habilitar QR y PDF.</p>
+
+          <div class="summary-actions">
+            <button type="button" class="btn btn-soft" [disabled]="!enablePDF" (click)="downloadQR()">
+              <mat-icon fontIcon="qr_code"></mat-icon> QR
+            </button>
+            <button type="button" class="btn btn-soft" [disabled]="!enablePDF" (click)="descargarPDF()">
+              <mat-icon fontIcon="picture_as_pdf"></mat-icon> PDF
+            </button>
+          </div>
+
+          <button class="btn btn-primary register-btn" type="button" (click)="registerOrder()">
+            <mat-icon fontIcon="add_box"></mat-icon> Registrar orden
+          </button>
+
+          <span id="clear-register" class="clear-link" role="button" tabindex="0"
+            (click)="clearAllDataForm()" (keydown.enter)="clearAllDataForm()" (keydown.space)="clearAllDataForm()"
+            aria-label="Limpiar datos">
+            Limpiar datos
+          </span>
+        </mat-card>
+      </div>
     </div>
-</form>
-<br><br>
-<app-pdf [ordenIngreso]="ordenIngreso"></app-pdf>
+  </form>
+
+  <app-pdf [ordenIngreso]="ordenIngreso"></app-pdf>
 </div>

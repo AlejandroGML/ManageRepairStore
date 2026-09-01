@@ -33,29 +33,45 @@
       <form (ngSubmit)="login()">
         <div class="field">
           <label for="login-email">Email</label>
-          <input
-            id="input-email"
-            class="input"
-            type="email"
-            placeholder="correo@ejemplo.cl"
-            [(ngModel)]="email"
-            name="email"
-            autocomplete="email"
-            required
-          >
+          <div class="input-group">
+            <mat-icon fontIcon="mail" class="input-icon"></mat-icon>
+            <input
+              id="input-email"
+              class="input"
+              type="email"
+              placeholder="usuario@ejemplo.cl"
+              [(ngModel)]="email"
+              name="email"
+              autocomplete="email"
+              required
+            >
+          </div>
         </div>
         <div class="field">
           <label for="login-pass">Contraseña</label>
-          <input
-            id="input-pass"
-            class="input"
-            type="password"
-            placeholder="Contraseña"
-            [(ngModel)]="password"
-            name="password"
-            autocomplete="current-password"
-            required
-          >
+          <div class="input-group">
+            <mat-icon fontIcon="lock" class="input-icon"></mat-icon>
+            <input
+              id="input-pass"
+              class="input"
+              type="password"
+              placeholder="Contraseña"
+              [(ngModel)]="password"
+              name="password"
+              autocomplete="current-password"
+              required
+            >
+            <button type="button" class="eye-toggle" (click)="togglePassword()" aria-label="Mostrar contraseña" matTooltip="Mostrar contraseña">
+              <mat-icon [fontIcon]="showPassword ? 'visibility_off' : 'visibility'"></mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="login-row">
+          <label class="remember">
+            <input type="checkbox" checked /> Recordarme
+          </label>
+          <a href="#" class="forgot-link" (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
         </div>
 
         <div class="login-actions">
@@ -68,22 +84,22 @@
       </form>
 
       <div class="demo-box">
-        <div class="demo-title">Acceso rápido demo</div>
+        <div class="demo-title">ENTRAR COMO</div>
         <div class="demo-roles">
           <button type="button" class="demo-role" (click)="demoLogin('admin')">
-            <span class="demo-avatar">A</span>
+            <mat-icon fontIcon="admin_panel_settings"></mat-icon>
             <div><b>Administrador</b><span>admin@demo.example</span></div>
           </button>
           <button type="button" class="demo-role" (click)="demoLogin('seller')">
-            <span class="demo-avatar">V</span>
+            <mat-icon fontIcon="point_of_sale"></mat-icon>
             <div><b>Vendedor</b><span>clerk@demo.example</span></div>
           </button>
           <button type="button" class="demo-role" (click)="demoLogin('warehouse')">
-            <span class="demo-avatar">B</span>
+            <mat-icon fontIcon="inventory_2"></mat-icon>
             <div><b>Bodega</b><span>bodega@demo.example</span></div>
           </button>
         </div>
-        <div class="demo-note">Todos los accesos usan la contraseña <code>Demo1234!</code></div>
+        <div class="demo-note">Clave: <code>Demo1234!</code></div>
       </div>
     </div>
   </div>

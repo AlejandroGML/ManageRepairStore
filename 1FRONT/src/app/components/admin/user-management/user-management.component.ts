@@ -20,14 +20,6 @@ import { SnackbarService } from '../../../services/snackbar.service';
   styleUrls: ['./user-management.component.css'],
 })
 export class UserManagementComponent implements OnInit, AfterViewInit {
-  readonly displayedColumns: string[] = [
-    'user',
-    'email',
-    'role',
-    'active',
-    'lastAccess',
-    'actions',
-  ];
   users: SystemUser[] = [];
 
   private readonly usersService = inject(UsersService);
@@ -65,21 +57,20 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   }
 
   userInitials(name: string): string {
-    const parts = name.trim().split(/\s+/);
-    const first = parts[0]?.charAt(0) ?? '';
-    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
-    return (first + last).toUpperCase();
+    return (name.trim().charAt(0) ?? '').toUpperCase();
   }
 
   /** Relativo "hace X" basado en updatedAt (proxy del último acceso). */
   lastAccess(user: SystemUser): string {
     const date = (user as any).updatedAt ?? (user as any).createdAt;
     if (!date) return '—';
-    const diffH = (Date.now() - new Date(date).getTime()) / 3600000;
-    if (diffH < 1) return 'hace un momento';
+    const diffMin = (Date.now() - new Date(date).getTime()) / 60000;
+    if (diffMin < 1) return 'hace un momento';
+    if (diffMin < 60) return `hace ${Math.round(diffMin)} min`;
+    const diffH = diffMin / 60;
     if (diffH < 24) return `hace ${Math.round(diffH)} h`;
-    if (diffH < 720) return `hace ${Math.round(diffH / 24)} d`;
-    return 'hace mucho';
+    const diffD = diffH / 24;
+    return `hace ${Math.round(diffD)} días`;
   }
 
   openCreateDialog(): void {
