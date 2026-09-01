@@ -15,6 +15,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
+  // Prevent heuristic HTTP caching (browser 304 responses break zone.js
+  // change detection for HttpClient callbacks on subsequent visits).
+  req = req.clone({
+    setHeaders: { 'Cache-Control': 'no-store' },
+  });
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
