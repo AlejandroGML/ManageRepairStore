@@ -3,6 +3,13 @@
 @use './theme' as theme;
 @use './components';
 
+// Global reset: border-box everywhere (lost when Bootstrap was removed)
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 // Apply Angular Material light theme globally
 @include mat.all-component-themes(theme.$mrs-light-theme);
 
@@ -15,6 +22,7 @@
   --color-primary-disabled: #{vars.$color-primary-disabled};
   --color-on-primary: #{vars.$color-on-primary};
   --color-secondary: #{vars.$color-secondary};
+  --color-accent: #{vars.$color-accent};
   --color-sidebar: #{vars.$color-sidebar};
   --on-sidebar: var(--color-text-dark);
   --on-sidebar-muted: var(--color-text-muted-dark);

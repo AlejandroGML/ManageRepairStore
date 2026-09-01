@@ -129,6 +129,8 @@ table.data th {
   color: var(--color-text-muted);
   padding: 10px 14px;
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  white-space: nowrap;
 }
 
 table.data td {
