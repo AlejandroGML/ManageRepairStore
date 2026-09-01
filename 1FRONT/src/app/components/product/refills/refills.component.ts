@@ -73,7 +73,9 @@ export class RefillsComponent implements OnInit {
 
   /** Fecha corta estilo prototipo: "30 ago". */
   private shortDate(d: Date): string {
-    return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }).replace('.', '');
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = d.toLocaleDateString('es-CL', { month: 'short' }).replace('.', '').replace('-', '');
+    return `${day} ${month}`;
   }
 
   /** Formato moneda sin decimales para placeholders: "52.000". */
@@ -89,8 +91,29 @@ export class RefillsComponent implements OnInit {
   onProductChange(): void {
     const product = this.products.find((p) => p.id === this.selectedProductId);
     if (!product) return;
-    const last = product.transactions?.[product.transactions.length - 1];
-    this.costPrice = last?.costPrice ?? product.costPrice ?? 0;
+    const cached = this.lastCostFor(product);
+    if (cached > 0) {
+      this.costPrice = cached;
+      return;
+    }
+    // El GET solo trae la última tx (puede ser una venta sin costo):
+    // buscar el último costo real en el historial completo del producto.
+    if (product.id !== undefined) {
+      this.productsApi.getProductTransactions(product.id).subscribe((txs) => {
+        const lastCost = [...txs].reverse().find((tx) => tx.costPrice);
+        this.costPrice = lastCost?.costPrice ?? 0;
+      });
+    }
+  }
+
+  /** Último costo unitario conocido: la transacción más reciente CON costo
+   *  (una venta puede ser la última tx sin costPrice). */
+  private lastCostFor(product: Product): number {
+    const txs = product.transactions ?? [];
+    for (const tx of [...txs].reverse()) {
+      if (tx.costPrice) return tx.costPrice;
+    }
+    return product.costPrice ?? 0;
   }
 
   registerEntry(): void {
