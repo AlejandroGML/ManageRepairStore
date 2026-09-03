@@ -8,7 +8,7 @@ import { ModalOrdersComponent } from '../modal-orders/modal-orders.component';
 import { ModalEditClientComponent } from '../modal-edit-client/modal-edit-client.component';
 import { ModalDeleteClientComponent } from '../modal-delete-client/modal-delete-client.component';
 import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
-import { Client, Order } from 'src/app/interface/client';
+import { Client } from 'src/app/interface/client';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
@@ -24,6 +24,7 @@ interface OrderRow {
   total: number;
   status: string;
 }
+
 @Component({
   selector: 'app-finder',
   templateUrl: './finder.component.html',
@@ -40,25 +41,48 @@ export class FinderComponent implements OnInit {
 
   clients: ClientRow[] = [];
   ordersTable: OrderRow[] = [];
+  /** Todas las órdenes por cliente (para filtrar el panel al seleccionar). */
+  private ordersByClient = new Map<number, OrderRow[]>();
   totalOrders = 0;
   clientSearch = '';
+  /** Cliente seleccionado: sus órdenes recientes se muestran en el panel derecho. */
+  selectedClient: ClientRow | null = null;
+
+  /** Paginación de la tabla de clientes (10 por página, mismo patrón custom). */
+  pageSize = 10;
+  pageIndex = 0;
 
   ngOnInit(): void {
     this.loadData();
   }
 
   private loadData(): void {
+    // GET /order/all devuelve clientes con sus órdenes.
     this.ordersApi.getAllOrders().subscribe((clientsWithOrders) => {
       const counts = new Map<number, number>();
       const orders: OrderRow[] = [];
-      for (const c of clientsWithOrders) {
+      this.ordersByClient = new Map();
+      for (const c of clientsWithOrders ?? []) {
         const list = c.orders ?? [];
-        if (c.id !== undefined) counts.set(c.id, list.length);
+        if (c.id !== undefined) {
+          counts.set(c.id, list.length);
+          this.ordersByClient.set(
+            c.id,
+            list
+              .map((o: any): OrderRow => ({
+                code: o.code ?? this.orderCode(o.id),
+                clientName: c.name,
+                total: o.total ?? 0,
+                status: o.status ?? 'Pendiente',
+              }))
+              .sort((a: OrderRow, b: OrderRow) => b.code.localeCompare(a.code))
+          );
+        }
         for (const o of list) {
           orders.push({
             code: (o as any).code ?? this.orderCode(o.id),
             clientName: c.name,
-            total: o.total ?? 0,
+            total: (o as any).total ?? 0,
             status: o.status ?? 'Pendiente',
           });
         }
@@ -68,9 +92,33 @@ export class FinderComponent implements OnInit {
       this.ordersTable = orders.slice(0, 6);
 
       this.clientsApi.getAllClients().subscribe((allClients) => {
-        this.clients = allClients.map((c) => ({ ...c, orderCount: counts.get(c.id ?? 0) ?? 0 }));
+        this.clients = (allClients ?? []).map((c) => ({
+          ...c,
+          orderCount: counts.get(c.id ?? 0) ?? 0,
+        }));
+        // Si había un cliente seleccionado y ya no está en la lista, deseleccionar.
+        if (this.selectedClient) {
+          const stillThere = this.clients.some((c) => c.id === this.selectedClient?.id);
+          if (!stillThere) this.selectClient(null);
+        }
       });
     });
+  }
+
+  /** Selecciona un cliente (fila) y muestra sus órdenes recientes en el panel. */
+  selectClient(client: ClientRow | null): void {
+    this.selectedClient = client;
+    if (client?.id !== undefined && this.ordersByClient.has(client.id)) {
+      this.ordersTable = (this.ordersByClient.get(client.id) ?? []).slice(0, 6);
+    } else if (client) {
+      this.ordersTable = [];
+    } else {
+      // Sin selección: mostrar las recientes globales.
+      this.ordersTable = [...this.ordersByClient.values()]
+        .flat()
+        .sort((a, b) => b.code.localeCompare(a.code))
+        .slice(0, 6);
+    }
   }
 
   /** Código de orden estilo prototipo: ORD-1039, ORD-1040... */
@@ -86,6 +134,30 @@ export class FinderComponent implements OnInit {
       const rut = (c.rut_raw ?? '').toLowerCase().replace(/[.-]/g, '');
       return name.includes(q) || rut.includes(q);
     });
+  }
+
+  get pageCount(): number { return Math.max(1, Math.ceil(this.filteredClients.length / this.pageSize)); }
+  get startIndex(): number { return Math.min(this.pageIndex * this.pageSize, this.filteredClients.length); }
+  get endIndex(): number { return Math.min(this.startIndex + this.pageSize, this.filteredClients.length); }
+  get pageClients(): ClientRow[] { return this.filteredClients.slice(this.startIndex, this.endIndex); }
+  /**
+   * Páginas visibles con ventana compacta (primera, última, actual ±1 y elipsis)
+   * para que la paginación no desborde el marco con decenas de botones.
+   */
+  get visiblePages(): (number | '…')[] {
+    const total = this.pageCount;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+    const current = this.pageIndex;
+    const pages: (number | '…')[] = [0];
+    if (current > 2) pages.push('…');
+    for (let i = Math.max(1, current - 1); i <= Math.min(total - 2, current + 1); i++) pages.push(i);
+    if (current < total - 3) pages.push('…');
+    pages.push(total - 1);
+    return pages;
+  }
+
+  goPage(page: number): void {
+    if (page >= 0 && page < this.pageCount) this.pageIndex = page;
   }
 
   /** Badge class por estado de orden (prototipo). */

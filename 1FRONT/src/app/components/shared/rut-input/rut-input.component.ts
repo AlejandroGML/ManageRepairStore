@@ -118,11 +118,30 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
       return;
     }
 
-    // Sin DV explícito — computar DV automáticamente
-    if (this.value.length >= 8 && this.value.length <= 9 && /^\d+$/.test(this.value)) {
+    // Sin guión: 8 dígitos = solo base (computar DV); 9 = base(8) + DV explícito (validar)
+    if (/^\d{8}$/.test(this.value)) {
       const dv = this.rutService.calcularDV(this.value);
       const normalized = `${this.value}-${dv}`;
       this.value = normalized.replace(/-/g, '');
+      this.displayValue = this.formatRutDisplay(this.value);
+      this.rutError = '';
+      this.onChange(this.value);
+      return;
+    }
+
+    if (/^\d{8}[0-9K]$/.test(this.value)) {
+      // El usuario escribió un DV explícito sin guión — validarlo
+      const base = this.value.slice(0, -1);
+      const dv = this.value.slice(-1);
+      const expectedDv = this.rutService.calcularDV(base);
+
+      if (expectedDv !== dv) {
+        this.rutError = `DV no válido — se esperaba ${expectedDv}`;
+        this.onChange(this.value);
+        return;
+      }
+
+      // DV explícito válido
       this.displayValue = this.formatRutDisplay(this.value);
       this.rutError = '';
       this.onChange(this.value);

@@ -18,7 +18,7 @@
     <div class="div-table">
         <mat-card class="card-table-wrapper">
             <div class="table-responsive">
-                <table mat-table [dataSource]="dataSource">
+                <table mat-table [dataSource]="pageClients">
                     <!-- id Column -->
                     <ng-container matColumnDef="id">
                         <th mat-header-cell *matHeaderCellDef> N° </th>
@@ -64,6 +64,21 @@
                         <td class="mat-cell" colspan="4">Sin coincidencias</td>
                     </tr>
                 </table>
+            </div>
+            <div class="paginator">
+              <span>Mostrando {{ dataSource.data.length ? startIndex + 1 : 0 }}-{{ endIndex }} de {{ dataSource.data.length }}</span>
+              <div class="pages" *ngIf="pageCount > 1">
+                <button class="pg" [disabled]="pageIndex === 0" (click)="goPage(pageIndex - 1)" aria-label="Anterior">
+                  <mat-icon fontIcon="chevron_left"></mat-icon>
+                </button>
+                <ng-container *ngFor="let p of visiblePages">
+                  <button *ngIf="p !== '…'" class="pg" [class.active]="p === pageIndex" (click)="goPage(p)">{{ p + 1 }}</button>
+                  <span *ngIf="p === '…'" class="pg-ellipsis">…</span>
+                </ng-container>
+                <button class="pg" [disabled]="pageIndex >= pageCount - 1" (click)="goPage(pageIndex + 1)" aria-label="Siguiente">
+                  <mat-icon fontIcon="chevron_right"></mat-icon>
+                </button>
+              </div>
             </div>
         </mat-card>
     </div>

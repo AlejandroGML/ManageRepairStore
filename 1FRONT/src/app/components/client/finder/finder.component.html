@@ -38,12 +38,20 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let client of filteredClients">
+            <tr
+              *ngFor="let client of pageClients"
+              class="client-row"
+              [class.selected]="selectedClient?.id === client.id"
+              (click)="selectClient(client)"
+              (keydown.enter)="selectClient(client)"
+              tabindex="0"
+              role="button"
+            >
               <td class="mono">{{ client.rut_normalizado ? (client.rut_normalizado | rut) : (client.rut_raw | rut) }}</td>
               <td class="strong">{{ client.name | name }}</td>
               <td>{{ client.phone }}</td>
               <td class="col-num mono">{{ client.orderCount }}</td>
-              <td class="col-num">
+              <td class="col-num" (click)="$event.stopPropagation()">
                 <button class="icon-btn" (click)="showOrderDetails(client)" matTooltip="Ver órdenes" aria-label="Ver órdenes">
                   <mat-icon fontIcon="receipt_long"></mat-icon>
                 </button>
@@ -55,11 +63,26 @@
                 </button>
               </td>
             </tr>
-            <tr *ngIf="!filteredClients.length">
+            <tr *ngIf="!pageClients.length">
               <td colspan="5" class="empty-state">Sin clientes que coincidan.</td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="paginator">
+        <span>Mostrando {{ filteredClients.length ? startIndex + 1 : 0 }}-{{ endIndex }} de {{ filteredClients.length }}</span>
+        <div class="pages" *ngIf="pageCount > 1">
+          <button class="pg" [disabled]="pageIndex === 0" (click)="goPage(pageIndex - 1)" aria-label="Anterior">
+            <mat-icon fontIcon="chevron_left"></mat-icon>
+          </button>
+          <ng-container *ngFor="let p of visiblePages">
+            <button *ngIf="p !== '…'" class="pg" [class.active]="p === pageIndex" (click)="goPage(p)">{{ p + 1 }}</button>
+            <span *ngIf="p === '…'" class="pg-ellipsis">…</span>
+          </ng-container>
+          <button class="pg" [disabled]="pageIndex >= pageCount - 1" (click)="goPage(pageIndex + 1)" aria-label="Siguiente">
+            <mat-icon fontIcon="chevron_right"></mat-icon>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -67,6 +90,7 @@
     <div class="card">
       <div class="card-head">
         <h2 class="card-title">Órdenes recientes</h2>
+        <span class="recent-context" *ngIf="selectedClient">{{ selectedClient.name | name }}</span>
       </div>
       <div class="table-responsive">
         <table class="data">
@@ -76,7 +100,6 @@
               <th>Cliente</th>
               <th class="col-num">Total</th>
               <th>Estado</th>
-              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -89,14 +112,11 @@
                   <span class="dot"></span> {{ statusLabel(o.status) }}
                 </span>
               </td>
-              <td class="col-num">
-                <button class="icon-btn" matTooltip="Ver ticket" aria-label="Ver ticket">
-                  <mat-icon fontIcon="receipt_long"></mat-icon>
-                </button>
-              </td>
             </tr>
             <tr *ngIf="!ordersTable.length">
-              <td colspan="5" class="empty-state">Sin órdenes registradas.</td>
+              <td colspan="4" class="empty-state">
+                {{ selectedClient ? 'Este cliente no tiene órdenes.' : 'Sin órdenes registradas. Selecciona un cliente para ver las suyas.' }}
+              </td>
             </tr>
           </tbody>
         </table>
