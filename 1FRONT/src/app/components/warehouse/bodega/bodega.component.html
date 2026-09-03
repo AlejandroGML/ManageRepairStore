@@ -1,0 +1,22 @@
+<div class="bodega-tabs" role="tablist" aria-label="Secciones de bodega">
+  <a
+    class="bodega-tab"
+    routerLink="inventario"
+    routerLinkActive="active"
+    role="tab"
+    aria-selected="true"
+  >
+    <mat-icon fontIcon="inventory_2"></mat-icon> Inventario
+  </a>
+  <a
+    class="bodega-tab"
+    routerLink="reposiciones"
+    routerLinkActive="active"
+    role="tab"
+    aria-selected="false"
+  >
+    <mat-icon fontIcon="add_box"></mat-icon> Reposiciones
+  </a>
+</div>
+
+<router-outlet></router-outlet>

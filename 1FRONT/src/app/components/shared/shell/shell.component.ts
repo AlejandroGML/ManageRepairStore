@@ -6,6 +6,7 @@ import { filter } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from 'src/app/services/auth.service';
+import { ProductsApiService } from 'src/app/services/products.api.service';
 import { UserProfile } from 'src/app/interface/user-profile';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
@@ -14,7 +15,7 @@ interface NavItem {
   label: string;
   icon: string;
   roles: string[];
-  badge?: number;
+  badgeKey?: string;
 }
 
 interface NavGroup {
@@ -32,12 +33,14 @@ interface NavGroup {
 export class ShellComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly productsApi = inject(ProductsApiService);
 
   sidebarOpen = false;
   sidebarCollapsed = false;
   pageTitle = '';
   pageSub = '';
   globalSearch = '';
+  pendingRefills = 0;
 
   readonly navGroups: NavGroup[] = [
     {
@@ -51,9 +54,7 @@ export class ShellComponent implements OnInit {
     {
       label: 'Inventario',
       items: [
-        { path: '/productos', label: 'Productos', icon: 'category', roles: ['admin', 'warehouse'] },
-        { path: '/bodega', label: 'Bodega', icon: 'warehouse', roles: ['admin', 'warehouse'] },
-        { path: '/reposiciones', label: 'Reposiciones', icon: 'add_box', roles: ['admin', 'warehouse'], badge: 3 },
+        { path: '/bodega', label: 'Bodega', icon: 'warehouse', roles: ['admin', 'warehouse'], badgeKey: 'refills' },
       ],
     },
     {
@@ -67,8 +68,8 @@ export class ShellComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    // Título inicial: cubre recarga directa (el subscribe de NavigationEnd
-    // solo se registra después del primer evento de navegación).
+    // Título inicial: cubre recarga directa / F5 (el subscribe a NavigationEnd
+    // se registra después del primer evento de navegación).
     this.applyRouteTitle();
 
     this.router.events
@@ -78,16 +79,10 @@ export class ShellComponent implements OnInit {
         this.sidebarOpen = false;
       });
 
-    // Ctrl+K focus global search
-    document.addEventListener('keydown', (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        document.getElementById('global-search')?.focus();
-      }
-    });
+    this.loadPendingRefills();
   }
 
-  /** Lee title/sub de la ruta activa más profunda (prototipo: topbar). */
+  /** Lee title/sub de la ruta activa más profunda (data de la ruta). */
   private applyRouteTitle(): void {
     let route = this.router.routerState.root;
     while (route.firstChild) {
@@ -96,6 +91,30 @@ export class ShellComponent implements OnInit {
     const data = route.snapshot.data as { title?: string; sub?: string };
     this.pageTitle = data.title ?? '';
     this.pageSub = data.sub ?? '';
+  }
+
+  /**
+   * Badge de reposiciones: cuenta productos con stock bajo su mínimo
+   * (punto de reposición) desde el endpoint de productos activos.
+   */
+  private loadPendingRefills(): void {
+    this.productsApi.getActiveProducts().subscribe({
+      next: (products) => {
+        this.pendingRefills = (products ?? []).filter(
+          (p) => (p.stock ?? 0) < (p.minimum ?? 0),
+        ).length;
+      },
+      error: () => {
+        this.pendingRefills = 0;
+      },
+    });
+  }
+
+  badgeFor(item: NavItem): number | undefined {
+    if (item.badgeKey !== 'refills' || this.pendingRefills <= 0) {
+      return undefined;
+    }
+    return this.pendingRefills;
   }
 
   get user(): UserProfile | undefined {

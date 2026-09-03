@@ -20,7 +20,30 @@ describe('AppRoutingModule', () => {
     const shell = routes.find((r) => r.path === '');
     const paths = (shell?.children ?? []).map((c) => c.path);
     expect(paths).toEqual(
-      expect.arrayContaining(['panel', 'ventas', 'registrar', 'productos', 'bodega', 'reposiciones', 'clientes', 'admin']),
+      expect.arrayContaining(['panel', 'ventas', 'registrar', 'bodega', 'clientes', 'admin']),
+    );
+  });
+
+  it('should redirect legacy /productos and /reposiciones into /bodega', () => {
+    const shell = routes.find((r) => r.path === '');
+    const productos = (shell?.children ?? []).find((c) => c.path === 'productos');
+    const reposiciones = (shell?.children ?? []).find((c) => c.path === 'reposiciones');
+    expect(productos).toBeDefined();
+    expect(reposiciones).toBeDefined();
+    if (productos) {
+      expect(productos.redirectTo).toBe('bodega/inventario');
+    }
+    if (reposiciones) {
+      expect(reposiciones.redirectTo).toBe('bodega/reposiciones');
+    }
+  });
+
+  it('should nest inventario/reposiciones under /bodega', () => {
+    const shell = routes.find((r) => r.path === '');
+    const bodega = (shell?.children ?? []).find((c) => c.path === 'bodega');
+    const childPaths = (bodega?.children ?? []).map((c) => c.path);
+    expect(childPaths).toEqual(
+      expect.arrayContaining(['inventario', 'reposiciones']),
     );
   });
 });
