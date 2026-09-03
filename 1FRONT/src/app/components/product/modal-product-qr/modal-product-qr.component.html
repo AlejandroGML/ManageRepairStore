@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Código QR del producto</h2>
+
+<mat-dialog-content class="qr-content">
+  <p class="qr-hint">
+    Escanea para identificar este producto en bodega o imprime la etiqueta.
+  </p>
+  <div class="qr-host-wrap">
+    <div #qrHost class="qr-host"></div>
+  </div>
+  <p class="qr-product mono">{{ productName }}</p>
+  <p class="qr-data mono muted">{{ qrData }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center">
+  <button mat-button (click)="close()">Cerrar</button>
+  <button mat-flat-button color="primary" (click)="download()">
+    <mat-icon fontIcon="download"></mat-icon> Descargar PNG
+  </button>
+</mat-dialog-actions>

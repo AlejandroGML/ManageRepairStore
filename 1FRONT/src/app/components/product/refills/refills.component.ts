@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
-import { Product, RefillGroup } from 'src/app/interface/warehouse';
+import { Product } from 'src/app/interface/warehouse';
 import { SalesApiService } from 'src/app/services/sales.api.service';
 import { ProductsApiService } from 'src/app/services/products.api.service';
 import { DataSyncService } from 'src/app/services/data-sync.service';
@@ -16,6 +16,12 @@ interface HistoryRow {
   product: string;
   qty: number;
   provider: string;
+  /** Stock previo (antes de la entrada) — null si la tx no trae finalStock. */
+  prevStock: number | null;
+  /** Stock posterior (finalStock server-side). */
+  postStock: number | null;
+  /** Solo para ordenar (no se muestra). */
+  sortDate: number;
 }
 
 @Component({
@@ -57,18 +63,43 @@ export class RefillsComponent implements OnInit {
     });
   }
 
+  /**
+   * Historial derivado de las transacciones de stock de GET /product/active:
+   * entradas con quantity > 0 (reposiciones). El PROVEEDOR viaja en
+   * tx.description. Muestra stock previo → posterior (finalStock server-side).
+   */
   private loadHistory(): void {
-    this.salesApi.getRefillsHistory().subscribe((groups: RefillGroup[]) => {
-      this.history = groups.flatMap((g) =>
-        (g.transactions ?? []).map((tx) => ({
-          id: g.id ?? 0,
-          date: g.createdAt ? this.shortDate(new Date(g.createdAt)) : '',
-          product: tx.product ? (tx.product as any).name ?? '—' : '—',
-          qty: Math.abs(tx.quantity ?? 0),
-          provider: tx.description ?? '—',
-        })),
-      );
+    this.productsApi.getActiveProducts().subscribe((products: Product[]) => {
+      const rows: HistoryRow[] = [];
+      for (const p of products ?? []) {
+        for (const tx of p.transactions ?? []) {
+          if ((tx.quantity ?? 0) <= 0) continue; // solo entradas de stock
+          const createdAt = tx.createdAt ? new Date(tx.createdAt) : null;
+          const postStock = tx.finalStock !== undefined && tx.finalStock !== null
+            ? Number(tx.finalStock)
+            : null;
+          const prevStock = postStock !== null ? postStock - Math.abs(tx.quantity ?? 0) : null;
+          rows.push({
+            id: tx.id,
+            date: createdAt ? this.shortDate(createdAt) : '',
+            product: p.name,
+            qty: Math.abs(tx.quantity ?? 0),
+            provider: tx.description?.trim() || '—',
+            prevStock,
+            postStock,
+            sortDate: createdAt?.getTime() ?? 0,
+          });
+        }
+      }
+      // Más reciente primero.
+      rows.sort((a, b) => b.sortDate - a.sortDate);
+      this.history = rows;
     });
+  }
+
+  /** Detalle legible del proveedor/factura (sin el prefijo "Reposición de stock ·"). */
+  providerLabel(h: HistoryRow): string {
+    return h.provider.replace(/^Reposición de stock\s*·\s*/i, '');
   }
 
   /** Fecha corta estilo prototipo: "30 ago". */

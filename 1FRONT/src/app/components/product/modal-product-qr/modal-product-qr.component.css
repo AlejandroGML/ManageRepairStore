@@ -1,0 +1,41 @@
+.qr-content {
+  text-align: center;
+  padding: 8px 24px 4px;
+}
+
+.qr-hint {
+  font-size: 13px;
+  color: var(--color-text-muted, #6b7280);
+  margin: 0 0 16px;
+}
+
+.qr-host-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.qr-host {
+  padding: 12px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  background: #ffffff;
+  display: inline-block;
+}
+
+.qr-host canvas {
+  display: block;
+}
+
+.qr-product {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  word-break: break-word;
+}
+
+.qr-data {
+  font-size: 11px;
+  word-break: break-all;
+  margin: 0;
+}

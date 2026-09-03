@@ -2,12 +2,15 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatDialog } from '@angular/material/dialog';
 import { Product } from 'src/app/interface/warehouse';
+import { Client } from 'src/app/interface/client';
 import { SalesApiService } from 'src/app/services/sales.api.service';
 import { ProductsApiService } from 'src/app/services/products.api.service';
+import { ClientsApiService } from 'src/app/services/clients.api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { ProductSearchModalComponent } from '../../product/product-search-modal/product-search-modal.component';
+import { ModalChoiceClientComponent } from '../../client/modal-choice-client/modal-choice-client.component';
 import { DataSyncService } from 'src/app/services/data-sync.service';
 import { Subscription } from 'rxjs';
 import jsPDF from 'jspdf';
@@ -37,6 +40,9 @@ export class SalesComponent implements OnInit, OnDestroy {
   categoryFilter = 'all';
   categoryNames: string[] = [];
   catalogLoading = true;
+  /** Cliente seleccionado (solo informativo — el batch no recibe clientId). */
+  selectedClient: Client | null = null;
+  clients: Client[] = [];
   get userLogged(): any { return this.authService.getCurrentUser(); }
 
   private readonly salesApi = inject(SalesApiService);
@@ -45,10 +51,14 @@ export class SalesComponent implements OnInit, OnDestroy {
   private readonly dataSyncService = inject(DataSyncService);
   private readonly snackbar = inject(SnackbarService);
   private readonly productsApi = inject(ProductsApiService);
+  private readonly clientsApi = inject(ClientsApiService);
   private readonly saleSubscriptions = new Subscription();
 
   ngOnInit(): void {
     this.loadCatalog();
+    this.clientsApi.getAllClients().subscribe((clients) => {
+      this.clients = clients ?? [];
+    });
   }
 
   ngOnDestroy(): void {
@@ -57,12 +67,39 @@ export class SalesComponent implements OnInit, OnDestroy {
 
   private loadCatalog(): void {
     this.catalogLoading = true;
-    this.productsApi.getProductsWithLastTransaction().subscribe((products: Product[]) => {
-
-      this.catalog = products;
-      this.categoryNames = [...new Set(products.map((p) => p.category?.name).filter((n): n is string => !!n))].sort();
+    this.productsApi.getActiveProducts().subscribe((products: Product[]) => {
+      this.catalog = (products ?? []).map((p) => {
+        const lastTx =
+          p.transactions && p.transactions.length > 0
+            ? p.transactions[p.transactions.length - 1]
+            : null;
+        return {
+          ...p,
+          sellingPrice: p.sellingPrice ?? lastTx?.sellingPrice ?? 0,
+        };
+      });
+      this.categoryNames = [
+        ...new Set(
+          this.catalog.map((p) => (p as any).category?.name).filter((n): n is string => !!n)
+        ),
+      ].sort();
       this.catalogLoading = false;
       this.filterCatalog();
+    });
+  }
+
+  /** Selector de cliente del carrito (modal, estilo ABAGAS). */
+  openClientSelector(): void {
+    const dialogRef = this.dialog.open(ModalChoiceClientComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      data: { users: this.clients, rut: '' },
+    });
+
+    dialogRef.afterClosed().subscribe((client: Client) => {
+      if (client) {
+        this.selectedClient = client;
+      }
     });
   }
 
@@ -236,6 +273,7 @@ applyDiscount(index: number, discount: number): void {
           this.dataSource.data = [];
           this.totalSaleValue = 0;
           this.submitting = false;
+          this.selectedClient = null;
           this.snackbar.success('Venta realizada correctamente');
           this.dataSyncService.notifyTransactionUpdate();
         },

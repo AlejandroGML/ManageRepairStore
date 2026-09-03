@@ -10,6 +10,7 @@ import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.
 import { ImageModalComponent } from '../../shared/image-modal/image-modal.component';
 import { ModalEditProductComponent } from '../modal-edit-product/modal-edit-product.component';
 import { ModalViewTransactionsComponent } from '../modal-view-transactions/modal-view-transactions.component';
+import { ModalProductQrComponent } from '../modal-product-qr/modal-product-qr.component';
 import { ModalProductExistsComponent } from '../modal-product-exists/modal-product-exists.component';
 import { ModalSearchResultsComponent } from '../modal-search-results/modal-search-results.component';
 import { DataSyncService } from 'src/app/services/data-sync.service';
@@ -180,6 +181,11 @@ export class ProductComponent implements OnInit, AfterViewInit {
     return `P-${String(id).padStart(3, '0')}`;
   }
 
+  /** Categoría visible en la fila (join del backend; — si no tiene). */
+  categoryName(product: Product): string {
+    return (product as any).category?.name ?? '—';
+  }
+
   /** Ícono por categoría (seed usa el nombre del ícono en product.image). */
   productIcon(product: Product): string {
     const img = product.image;
@@ -211,6 +217,14 @@ export class ProductComponent implements OnInit, AfterViewInit {
     } else {
       console.error("El ID del producto es indefinido");
     }
+  }
+
+  /** Abre el modal con el QR de identificación del producto. */
+  openProductQrModal(product: Product): void {
+    this.dialog.open(ModalProductQrComponent, {
+      width: '420px',
+      data: { product },
+    });
   }
 
   openEditProductModal(product: Product): void {

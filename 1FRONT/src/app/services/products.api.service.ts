@@ -40,6 +40,11 @@ export class ProductsApiService {
     return this.http.get<Product[]>(`${this.url}/product/LastTransaction`);
   }
 
+  // Productos activos (incluye stock y mínimo server-side)
+  getActiveProducts(): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.url}/product/active`);
+  }
+
   // Método para obtener las transacciones de un producto
   getProductTransactions(productId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/product/${productId}/transactions`);

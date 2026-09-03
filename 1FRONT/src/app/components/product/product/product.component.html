@@ -44,6 +44,7 @@
             <th>ID</th>
             <th>Imagen</th>
             <th>Nombre</th>
+            <th>Categoría</th>
             <th class="col-num">Stock</th>
             <th>Localización</th>
             <th class="col-num">Costo</th>
@@ -61,6 +62,7 @@
               </span>
             </td>
             <td class="strong">{{ product.name }}</td>
+            <td>{{ categoryName(product) }}</td>
             <td class="col-num mono">{{ product.stock }}</td>
             <td class="mono">{{ product.location }}</td>
             <td class="col-num mono">{{ product.costPrice | currency:'CLP':'symbol-narrow':'1.0-0' }}</td>
@@ -71,6 +73,9 @@
               </span>
             </td>
             <td class="col-num">
+              <button class="icon-btn" (click)="openProductQrModal(product)" matTooltip="QR del producto" aria-label="QR del producto">
+                <mat-icon fontIcon="qr_code_2"></mat-icon>
+              </button>
               <button class="icon-btn" (click)="openTransactionModal(product)" matTooltip="Historial" aria-label="Historial">
                 <mat-icon fontIcon="history"></mat-icon>
               </button>
@@ -83,7 +88,7 @@
             </td>
           </tr>
           <tr *ngIf="!pageItems.length">
-            <td colspan="9" class="empty-state">Sin productos que coincidan con el filtro.</td>
+            <td colspan="10" class="empty-state">Sin productos que coincidan con el filtro.</td>
           </tr>
         </tbody>
       </table>

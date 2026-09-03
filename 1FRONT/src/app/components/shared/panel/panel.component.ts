@@ -7,6 +7,7 @@ import { ClientsApiService } from 'src/app/services/clients.api.service';
 import { OrdersApiService } from 'src/app/services/orders.api.service';
 import { AdminApiService } from 'src/app/services/admin.api.service';
 import { SalesApiService } from 'src/app/services/sales.api.service';
+import { SnackbarService } from 'src/app/services/snackbar.service';
 import { Product } from 'src/app/interface/warehouse';
 import { Log } from 'src/app/interface/client';
 
@@ -42,6 +43,7 @@ export class PanelComponent implements OnInit {
   private readonly ordersApi = inject(OrdersApiService);
   private readonly adminApi = inject(AdminApiService);
   private readonly salesApi = inject(SalesApiService);
+  private readonly snackbar = inject(SnackbarService);
 
   kpis: Kpi[] = [];
   lowStock: Product[] = [];
@@ -152,6 +154,10 @@ export class PanelComponent implements OnInit {
   }
 
   exportLowStockCsv(): void {
+    if (!this.lowStock.length) {
+      this.snackbar.openSnackBar('Sin alertas de stock bajo para exportar');
+      return;
+    }
     const header = 'Producto,Stock,Mínimo\n';
     const rows = this.lowStock.map((p) => `${p.name},${p.stock},${p.minimum ?? ''}`).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });

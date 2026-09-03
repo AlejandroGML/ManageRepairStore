@@ -68,7 +68,8 @@
               <th>Fecha</th>
               <th>Producto</th>
               <th class="col-num">Cant.</th>
-              <th>Proveedor</th>
+              <th class="col-num">Stock</th>
+              <th>Detalle</th>
             </tr>
           </thead>
           <tbody>
@@ -76,7 +77,13 @@
               <td class="mono muted">{{ h.date }}</td>
               <td>{{ h.product }}</td>
               <td class="col-num mono">+{{ h.qty }}</td>
-              <td>{{ h.provider }}</td>
+              <td class="col-num mono">
+                <ng-container *ngIf="h.prevStock !== null; else stockEmpty">
+                  {{ h.prevStock }} → {{ h.postStock }}
+                </ng-container>
+                <ng-template #stockEmpty><span class="muted">—</span></ng-template>
+              </td>
+              <td>{{ providerLabel(h) }}</td>
             </tr>
           </tbody>
         </table>

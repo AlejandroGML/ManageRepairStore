@@ -112,7 +112,9 @@
 
         <div class="cart-client">
           <mat-icon fontIcon="person" class="cc-icon"></mat-icon>
-          <button class="btn btn-ghost btn-sm cc-btn">Cliente: Sin cliente</button>
+          <button class="btn btn-ghost btn-sm cc-btn" (click)="openClientSelector()">
+            {{ selectedClient ? 'Cliente: ' + selectedClient.name : 'Cliente: Sin cliente' }}
+          </button>
         </div>
 
         <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
