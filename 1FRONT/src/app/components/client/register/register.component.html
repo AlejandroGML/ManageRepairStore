@@ -17,7 +17,7 @@
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="input-client">Nombre</label>
-            <input id="input-client" class="input" placeholder="Ej: Comercial Toledo SpA" autocomplete="off" formControlName="name" />
+            <input id="input-client" class="input" placeholder="Ej: Comercial Ejemplo SpA" autocomplete="off" formControlName="name" />
             <span class="field-error" *ngIf="form.get('name')?.invalid">{{ obtenerMensajeError(form.get('name')!) }}</span>
           </div>
           <div class="field-group">
@@ -76,7 +76,7 @@
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="input-email">Correo</label>
-            <input id="input-email" class="input" placeholder="Ej: info@toledo.example" formControlName="email" />
+            <input id="input-email" class="input" placeholder="Ej: info@demo.example" formControlName="email" />
             <span class="field-error" *ngIf="form.get('email')?.invalid">{{ obtenerMensajeError(form.get('email')!) }}</span>
           </div>
           <div class="field-group">
