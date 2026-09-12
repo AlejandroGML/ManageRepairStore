@@ -17,6 +17,13 @@ export class LoginComponent implements AfterViewInit {
   loading: boolean = false;
   showPassword = false;
 
+  /** Accesos rápidos del demo (solo datos sintéticos). */
+  private readonly demoAccounts: Record<string, { email: string; password: string }> = {
+    admin: { email: 'admin@demo.example', password: 'Demo1234!' },
+    seller: { email: 'clerk@demo.example', password: 'Demo1234!' },
+    warehouse: { email: 'bodega@demo.example', password: 'Demo1234!' },
+  };
+
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -25,6 +32,14 @@ export class LoginComponent implements AfterViewInit {
     setTimeout(() => {
       document.getElementById('input-email')?.focus();
     }, 400);
+  }
+
+  demoLogin(role: 'admin' | 'seller' | 'warehouse'): void {
+    const account = this.demoAccounts[role];
+    if (!account) return;
+    this.email = account.email;
+    this.password = account.password;
+    this.login();
   }
 
   togglePassword(): void {

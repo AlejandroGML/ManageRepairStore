@@ -201,3 +201,71 @@
   .login-form-pane { padding: 24px; }
   .login-hero h1 { font-size: 22px; }
 }
+
+/* ===== Demo quick-login (portfolio: synthetic accounts) ===== */
+.demo-box {
+  margin-top: 26px;
+  background: var(--color-primary-light);
+  border: 1px dashed var(--color-primary-disabled);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.demo-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary-dark);
+  margin-bottom: 8px;
+}
+
+.demo-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.demo-role:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.demo-role .mat-icon {
+  color: var(--color-primary);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.demo-role b { display: block; font-size: 13.5px; color: var(--color-text); }
+.demo-role span { font-size: 12px; color: var(--color-text-muted); font-family: var(--font-mono); }
+
+.demo-note {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
+.demo-note code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}

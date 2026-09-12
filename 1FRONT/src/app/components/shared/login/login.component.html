@@ -7,7 +7,7 @@
     </div>
 
     <div class="login-hero">
-      <h1>Gestiona tu negocio de gas y repuestos en un solo lugar</h1>
+      <h1>Gestiona tu taller de reparaciones en un solo lugar</h1>
       <p>Stock en tiempo real, ventas, órdenes de servicio y tickets PDF/QR con RUT y precios en CLP. Hecho para el mercado chileno.</p>
       <div class="hero-feature">
         <mat-icon fontIcon="inventory_2"></mat-icon>
@@ -76,6 +76,25 @@
           }
         </div>
       </form>
+
+      <div class="demo-box">
+        <div class="demo-title">ENTRAR COMO</div>
+        <div class="demo-roles">
+          <button type="button" class="demo-role" (click)="demoLogin('admin')">
+            <mat-icon fontIcon="admin_panel_settings"></mat-icon>
+            <div><b>Administrador</b><span>admin@demo.example</span></div>
+          </button>
+          <button type="button" class="demo-role" (click)="demoLogin('seller')">
+            <mat-icon fontIcon="point_of_sale"></mat-icon>
+            <div><b>Vendedor</b><span>clerk@demo.example</span></div>
+          </button>
+          <button type="button" class="demo-role" (click)="demoLogin('warehouse')">
+            <mat-icon fontIcon="inventory_2"></mat-icon>
+            <div><b>Bodega</b><span>bodega@demo.example</span></div>
+          </button>
+        </div>
+        <div class="demo-note">Clave: <code>Demo1234!</code></div>
+      </div>
     </div>
   </div>
 </div>

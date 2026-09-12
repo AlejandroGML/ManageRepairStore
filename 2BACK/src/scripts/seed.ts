@@ -181,7 +181,7 @@ async function seed() {
     await qr.query(
       `TRUNCATE TABLE refill_groups, transaction_entity, order_entity, sales,
        client_entity, product_entity, category_entity, client_group_entity,
-       user_entity, log_entity RESTART IDENTITY CASCADE`,
+       user_entity, log_entity, worker_entity RESTART IDENTITY CASCADE`,
     );
 
     const now = new Date();

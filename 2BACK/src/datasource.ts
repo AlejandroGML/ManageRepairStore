@@ -9,6 +9,7 @@ import { CategoryEntity } from './entities/category.entity';
 import { SaleEntity } from './entities/sale.entity';
 import { LogEntity } from './entities/log.entity';
 import { RefillGroupEntity } from './entities/refill-group.entity';
+import { WorkerEntity } from './entities/worker.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -28,6 +29,7 @@ export const AppDataSource = new DataSource({
     SaleEntity,
     LogEntity,
     RefillGroupEntity,
+    WorkerEntity,
   ],
   synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true' || process.env.NODE_ENV !== 'production',
 });
