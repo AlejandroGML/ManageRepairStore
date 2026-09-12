@@ -123,11 +123,32 @@ describe('LoginComponent', () => {
     expect(logo?.getAttribute('alt')).toBe('Manage Repair Store');
   });
 
-  it('should NOT show demo credentials (ENTRAR COMO box absent)', () => {
+  it('should show the demo quick-login box with the three synthetic roles (portfolio)', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).not.toContain('ENTRAR COMO');
-    expect(compiled.querySelector('.demo-box')).toBeNull();
-    expect(compiled.textContent).not.toContain('Demo1234!');
+    expect(compiled.textContent).toContain('ENTRAR COMO');
+    expect(compiled.querySelector('.demo-box')).toBeTruthy();
+    expect(compiled.querySelectorAll('.demo-role').length).toBe(3);
+    expect(compiled.textContent).toContain('Demo1234!');
+  });
+
+  it('should fill credentials and submit when a demo role is clicked', () => {
+    const mockUser = { id: 1, name: 'Admin', email: 'admin@demo.example', role: 'admin' };
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    component.demoLogin('admin');
+
+    expect(component.email).toBe('admin@demo.example');
+    expect(component.password).toBe('Demo1234!');
+
+    const req = httpMock.expectOne(backendUrl + '/auth/login');
+    expect(req.request.body).toEqual({
+      email: 'admin@demo.example',
+      password: 'Demo1234!',
+    });
+    req.flush({ access_token: 'token', user: mockUser });
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });
 
   it('should toggle password visibility', () => {
