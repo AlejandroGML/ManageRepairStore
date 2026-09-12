@@ -14,6 +14,7 @@ import { LogEntity } from '../entities/log.entity';
 import { RefillGroupEntity } from '../entities/refill-group.entity';
 import { OrderEntity } from '../entities/order.entity';
 import { SaleEntity } from '../entities/sale.entity';
+import { WorkerEntity } from '../entities/worker.entity';
 import { calcularDV } from '../services/rut.service';
 
 /**
@@ -391,6 +392,14 @@ async function seed() {
       );
     }
     console.log(`  ✓ Sales: ${sales.length} (today $412.900 / yesterday $367.350)`);
+
+    // --- Workers: global pool for the Repuestos tab (synthetic) ---
+    const workerRepo = qr.manager.getRepository(WorkerEntity);
+    const workerNames = ['Jorge Morales', 'Paula Soto', 'Ricardo Verde'];
+    for (const name of workerNames) {
+      await workerRepo.save(workerRepo.create({ name }));
+    }
+    console.log(`  ✓ Workers: ${workerNames.length} (Repuestos tab pool)`);
 
     console.log('\n✅ Demo seed complete.');
     console.log('   Login: admin@demo.example / Demo1234!');
