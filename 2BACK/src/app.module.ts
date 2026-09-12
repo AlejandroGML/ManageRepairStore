@@ -10,6 +10,8 @@ import { UsersModule } from './users/users.module';
 import { ClientModule } from './client/client.module';
 import { OrderModule } from './order/order.module';
 import { ProductModule } from './product/product.module';
+import { CategoryModule } from './category/category.module';
+import { WorkerModule } from './worker/worker.module';
 import { SalesModule } from './sales/sales.module';
 import { LogModule } from './log/log.module';
 
@@ -38,6 +40,8 @@ import { LogModule } from './log/log.module';
     ClientModule,
     OrderModule,
     ProductModule,
+    CategoryModule,
+    WorkerModule,
     SalesModule,
     LogModule,
   ],
