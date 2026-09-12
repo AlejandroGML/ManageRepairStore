@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientEntity } from '../entities/client.entity';
 import { ClientGroupEntity } from '../entities/client-group.entity';
+import * as ExcelJS from 'exceljs';
 import { ClientService } from './client.service';
 
 describe('ClientService', () => {
@@ -59,7 +60,7 @@ describe('ClientService', () => {
         {
           provide: getRepositoryToken(ClientEntity),
           useValue: {
-            find: jest.fn(),
+            find: jest.fn().mockResolvedValue([]),
             findOne: jest.fn(),
             save: jest.fn(),
             createQueryBuilder: jest.fn(),
@@ -135,40 +136,167 @@ describe('ClientService', () => {
     });
   });
 
+  describe('searchClients', () => {
+    const buildQb = (): any => ({
+      where: jest.fn().mockReturnThis(),
+      getCount: jest.fn().mockResolvedValue(1),
+      addSelect: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getRawAndEntities: jest.fn().mockResolvedValue({
+        entities: [mockClients[0]],
+        raw: [{ order_count: '3' }],
+      }),
+    });
+
+    it('should search by name with ILIKE and map the order count', async () => {
+      const qb = buildQb();
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const result = await service.searchClients('juan', 'name');
+
+      expect(qb.where).toHaveBeenCalledWith('c.name ILIKE :term', { term: '%juan%' });
+      expect(qb.take).toHaveBeenCalledWith(100);
+      expect(result.total).toBe(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].orderCount).toBe(3);
+    });
+
+    it('should sanitize LIKE wildcards and cap the limit at 100', async () => {
+      const qb = buildQb();
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      await service.searchClients('ju_an%', 'name', 500);
+
+      expect(qb.where).toHaveBeenCalledWith('c.name ILIKE :term', { term: '%ju\\_an\\%%' });
+      expect(qb.take).toHaveBeenCalledWith(100);
+    });
+
+    it('should match RUT ignoring dots and dashes', async () => {
+      const qb = buildQb();
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      await service.searchClients('12.345-6', 'rut');
+
+      expect(qb.where).toHaveBeenCalledWith(
+        "REPLACE(REPLACE(c.rut_raw, '.', ''), '-', '') ILIKE :digits " +
+          "OR REPLACE(REPLACE(c.rut_normalizado, '.', ''), '-', '') ILIKE :digits",
+        { digits: '%123456%' },
+      );
+    });
+
+    it('should filter by company field', async () => {
+      const qb = buildQb();
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      await service.searchClients('sodimac', 'company');
+
+      expect(qb.where).toHaveBeenCalledWith('c.company_name ILIKE :term', { term: '%sodimac%' });
+    });
+  });
+
+  describe('buildClientsXlsx', () => {
+    const buildXlsQb = (raw: any[]): any => ({
+      select: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn().mockResolvedValue(raw),
+    });
+
+    const rawRows = [
+      { c_id: 1, c_name: 'Juan "Juanito" Pérez', c_rut_raw: '12345678-5', c_phone: '+56912345678', c_email: 'juan@example.com', c_address: 'Av. Siempre Viva 123', c_city: 'Santiago', c_company_name: 'Principal' },
+      { c_id: 2, c_name: 'María González', c_rut_raw: null, c_phone: null, c_email: null, c_address: null, c_city: null, c_company_name: null },
+    ];
+
+    async function loadWorkbook(): Promise<ExcelJS.Workbook> {
+      const qb = buildXlsQb(rawRows);
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+      const buffer = await service.buildClientsXlsx();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buffer as ArrayBuffer);
+      return wb;
+    }
+
+    it('should build a styled sheet with header, data and Particular fallback', async () => {
+      const wb = await loadWorkbook();
+      const sheet = wb.getWorksheet('Clientes')!;
+      expect(sheet).toBeDefined();
+
+      const header = sheet.getRow(1);
+      expect(header.getCell(1).value).toBe('N°');
+      expect(header.getCell(8).value).toBe('Empresa');
+      expect(header.getCell(1).font?.bold).toBe(true);
+
+      expect(sheet.getRow(2).getCell(2).value).toBe('Juan "Juanito" Pérez');
+      expect(sheet.getRow(3).getCell(8).value).toBe('Particular');
+      expect(sheet.rowCount).toBe(3); // encabezado + 2 filas
+    });
+
+    it('should zebra-stripe alternate data rows', async () => {
+      const wb = await loadWorkbook();
+      const sheet = wb.getWorksheet('Clientes')!;
+      // fila 3 (segunda de datos, i=1) lleva relleno zebra
+      const zebra = sheet.getRow(3).getCell(2).fill;
+      expect(zebra.type).toBe('pattern');
+      expect((zebra as any).fgColor?.argb).toBe('FFF3F4F6');
+      // fila 2 (primera de datos) sin relleno
+      const plain = sheet.getRow(2).getCell(2).fill as any;
+      expect(plain?.fgColor?.argb ?? 'none').not.toBe('FFF3F4F6');
+    });
+
+    it('should freeze the header row and set an autoFilter', async () => {
+      const wb = await loadWorkbook();
+      const sheet = wb.getWorksheet('Clientes')!;
+      expect(sheet.views?.[0]).toEqual(expect.objectContaining({ state: 'frozen', ySplit: 1 }));
+      expect(sheet.autoFilter).toBeDefined();
+    });
+
+    it('should return only the header row when there are no clients', async () => {
+      const qb = buildXlsQb([]);
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const buffer = await service.buildClientsXlsx();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buffer as ArrayBuffer);
+      const sheet = wb.getWorksheet('Clientes')!;
+      expect(sheet.rowCount).toBe(1);
+      expect(sheet.getRow(1).getCell(1).value).toBe('N°');
+    });
+  });
+
   describe('getClientHierarchy', () => {
     const groupClients: any[] = [
       {
         id: 1,
-        name: 'Retail Demo Chile SA',
+        name: 'Walmart Chile SA',
         rut_raw: '76042014k',
         rut_normalizado: '76042014-K',
         address: 'Matriz Santiago',
         city: 'Santiago',
         active: true,
         group_id: 10,
-        group: { id: 10, rut_normalizado: '76042014-K', name: 'Retail Demo', active: true },
+        group: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
       },
       {
         id: 2,
-        name: 'Retail Demo Norte',
+        name: 'Walmart Viña',
         rut_raw: '76042014k',
         rut_normalizado: '76042014-K',
-        address: 'Santiago',
-        city: 'Santiago',
+        address: 'Viña del Mar',
+        city: 'Viña del Mar',
         active: true,
         group_id: 10,
-        group: { id: 10, rut_normalizado: '76042014-K', name: 'Retail Demo', active: true },
+        group: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
       },
       {
         id: 3,
-        name: 'Retail Demo Sur',
+        name: 'Walmart Concón',
         rut_raw: '76042014k',
         rut_normalizado: '76042014-K',
-        address: 'Valparaíso',
-        city: 'Valparaíso',
+        address: 'Concón',
+        city: 'Concón',
         active: true,
         group_id: 10,
-        group: { id: 10, rut_normalizado: '76042014-K', name: 'Retail Demo', active: true },
+        group: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
       },
     ];
 
@@ -218,13 +346,13 @@ describe('ClientService', () => {
   describe('createUser', () => {
     it('should preserve existing group.name when creating a branch (same rut_normalizado)', async () => {
       const branchClient: ClientEntity = {
-        name: 'Juan Pérez Sucursal Norte',
+        name: 'Juan Pérez Sucursal Viña',
         rut_raw: '12345678-5',
         rut_normalizado: '12345678-5',
-        address: 'Santiago 789',
-        city: 'Santiago',
+        address: 'Viña del Mar 789',
+        city: 'Viña del Mar',
         active: true,
-        company_name: 'Sucursal Norte',
+        company_name: 'Sucursal Viña',
         group_id: 0, // will be set by createUser
         group: null as any,
       };
@@ -304,7 +432,7 @@ describe('ClientService', () => {
 
     it('should persist company_name when provided', async () => {
       const branchClient: ClientEntity = {
-        name: 'Retail Demo Chile SA',
+        name: 'Walmart Chile SA',
         rut_raw: '76042014-K',
         rut_normalizado: '76042014-K',
         address: 'Santiago Centro',
@@ -318,7 +446,7 @@ describe('ClientService', () => {
       const existingGroup: ClientGroupEntity = {
         id: 5,
         rut_normalizado: '76042014-K',
-        name: 'Retail Demo Chile SA',
+        name: 'Walmart Chile SA',
         credit_limit: 0,
         payment_terms: '',
         active: true,
