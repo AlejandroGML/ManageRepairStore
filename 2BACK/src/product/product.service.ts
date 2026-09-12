@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { ProductEntity } from '../entities/product.entity';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { StockService } from './stock.service';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class ProductService {
@@ -362,5 +363,50 @@ export class ProductService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * Export XLSX de productos con stock bajo (umbral fijo: < 7).
+   * Ordenado por stock ascendente: los más críticos primero.
+   */
+  async buildLowStockXlsx(): Promise<ExcelJS.Buffer> {
+    const products = await this.productRepository.find({
+      where: { active: true },
+      order: { stock: 'ASC' },
+    });
+    const low = products.filter((p) => (p.stock ?? 0) < 7);
+
+    const wb = new ExcelJS.Workbook();
+    const sheet = wb.addWorksheet('Stock bajo');
+    const headers = ['Producto', 'Stock', 'Mínimo'] as const;
+    const headerRow = sheet.addRow([...headers]);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6D28D9' } };
+      cell.alignment = { vertical: 'middle' };
+    });
+
+    low.forEach((p, i) => {
+      const row = sheet.addRow([p.name, p.stock ?? 0, p.minimum ?? 0]);
+      if (i % 2 === 1) {
+        row.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+        });
+      }
+    });
+
+    const widths = headers.map((_, col) => {
+      let max = headers[col].length;
+      for (const p of low) {
+        const v = String([p.name, p.stock ?? 0, p.minimum ?? 0][col] ?? '');
+        if (v.length > max) max = v.length;
+      }
+      return Math.min(max + 3, 45);
+    });
+    sheet.columns.forEach((col, i) => (col.width = widths[i]));
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+
+    return wb.xlsx.writeBuffer();
   }
 }

@@ -127,10 +127,13 @@ describe('SalesService', () => {
     it('should create batch sale with 2 products and return SaleEntity with snapshot', async () => {
       const product1 = mockProduct({ id: 1, name: 'p1', stock: 10 });
       const product2 = mockProduct({ id: 2, name: 'p2', stock: 5 });
+      const lastTxP1 = { id: 9, maxDiscount: 500 } as TransactionEntity;
 
       (queryRunner.manager.findOne as jest.Mock)
-        .mockResolvedValueOnce(product1)
-        .mockResolvedValueOnce(product2);
+        .mockResolvedValueOnce(product1)   // stock lock: product 1
+        .mockResolvedValueOnce(lastTxP1)   // last transaction: product 1
+        .mockResolvedValueOnce(product2)   // stock lock: product 2
+        .mockResolvedValueOnce(null);      // last transaction: product 2 (none)
 
       (queryRunner.manager.update as jest.Mock).mockResolvedValue({ affected: 1 });
 
@@ -167,6 +170,15 @@ describe('SalesService', () => {
       expect(result.id).toBe(1);
       expect(result.total).toBe(1200);
       expect(result.snapshot).toHaveLength(2);
+      // Sale transactions must carry over the product's maxDiscount policy
+      expect(transactionRepository.create).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ maxDiscount: 500 }),
+      );
+      expect(transactionRepository.create).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ maxDiscount: 0 }),
+      );
       expect(queryRunner.startTransaction).toHaveBeenCalled();
       expect(queryRunner.commitTransaction).toHaveBeenCalled();
       expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();

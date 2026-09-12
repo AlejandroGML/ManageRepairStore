@@ -15,8 +15,10 @@ async function bootstrap() {
   // Usar validaciones globales
   app.useGlobalPipes(new ValidationPipe());
 
-  // Sirviendo archivos estáticos desde la carpeta 'uploads'
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  // Archivos estáticos: SIEMPRE desde 2BACK/uploads (cwd del proyecto).
+  // __dirname cambia entre dev (dist/) y prod; el cwd es estable y coincide
+  // con donde Multer escribe los archivos.
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
   });
 

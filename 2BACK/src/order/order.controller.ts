@@ -49,8 +49,20 @@ export class OrderController {
   @ApiBody({ type: OrderFront, examples: OrderExample })
   @ApiCreatedResponse({ description: 'Create a new entry order.'})
   @ApiOperation({ summary: 'Create a new entry order' })
-  async create(@Body() newOrder: OrderFront): Promise<ClientEntity> {
-    return this.orderService.registerClientOrder(this.orderMapperService.mapToClientEntity(newOrder));
+  async create(@Req() req: any, @Body() newOrder: OrderFront): Promise<ClientEntity> {
+    const client = await this.orderService.registerClientOrder(
+      this.orderMapperService.mapToClientEntity(newOrder),
+    );
+    // Fire-and-forget: a log failure must not fail the order creation.
+    this.logService
+      .createLog({
+        userName: req.user?.name ?? 'Sistema',
+        clientId: client?.id ?? 0,
+        clientName: client?.name ?? '',
+        action: 'Orden de ingreso',
+      } as LogEntity)
+      .catch((err) => console.error('Failed to write order log', err));
+    return client;
   }
 
   @Patch(':id')

@@ -104,12 +104,20 @@ export class SalesService {
           p.quantity,
         );
 
+        // Carry over the product's current max discount policy: sale
+        // transactions must not zero it out, otherwise the POS (which reads
+        // the latest transaction) loses the discount cap after the first sale.
+        const lastTx = await queryRunner.manager.findOne(TransactionEntity, {
+          where: { product: { id: p.productId }, deleted: false },
+          order: { createdAt: 'DESC' },
+        });
+
         const tx = this.transactionRepository.create({
           operation: 'Venta Producto',
           quantity: p.quantity,
           sellingPrice: p.sellingPrice || 0,
           finalStock: newStock,
-          maxDiscount: 0,
+          maxDiscount: lastTx?.maxDiscount ?? 0,
           purchaseDiscount: p.purchaseDiscount || 0,
           location: p.location || 'Sin Datos',
           description: p.description || '',

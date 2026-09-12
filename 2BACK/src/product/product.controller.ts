@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Post, Body, UsePipes, ValidationPipe, UseInterceptors, Patch, Delete, UploadedFile, Query, Req } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, UsePipes, ValidationPipe, UseInterceptors, Patch, Delete, UploadedFile, Query, Req, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
+import { Response } from 'express';
 import { ProductService } from './product.service';
 import { RefillService } from './refill.service';
 import { ProductEntity } from '../entities/product.entity';
@@ -112,6 +113,16 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Return all active products' })
   async getActiveProducts(): Promise<ProductEntity[]> {
     return this.productService.getActiveProducts();
+  }
+
+  @Get('/export/low-stock')
+  @ApiOperation({ summary: 'Export low-stock products as a styled XLSX' })
+  async exportLowStock(@Res() res: Response): Promise<void> {
+    const buffer = await this.productService.buildLowStockXlsx();
+    const date = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="stock-bajo-${date}.xlsx"`);
+    res.send(Buffer.from(buffer as ArrayBuffer));
   }
 
   // Endpoint para obtener todos los productos, sin importar el estado de active

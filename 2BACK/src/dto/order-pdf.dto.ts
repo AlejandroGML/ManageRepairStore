@@ -1,7 +1,11 @@
 export interface OrderPdfDto {
   /** Client/order identification */
   clientId: number;
-  code: number;
+  /**
+   * Order code. Numeric id for legacy orders, ORD-xxxx string for new ones.
+   * The QR payload and PDF layout MUST NOT change with the new format.
+   */
+  code: string | number;
   /** Client details */
   name: string;
   rut: string;

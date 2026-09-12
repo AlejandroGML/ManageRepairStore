@@ -14,6 +14,7 @@ import { CategoryModule } from './category/category.module';
 import { WorkerModule } from './worker/worker.module';
 import { SalesModule } from './sales/sales.module';
 import { LogModule } from './log/log.module';
+import { PdfModule } from './services/pdf.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { LogModule } from './log/log.module';
     WorkerModule,
     SalesModule,
     LogModule,
+    PdfModule,
   ],
   controllers: [],
   providers: [

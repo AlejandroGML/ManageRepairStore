@@ -1,16 +1,17 @@
 import { OrderPdfService } from './order-pdf.service';
 import { OrderPdfDto } from '../dto/order-pdf.dto';
+import { PdfBrowserService } from '../services/pdf-browser.service';
 
 jest.mock('puppeteer', () => ({ launch: jest.fn() }));
 jest.mock('qrcode', () => ({ toDataURL: jest.fn() }));
 
-import * as puppeteer from 'puppeteer';
 import * as QRCode from 'qrcode';
 
 describe('OrderPdfService', () => {
   let service: OrderPdfService;
   let mockPage: { setContent: jest.Mock; emulateMediaType: jest.Mock; pdf: jest.Mock; close: jest.Mock };
   let mockBrowser: { newPage: jest.Mock; close: jest.Mock };
+  let pdfBrowser: { getBrowser: jest.Mock; logo: string; fontsCss: string };
 
   const mockOrder = (overrides: Partial<OrderPdfDto> = {}): OrderPdfDto => ({
     clientId: 1,
@@ -18,7 +19,7 @@ describe('OrderPdfService', () => {
     name: 'Test Client',
     rut: '12.345.678-5',
     address: 'Test Address',
-    city: 'Santiago',
+    city: 'Viña del Mar',
     phone: '999888777',
     date: '01-02-2026 10:30',
     description: 'Fuga de gas',
@@ -37,10 +38,14 @@ describe('OrderPdfService', () => {
       newPage: jest.fn().mockResolvedValue(mockPage),
       close: jest.fn().mockResolvedValue(undefined),
     };
-    (puppeteer.launch as jest.Mock).mockReset().mockResolvedValue(mockBrowser);
+    pdfBrowser = {
+      getBrowser: jest.fn().mockResolvedValue(mockBrowser),
+      logo: '',
+      fontsCss: '',
+    };
     (QRCode.toDataURL as jest.Mock).mockReset().mockResolvedValue('data:image/png;base64,GENERATED_QR');
 
-    service = new OrderPdfService();
+    service = new OrderPdfService(pdfBrowser as unknown as PdfBrowserService);
   });
 
   describe('QR resolution', () => {
@@ -48,6 +53,16 @@ describe('OrderPdfService', () => {
       await service.generateOrderPdf(mockOrder());
 
       expect(QRCode.toDataURL).toHaveBeenCalledWith('123', { width: 144, margin: 1 });
+      expect(mockPage.setContent).toHaveBeenCalledWith(
+        expect.stringContaining('data:image/png;base64,GENERATED_QR'),
+        expect.anything(),
+      );
+    });
+
+    it('should generate the QR from an ORD-xxxx string code unchanged', async () => {
+      await service.generateOrderPdf(mockOrder({ code: 'ORD-1234' }));
+
+      expect(QRCode.toDataURL).toHaveBeenCalledWith('ORD-1234', { width: 144, margin: 1 });
       expect(mockPage.setContent).toHaveBeenCalledWith(
         expect.stringContaining('data:image/png;base64,GENERATED_QR'),
         expect.anything(),
@@ -71,19 +86,16 @@ describe('OrderPdfService', () => {
       expect(html).toContain('>123<');
       expect(html).toContain('Test Client');
     });
+
+    it('should tolerate a missing code without throwing (legacy rows)', async () => {
+      // Legacy rows predate the code field; generation must not crash.
+      const legacy = mockOrder({ code: undefined as unknown as number });
+      await expect(service.generateOrderPdf(legacy)).resolves.toBeInstanceOf(Buffer);
+    });
   });
 
-  describe('browser lifecycle', () => {
-    it('should reuse a single browser instance across requests', async () => {
-      await service.generateOrderPdf(mockOrder());
-      await service.generateOrderPdf(mockOrder({ code: 456 }));
-
-      expect(puppeteer.launch).toHaveBeenCalledTimes(1);
-      expect(mockBrowser.newPage).toHaveBeenCalledTimes(2);
-      expect(mockBrowser.close).not.toHaveBeenCalled();
-    });
-
-    it('should close the page but keep the shared browser alive after each render', async () => {
+  describe('render', () => {
+    it('should close the page after each render (browser stays alive)', async () => {
       await service.generateOrderPdf(mockOrder());
 
       expect(mockPage.close).toHaveBeenCalledTimes(1);
@@ -107,23 +119,6 @@ describe('OrderPdfService', () => {
 
       expect(mockBrowser.newPage).toHaveBeenCalledTimes(2);
       expect(mockPage.close).toHaveBeenCalledTimes(2);
-    });
-
-    it('should reset the singleton when launch fails so the next call retries', async () => {
-      (puppeteer.launch as jest.Mock).mockRejectedValueOnce(new Error('no chrome'));
-
-      await expect(service.generateOrderPdf(mockOrder())).rejects.toThrow('no chrome');
-
-      await service.generateOrderPdf(mockOrder());
-
-      expect(puppeteer.launch).toHaveBeenCalledTimes(2);
-    });
-
-    it('should close the browser on module destroy', async () => {
-      await service.generateOrderPdf(mockOrder());
-      await service.onModuleDestroy();
-
-      expect(mockBrowser.close).toHaveBeenCalledTimes(1);
     });
   });
 });
