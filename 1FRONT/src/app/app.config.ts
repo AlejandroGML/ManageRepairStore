@@ -1,9 +1,10 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideAppInitializer, provideZoneChangeDetection, inject } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { DemoService } from './services/demo.service';
 
 import { routes } from './app-routing.module';
 
@@ -16,5 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideHttpClient(withInterceptors([authInterceptor])),
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' },
+    // Demo ephemerality: fresh seed data on every full page load (refresh).
+    provideAppInitializer(() => inject(DemoService).resetOnBoot()),
   ],
 };

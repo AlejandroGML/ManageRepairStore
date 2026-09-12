@@ -69,11 +69,27 @@ The seed also creates 6 categories, 24 repair products with CLP prices, and 8
 fictional clients with valid (módulo-11) synthetic RUTs. The login screen offers
 one-click demo access per role.
 
+### Demo ephemerality
+
+The demo is self-cleaning: every full page load fires `POST /demo/reset`, which
+re-runs the synthetic seed inside a transaction. Visitors can freely edit data
+(create products, register sales, assign spare parts…) and a **refresh restores
+the original state** — while every feature (server-side search, exports, PDFs,
+activity feed) keeps working against the real backend for real.
+
+- Disable it by running the backend with `DEMO_MODE=false` (the endpoint then
+  returns 403 and the frontend boot continues normally).
+- Concurrent resets are serialized server-side; the frontend shows a boot
+  splash while the reset runs and never blocks if the backend is unreachable.
+- Note: the reset is global — a new page load also resets data of other open
+  tabs. That is intentional for a portfolio demo (everyone sees the canonical
+  state).
+
 ## Testing
 
 ```bash
-cd 2BACK && pnpm test       # Jest — 27 suites, 195 tests
-cd 1FRONT && npx ng build   # production build
+cd 2BACK && pnpm test        # Jest — 33 suites, 249 tests
+cd 1FRONT && npx ng build    # production build (+ 371 Karma specs)
 ```
 
 ## Project layout
