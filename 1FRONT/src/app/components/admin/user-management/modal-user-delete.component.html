@@ -1,0 +1,35 @@
+<h2 mat-dialog-title>
+  <span>{{ hard ? 'Eliminar usuario definitivamente' : 'Desactivar usuario' }}</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content>
+  <div class="deactivate-confirm">
+    <mat-icon class="warn-icon" [fontIcon]="hard ? 'delete_forever' : 'person_off'" aria-hidden="true"></mat-icon>
+    @if (hard) {
+      <p>
+        <b>{{ user.name }}</b> ya está desactivado.
+        ¿Eliminarlo <b>definitivamente</b>? Esta acción no se puede deshacer.
+      </p>
+    } @else {
+      <p>¿Está seguro que desea desactivar al usuario <b>{{ user.name }}</b>?</p>
+    }
+  </div>
+
+  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center">
+  <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+  @if (hard) {
+    <button class="btn btn-danger" type="button" (click)="hardDelete()">
+      <mat-icon fontIcon="delete_forever"></mat-icon> Eliminar definitivamente
+    </button>
+  } @else {
+    <button class="btn btn-danger" type="button" (click)="deactivate()">
+      <mat-icon fontIcon="block"></mat-icon> Desactivar
+    </button>
+  }
+</mat-dialog-actions>

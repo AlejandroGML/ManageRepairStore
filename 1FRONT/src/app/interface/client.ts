@@ -15,7 +15,8 @@ export interface Order {
   id: number;
   status?: string;
   comment?: string;
-  total?: number;
+  /** Código visible de la orden (ORD-xxxx o id numérico). */
+  code?: string | number;
 }
 
 export interface Log {

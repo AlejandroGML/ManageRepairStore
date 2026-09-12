@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 
 import { ModalDeleteClientComponent } from './modal-delete-client.component';
 import { ClientsApiService } from 'src/app/services/clients.api.service';
-import { AdminApiService } from 'src/app/services/admin.api.service';
+import { LogApiService } from 'src/app/services/log.api.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { LoadingService } from 'src/app/services/loading.service';
 import { AuthService } from 'src/app/services/auth.service';
@@ -15,7 +15,7 @@ describe('ModalDeleteClientComponent', () => {
   let component: ModalDeleteClientComponent;
   let fixture: ComponentFixture<ModalDeleteClientComponent>;
   let clientsApiSpy: jasmine.SpyObj<ClientsApiService>;
-  let adminApiSpy: jasmine.SpyObj<AdminApiService>;
+  let logApiSpy: jasmine.SpyObj<LogApiService>;
   let snackbarSpy: jasmine.SpyObj<SnackbarService>;
   let loadingSpy: jasmine.SpyObj<LoadingService>;
   let authSpy: jasmine.SpyObj<AuthService>;
@@ -33,14 +33,14 @@ describe('ModalDeleteClientComponent', () => {
 
   beforeEach(async () => {
     clientsApiSpy = jasmine.createSpyObj('ClientsApiService', ['deleteUserById']);
-    adminApiSpy = jasmine.createSpyObj('AdminApiService', ['addLog']);
+    logApiSpy = jasmine.createSpyObj('LogApiService', ['create']);
     snackbarSpy = jasmine.createSpyObj('SnackbarService', ['openSnackBar']);
     loadingSpy = jasmine.createSpyObj('LoadingService', ['setLoading']);
     authSpy = jasmine.createSpyObj('AuthService', ['getCurrentUser']);
     dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     authSpy.getCurrentUser.and.returnValue({ name: 'Admin', email: 'admin@demo.example', role: 'admin' } as any);
-    adminApiSpy.addLog.and.returnValue(of({} as any));
+    logApiSpy.create.and.returnValue(of({} as any));
 
     await TestBed.configureTestingModule({
       imports: [ModalDeleteClientComponent, NoopAnimationsModule],
@@ -48,7 +48,7 @@ describe('ModalDeleteClientComponent', () => {
         { provide: MatDialogRef, useValue: dialogRefSpy },
         { provide: MAT_DIALOG_DATA, useValue: mockClient },
         { provide: ClientsApiService, useValue: clientsApiSpy },
-        { provide: AdminApiService, useValue: adminApiSpy },
+        { provide: LogApiService, useValue: logApiSpy },
         { provide: SnackbarService, useValue: snackbarSpy },
         { provide: LoadingService, useValue: loadingSpy },
         { provide: AuthService, useValue: authSpy },

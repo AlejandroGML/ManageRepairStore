@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { ProductsApiService } from 'src/app/services/products.api.service';
@@ -8,6 +8,7 @@ import { ImageModalComponent } from '../../shared/image-modal/image-modal.compon
 import { ModalEditProductComponent } from '../modal-edit-product/modal-edit-product.component';
 import { ModalViewTransactionsComponent } from '../modal-view-transactions/modal-view-transactions.component';
 import { DataSyncService } from 'src/app/services/data-sync.service'; // Importa el servicio
+import { ModalService } from 'src/app/services/modal.service';
 
 @Component({
   selector: 'app-modal-search-results',
@@ -17,6 +18,7 @@ import { DataSyncService } from 'src/app/services/data-sync.service'; // Importa
   styleUrls: ['./modal-search-results.component.css']
 })
 export class ModalSearchResultsComponent implements OnInit {
+  private readonly modal = inject(ModalService);
   displayedColumns: string[] = ['id', 'image', 'name', 'stock', 'location', 'sellingPrice', 'transaction', 'edit'];
   products: Product[] = [];
 
@@ -24,7 +26,6 @@ export class ModalSearchResultsComponent implements OnInit {
     public dialogRef: MatDialogRef<ModalSearchResultsComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { products: Product[] },
     private productsApi: ProductsApiService,
-    private dialog: MatDialog,
     private dataSyncService: DataSyncService // Inyecta el servicio
   ) {}
 
@@ -52,9 +53,9 @@ export class ModalSearchResultsComponent implements OnInit {
 
   // Abre el modal de imagen
   openImageModal(imageUrl?: string): void {
-    this.dialog.open(ImageModalComponent, {
-      width: '85%',
-      data: { imageUrl: imageUrl || 'assets/no-image-available.png' }
+    this.modal.open(ImageModalComponent, {
+      size: 'full',
+      data: { imageUrl: imageUrl || 'assets/img/no-image-available.png' }
     });
   }
 
@@ -62,8 +63,9 @@ export class ModalSearchResultsComponent implements OnInit {
   openTransactionModal(product: Product): void {
     if (product.id !== undefined) {
       this.productsApi.getProductTransactions(product.id).subscribe(transactions => {
-        this.dialog.open(ModalViewTransactionsComponent, {
-          width: '70%',
+        this.modal.open(ModalViewTransactionsComponent, {
+          // Ancho según contenido: crece con las columnas activadas hasta el tope.
+          size: 'auto',
           data: { product, transactions }
         });
       });
@@ -74,12 +76,12 @@ export class ModalSearchResultsComponent implements OnInit {
 
   // Abre el modal para editar el producto
   openEditProductModal(product: Product): void {
-    const dialogRef = this.dialog.open(ModalEditProductComponent, {
-      width: '60%',
+    const dialogRef = this.modal.open(ModalEditProductComponent, {
+      size: 'lg',
       data: { product }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result: unknown) => {
       if (result === 'updated') {
         this.dialogRef.close('updated');  // Notifica que hubo una actualización
         this.dataSyncService.notifyTransactionUpdate(); // Notifica actualización al cerrar el modal de edición

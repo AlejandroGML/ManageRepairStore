@@ -5,7 +5,7 @@ export interface OrdenIngreso {
     address: string
     city: string
     phone: string
-    code?: number
+    code?: number | string
     date?: Date;
     email?: string
     description: string

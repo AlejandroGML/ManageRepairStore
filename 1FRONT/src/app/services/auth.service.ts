@@ -1,35 +1,26 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { UserProfile } from '../interface/user-profile';
+import { AuthApiService, LoginResponse } from './auth.api.service';
 
-export interface LoginResponse {
-  access_token: string;
-  user: UserProfile;
-}
+export { LoginResponse };
 
+/**
+ * Sesión del usuario: estado + persistencia + navegación.
+ * El HTTP vive en AuthApiService; este servicio orquesta.
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly http = inject(HttpClient);
+  private readonly authApi = inject(AuthApiService);
   private readonly router = inject(Router);
 
   private currentUserSubject = new BehaviorSubject<UserProfile | null>(
     this.getStoredUser()
   );
   currentUser$ = this.currentUserSubject.asObservable();
-
-  private getBackendUrl(): string {
-    if (
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1'
-    ) {
-      return 'http://localhost:3000';
-    }
-    return 'http://192.168.50.101:3000';
-  }
 
   private getStoredUser(): UserProfile | null {
     const stored = localStorage.getItem('current_user');
@@ -44,21 +35,16 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${this.getBackendUrl()}/auth/login`, {
-        email,
-        password,
+    return this.authApi.login(email, password).pipe(
+      tap((response) => {
+        localStorage.setItem('access_token', response.access_token);
+        localStorage.setItem(
+          'current_user',
+          JSON.stringify(response.user)
+        );
+        this.currentUserSubject.next(response.user);
       })
-      .pipe(
-        tap((response) => {
-          localStorage.setItem('access_token', response.access_token);
-          localStorage.setItem(
-            'current_user',
-            JSON.stringify(response.user)
-          );
-          this.currentUserSubject.next(response.user);
-        })
-      );
+    );
   }
 
   logout(): void {

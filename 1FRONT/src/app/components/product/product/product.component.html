@@ -5,8 +5,8 @@
       <p class="page-lead">{{ totalProducts }} productos · {{ totalCategories }} categorías</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-ghost btn-sm" (click)="exportToExcel()">
-        <mat-icon fontIcon="download"></mat-icon> Exportar Excel
+      <button class="btn btn-soft" (click)="openManageCategories()">
+        <mat-icon fontIcon="category"></mat-icon> Gestionar categorías
       </button>
       <button class="btn btn-primary" (click)="openAddProductModal()">
         <mat-icon fontIcon="add"></mat-icon> Agregar producto
@@ -16,15 +16,11 @@
 
   <div class="card">
     <div class="filter-bar">
-      <div class="search-input-wrap">
-        <mat-icon fontIcon="search" class="search-input-icon"></mat-icon>
-        <input
-          class="input search-input"
-          placeholder="Buscar por nombre, código o localización..."
-          [(ngModel)]="searchValue"
-          [ngModelOptions]="{standalone: true}"
-          (keyup.enter)="performSearch()"
-        />
+      <div class="search-filter-row">
+        <select class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" aria-label="Buscar por">
+          <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label }}</option>
+        </select>
+        <input class="input" placeholder="Buscar producto..." [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" />
       </div>
       <select class="select" [(ngModel)]="categoryFilter" (ngModelChange)="onCategoryChange()">
         <option value="all">Todas las categorías</option>
@@ -57,9 +53,28 @@
           <tr *ngFor="let product of pageItems">
             <td class="mono muted">{{ productCode(product) }}</td>
             <td>
-              <span class="thumb" [title]="product.name" [attr.aria-label]="'Imagen de ' + product.name">
-                <mat-icon [fontIcon]="productIcon(product)"></mat-icon>
-              </span>
+              <ng-container *ngIf="hasRealImage(product); else iconThumb">
+                <img
+                  [src]="getImageUrl(product.image)"
+                  [alt]="'Imagen de ' + product.name"
+                  class="thumb thumb-img"
+                  role="button"
+                  tabindex="0"
+                  [title]="'Ver imagen de ' + product.name"
+                  (click)="openProductImage(product)"
+                  (keydown.enter)="openProductImage(product)"
+                  (keydown.space)="openProductImage(product)" />
+              </ng-container>
+              <ng-template #iconThumb>
+                <button
+                  type="button"
+                  class="thumb thumb-btn"
+                  [title]="'Ver imagen de ' + product.name"
+                  [attr.aria-label]="'Ver imagen de ' + product.name"
+                  (click)="openProductImage(product)">
+                  <mat-icon [fontIcon]="productIcon(product)"></mat-icon>
+                </button>
+              </ng-template>
             </td>
             <td class="strong">{{ product.name }}</td>
             <td>{{ categoryName(product) }}</td>
@@ -88,24 +103,24 @@
             </td>
           </tr>
           <tr *ngIf="!pageItems.length">
-            <td colspan="10" class="empty-state">Sin productos que coincidan con el filtro.</td>
+            <td colspan="10" class="empty-state">
+              {{ loading ? 'Cargando catálogo…' : 'Sin productos que coincidan con el filtro.' }}
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div class="paginator" *ngIf="pageCount > 1">
-      <span>Mostrando {{ startIndex + 1 }}-{{ endIndex }} de {{ filteredCount }}</span>
-      <div class="pages">
+    <div class="paginator">
+      <span>Mostrando {{ filteredCount ? startIndex + 1 : 0 }}-{{ endIndex }} de {{ filteredCount }}</span>
+      <div class="pages" *ngIf="pageCount > 1">
         <button class="pg" [disabled]="pageIndex === 0" (click)="goPage(pageIndex - 1)" aria-label="Anterior">
           <mat-icon fontIcon="chevron_left"></mat-icon>
         </button>
-        <button
-          class="pg"
-          *ngFor="let p of pageNumbers"
-          [class.active]="p === pageIndex"
-          (click)="goPage(p)"
-        >{{ p + 1 }}</button>
+        <ng-container *ngFor="let p of visiblePages">
+            <button *ngIf="p !== '…'" class="pg" [class.active]="p === pageIndex" (click)="goPage(p)">{{ p + 1 }}</button>
+            <span *ngIf="p === '…'" class="pg-ellipsis">…</span>
+          </ng-container>
         <button class="pg" [disabled]="pageIndex >= pageCount - 1" (click)="goPage(pageIndex + 1)" aria-label="Siguiente">
           <mat-icon fontIcon="chevron_right"></mat-icon>
         </button>

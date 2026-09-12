@@ -39,11 +39,21 @@ describe('OrdersApiService', () => {
     };
     const mockResponse: any = { id: 5 };
 
-    service.registerOrder(body).subscribe((res) => expect(res).toEqual(mockResponse));
+    service.create(body).subscribe((res) => expect(res).toEqual(mockResponse));
 
     const req = httpMock.expectOne(`${base}/order`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(body);
     req.flush(mockResponse);
+  });
+
+  it('should fetch all orders via GET /order/all', () => {
+    const mockOrders: any[] = [{ id: 1, orders: [{ id: 10 }] }];
+
+    service.getAllOrders().subscribe((res) => expect(res).toEqual(mockOrders));
+
+    const req = httpMock.expectOne(`${base}/order/all`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockOrders);
   });
 });

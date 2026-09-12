@@ -1,68 +1,69 @@
-<div mat-dialog-title>
-    <div class="dialog-header-actions">
-        <mat-icon class="icon-close" role="button" tabindex="0" (click)="close()" (keydown.enter)="close()" (keydown.space)="close()" aria-label="Cerrar">close</mat-icon>
-    </div>
-    <div class="title-wrapper">
-        <span class="title">Editar Cliente</span>
-        <img src="../../../../assets/icons/identity.svg" alt="" role="presentation" class="logo">
-    </div>
-</div>
+<h2 mat-dialog-title>
+  <span>Editar cliente</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
 
 <mat-dialog-content>
     <form [formGroup]="form">
-        <mat-card class="card-form">
-            <div class="row">
-                <div class="col-6">
-                    <mat-form-field class="input-field">
-                        <mat-label>Nombre</mat-label>
-                        <input id="input-client" matInput placeholder="Ej: Comercial Demo SpA" 
-                            autocomplete="off" formControlName="name"  required>
-                        <mat-error *ngIf="form.get('name')?.invalid">{{obtenerMensajeError(form.get('name')!)}}</mat-error>
-                    </mat-form-field><br>
-                    <app-rut-input formControlName="rut" placeholder="Ej: 12.345.678-5"></app-rut-input><br>
-                    <div class="company-field-row">
-                        <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
-                            Empresa
-                        </mat-slide-toggle>
-                        <mat-form-field class="input-field company-input">
-                            <mat-label>Nombre Empresa</mat-label>
-                            <input matInput placeholder="Ej: Comercial Demo SpA" formControlName="company_name">
-                        </mat-form-field>
-                    </div>
-                    <br>
-                    <mat-form-field class="input-field">
-                        <mat-label>Correo Electrónico</mat-label>
-                        <input  matInput placeholder="info@demo.example" formControlName="email">
-                        <mat-error *ngIf="form.get('email')?.invalid">{{obtenerMensajeError(form.get('email')!)}}</mat-error>
-                    </mat-form-field> 
+        <div class="edit-grid">
+            <div class="edit-col">
+                <div class="field-group">
+                    <label class="field-label" for="input-client">Nombre</label>
+                    <input id="input-client" class="input" placeholder="Ej: Manage Repair Store" autocomplete="off" formControlName="name" />
+                    <span class="field-error" *ngIf="form.get('name')?.invalid">{{ obtenerMensajeError(form.get('name')!) }}</span>
                 </div>
-                <div class="col-6">
-                    <mat-form-field class="input-field">
-                        <mat-label>Dirección</mat-label>
-                        <input matInput placeholder="Ej: Av. Providencia 1234" formControlName="address" required>
-                        <mat-error *ngIf="form.get('address')?.invalid">{{obtenerMensajeError(form.get('address')!)}}</mat-error>
-                    </mat-form-field><br>
-                    <mat-form-field class="input-field">
-                        <mat-label>Comuna</mat-label>
-                        <input matInput placeholder="Ej: Santiago" formControlName="city" required>
-                        <mat-error *ngIf="form.get('city')?.invalid">{{obtenerMensajeError(form.get('city')!)}}</mat-error>
-                    </mat-form-field><br>
-                    <mat-form-field class="input-field">
-                        <mat-label>Teléfono</mat-label>
-                        <input matInput placeholder="9 5555 1234" formControlName="phone" required>
-                        <mat-error *ngIf="form.get('phone')?.invalid">{{obtenerMensajeError(form.get('phone')!)}}</mat-error>
-                    </mat-form-field>
+
+                <div class="field-group">
+                    <label class="field-label" for="input-rut">RUT</label>
+                    <app-rut-input formControlName="rut" variant="plain" placeholder="Ej: 12.345.678-5"></app-rut-input>
+                    <span class="field-error" *ngIf="form.get('rut')?.invalid">{{ obtenerMensajeError(form.get('rut')!) }}</span>
+                </div>
+
+                <div class="company-field-row">
+                    <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
+                        Empresa
+                    </mat-slide-toggle>
+                    <div class="field-group company-input">
+                        <label class="field-label" for="input-company">Nombre Empresa</label>
+                        <input id="input-company" class="input" placeholder="Ej: Manage Repair Store" formControlName="company_name" />
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="input-email">Correo Electrónico</label>
+                    <input id="input-email" class="input" placeholder="info@demo.example" formControlName="email" />
+                    <span class="field-error" *ngIf="form.get('email')?.invalid">{{ obtenerMensajeError(form.get('email')!) }}</span>
                 </div>
             </div>
-        </mat-card>
+
+            <div class="edit-col">
+                <div class="field-group">
+                    <label class="field-label" for="input-address">Dirección</label>
+                    <input id="input-address" class="input" placeholder="Ej: 6 Oriente #1256" formControlName="address" />
+                    <span class="field-error" *ngIf="form.get('address')?.invalid">{{ obtenerMensajeError(form.get('address')!) }}</span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="input-city">Comuna</label>
+                    <input id="input-city" class="input" placeholder="Ej: Viña del Mar" formControlName="city" />
+                    <span class="field-error" *ngIf="form.get('city')?.invalid">{{ obtenerMensajeError(form.get('city')!) }}</span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="input-phone">Teléfono</label>
+                    <input id="input-phone" class="input" placeholder="93565666" formControlName="phone" />
+                    <span class="field-error" *ngIf="form.get('phone')?.invalid">{{ obtenerMensajeError(form.get('phone')!) }}</span>
+                </div>
+            </div>
+        </div>
     </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-    <button class="btn-cancel" type="button" (click)="close()" mat-raised-button>
-        <mat-icon>close</mat-icon> Cerrar
-    </button>
-    <button class="btn-save" type="button" (click)="saveClient()" mat-raised-button color="primary">
-        <mat-icon>edit</mat-icon> Guardar
+    <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+    <button class="btn btn-primary" type="button" (click)="saveClient()">
+        <mat-icon fontIcon="edit"></mat-icon> Guardar
     </button>
 </mat-dialog-actions>

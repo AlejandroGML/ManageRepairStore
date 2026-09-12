@@ -3,14 +3,16 @@ import { authGuard } from './guards/auth.guard';
 import { rolesGuard } from './guards/roles.guard';
 import { homeRedirectGuard } from './guards/home-redirect.guard';
 import { ShellComponent } from './components/shared/shell/shell.component';
-import { PanelComponent } from './components/shared/panel/panel.component';
+import { PanelComponent } from './components/panel/panel.component';
 import { LoginComponent } from './components/shared/login/login.component';
+import { ProfileComponent } from './components/shared/profile/profile.component';
 import { SalesComponent } from './components/sales/sales/sales.component';
 import { RegisterComponent } from './components/client/register/register.component';
 import { FinderComponent } from './components/client/finder/finder.component';
 import { BodegaComponent } from './components/warehouse/bodega/bodega.component';
 import { ProductComponent } from './components/product/product/product.component';
 import { RefillsComponent } from './components/product/refills/refills.component';
+import { RepuestosComponent } from './components/product/repuestos/repuestos.component';
 import { UserManagementComponent } from './components/admin/user-management/user-management.component';
 
 export const routes: Routes = [
@@ -33,7 +35,12 @@ export const routes: Routes = [
       {
         path: 'panel',
         component: PanelComponent,
-        data: { title: 'Panel', sub: 'Resumen del taller' },
+        data: { title: 'Panel', sub: 'Resumen del negocio' },
+      },
+      {
+        path: 'perfil',
+        component: ProfileComponent,
+        data: { title: 'Mi perfil', sub: 'Tu información y seguridad' },
       },
       {
         path: 'ventas',
@@ -45,7 +52,7 @@ export const routes: Routes = [
         path: 'registrar',
         component: RegisterComponent,
         canActivate: [rolesGuard(['admin'])],
-        data: { title: 'Orden de ingreso', sub: 'Registra cliente y genera la orden de servicio' },
+        data: { title: 'Registrar orden', sub: 'Registra cliente y genera la orden de servicio' },
       },
       {
         path: 'bodega',
@@ -57,28 +64,25 @@ export const routes: Routes = [
           {
             path: 'inventario',
             component: ProductComponent,
-            data: { title: 'Inventario', sub: 'Catálogo de productos' },
+            data: { title: 'Inventario', sub: 'Catálogo e inventario' },
           },
           {
             path: 'reposiciones',
             component: RefillsComponent,
             data: { title: 'Reposiciones', sub: 'Registra entradas de inventario' },
           },
+          {
+            path: 'repuestos',
+            component: RepuestosComponent,
+            data: { title: 'Repuestos', sub: 'Asignaciones a trabajadores' },
+          },
         ],
-      },
-      {
-        path: 'productos',
-        redirectTo: 'bodega/inventario',
-      },
-      {
-        path: 'reposiciones',
-        redirectTo: 'bodega/reposiciones',
       },
       {
         path: 'clientes',
         component: FinderComponent,
         canActivate: [rolesGuard(['admin'])],
-        data: { title: 'Clientes y órdenes', sub: '8 clientes · 36 órdenes' },
+        data: { title: 'Clientes y órdenes', sub: 'Historial y órdenes recientes' },
       },
       {
         path: 'admin',

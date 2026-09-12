@@ -128,9 +128,9 @@ describe('AuthService', () => {
     it('should return false when current user role is seller', () => {
       const sellerResponse = {
         access_token: 'seller-token',
-        user: { id: 2, name: 'Seller', email: 'seller@demo.example', role: 'seller' } as UserProfile,
+        user: { id: 2, name: 'Seller', email: 'test@demo.example', role: 'seller' } as UserProfile,
       };
-      service.login('seller@demo.example', 'pass123').subscribe();
+      service.login('test@demo.example', 'pass123').subscribe();
       httpMock.expectOne('http://localhost:3000/auth/login').flush(sellerResponse);
       expect(service.isAdmin()).toBeFalse();
     });

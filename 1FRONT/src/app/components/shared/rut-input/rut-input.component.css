@@ -1,11 +1,15 @@
 :host {
   display: block;
-  width: 90%;
-  margin-left: 5%;
+  width: 100%;
 }
 
 /* Inner mat-form-field fills the host */
 :host mat-form-field {
   width: 100%;
   margin-left: 0;
+}
+
+/* Plain variant: matches the standard .input fields of the design system */
+.rut-input-field {
+  width: 100%;
 }

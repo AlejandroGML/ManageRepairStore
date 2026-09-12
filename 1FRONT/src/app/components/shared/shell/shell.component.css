@@ -7,8 +7,8 @@
 .sidebar {
   width: 248px;
   flex-shrink: 0;
-  background: var(--color-sidebar);
-  color: var(--on-sidebar);
+  background: var(--color-bg-dark);
+  color: var(--color-text-dark);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -24,45 +24,27 @@
   padding: var(--space-base) var(--space-base) var(--space-lg);
 }
 
-.brand-mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(140deg, var(--color-primary), var(--color-brand-mid));
-  color: var(--color-on-primary);
+/* Logo Manage Repair Store sobre fondo blanco (sus colores necesitan fondo claro).
+   La caja ocupa todo el ancho de la columna; el logo queda centrado. */
+.brand-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: var(--font-bold);
-  font-size: var(--text-sm);
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  height: 56px;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
 }
 
-.brand-mark .mat-icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.brand-name {
-  font-weight: var(--font-bold);
-  font-size: var(--text-base);
-  line-height: 1.2;
-  color: var(--on-sidebar);
-  white-space: nowrap;
-}
-
-.brand-sub {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--on-sidebar-muted);
-  white-space: nowrap;
+.brand-logo {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  display: block;
+  object-fit: contain;
 }
 
 .nav {
@@ -77,7 +59,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--on-sidebar-muted);
+  color: var(--color-text-muted-dark);
 }
 
 .nav-link {
@@ -88,7 +70,7 @@
   margin: 2px 8px;
   padding: 10px 12px;
   border-radius: var(--radius-md);
-  color: #9CA3AF;
+  color: var(--color-text-muted-dark);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -98,7 +80,7 @@
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #EDE9FE;
+  color: var(--color-text-dark);
 }
 
 .nav-link.active {
@@ -167,13 +149,13 @@
 
 .user-meta span {
   font-size: var(--text-xs);
-  color: var(--on-sidebar-muted);
+  color: var(--color-text-muted-dark);
 }
 
 .logout-btn {
   border: none;
   background: transparent;
-  color: var(--on-sidebar-muted);
+  color: var(--color-text-muted-dark);
   cursor: pointer;
   width: 32px;
   height: 32px;
@@ -271,59 +253,60 @@
   gap: var(--space-sm);
 }
 
-.topbar-icon {
-  width: 36px;
-  height: 36px;
-}
-
-/* ===== Global search ===== */
-.global-search {
-  position: relative;
+/* Clickable user chip in the topbar (next to the theme toggle). */
+.topbar-user {
   display: flex;
   align-items: center;
-  width: 260px;
-  margin-left: auto;
+  gap: var(--space-sm);
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--color-border, transparent);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.global-search .gs-icon {
-  position: absolute;
-  left: 10px;
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-  color: var(--color-text-muted);
-  pointer-events: none;
+.topbar-user:hover {
+  background: rgba(127, 127, 127, 0.12);
 }
 
-.global-search input {
-  width: 100%;
-  height: 34px;
-  padding: 0 54px 0 34px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
+.topbar-user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-bold);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+.topbar-user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+
+.topbar-user-meta strong {
+  font-size: var(--text-xs);
+  white-space: nowrap;
   color: var(--color-text);
-  font-family: inherit;
-  font-size: 13px;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.global-search input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
-}
-
-.global-search kbd {
-  position: absolute;
-  right: 8px;
-  font-family: var(--font-mono);
+.topbar-user-meta span {
   font-size: 10px;
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  background: var(--color-surface);
+}
+
+/* On small screens keep only the avatar in the topbar. */
+@media (max-width: 600px) {
+  .topbar-user-meta {
+    display: none;
+  }
 }
 
 /* ===== Collapsed sidebar ===== */
@@ -340,6 +323,10 @@
     justify-content: center;
     padding-left: var(--space-sm);
     padding-right: var(--space-sm);
+  }
+
+  .sidebar-collapsed .brand-logo-wrap {
+    display: none;
   }
 
   .sidebar-collapsed .brand-text,
@@ -383,10 +370,6 @@
   }
 
   .collapse-btn {
-    display: none;
-  }
-
-  .global-search {
     display: none;
   }
 

@@ -12,8 +12,7 @@ import { AuthService } from '../services/auth.service';
  * unreachable anyway because authGuard on the parent redirects first.
  * Returning parseUrl('/login') here was an infinite redirect loop on
  * the /login route (guard → /login → guard → /login …), which hung the
- * renderer and left the app on a blank screen. (ABAGAS lesson, fixed
- * in 3a4e3db; ported here.)
+ * renderer and left the app on a blank screen.
  */
 export const homeRedirectGuard: CanActivateFn = (): boolean | UrlTree => {
   const router = inject(Router);

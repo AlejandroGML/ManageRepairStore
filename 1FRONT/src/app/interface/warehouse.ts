@@ -6,11 +6,11 @@ export interface Product {
   maxDiscount?: number;
   quantity: number;
   stock?: number;            // Server-side stock (replaces finalStock reads)
-  minimum?: number;          // Punto de reposición (prototipo: columna MÍNIMO)
+  minimum?: number;          // Reorder threshold (stock < minimum → needs refill)
   costPrice?: number;
   sellingPrice?: number;
   location?: string;
-  category?: { id?: number; name: string } | null;
+  category?: { id: number; name: string } | null; // category join (GET /product/active)
   transactions: Transaction[];
 }
 
@@ -31,7 +31,6 @@ export interface Transaction {
   description?: string;      // Agregar esta propiedad
   assignedWorker?: string;   // Agregar esta propiedad
   payMethod?: string;
-  product?: Product | null;  // Relación (refill history)
 }
 
 export interface RefillGroup {

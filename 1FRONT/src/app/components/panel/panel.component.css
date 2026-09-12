@@ -1,0 +1,150 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-base);
+  margin-bottom: var(--space-lg);
+}
+
+.kpi {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+/* Manage Repair Store tones — no violet/teal (MRS lesson: rebrand). */
+.kpi-icon.orange { background: var(--color-primary-light); color: var(--color-primary); }
+.kpi-icon.amber { background: color-mix(in srgb, var(--color-warning) 16%, transparent); color: #b45309; }
+.kpi-icon.red { background: color-mix(in srgb, var(--color-error) 12%, transparent); color: var(--color-error); }
+.kpi-icon.green { background: color-mix(in srgb, var(--color-success) 14%, transparent); color: var(--color-success); }
+
+[data-theme='dark'] .kpi-icon.amber { color: #fbbf24; }
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: var(--font-bold);
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-delta {
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-muted);
+}
+
+.kpi-delta .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.kpi-delta.up { color: var(--color-success); }
+.kpi-delta.down { color: var(--color-error); }
+.kpi-delta.flat { color: var(--color-text-muted); }
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-base);
+  align-items: start;
+}
+
+/* Activity feed */
+.activity-list {
+  padding: var(--space-xs) 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 20px;
+}
+
+.activity-item + .activity-item {
+  border-top: 1px solid var(--color-border);
+}
+
+.activity-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.activity-icon.orange { background: var(--color-primary-light); color: var(--color-primary); }
+.activity-icon.amber { background: color-mix(in srgb, var(--color-warning) 16%, transparent); color: #b45309; }
+.activity-icon.green { background: color-mix(in srgb, var(--color-success) 14%, transparent); color: var(--color-success); }
+
+[data-theme='dark'] .activity-icon.amber { color: #fbbf24; }
+
+.activity-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.activity-meta strong {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.activity-meta span {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.activity-user {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.activity-time {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  margin-left: var(--space-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .panel-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+}

@@ -1,29 +1,47 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
-import { ClientsApiService } from 'src/app/services/clients.api.service';
+import { ClientsApiService, ClientSearchResult } from 'src/app/services/clients.api.service';
 import { OrdersApiService } from 'src/app/services/orders.api.service';
 import { LoadingService } from 'src/app/services/loading.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ModalOrdersComponent } from '../modal-orders/modal-orders.component';
 import { ModalEditClientComponent } from '../modal-edit-client/modal-edit-client.component';
 import { ModalDeleteClientComponent } from '../modal-delete-client/modal-delete-client.component';
-import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
-import { Client } from 'src/app/interface/client';
+import {
+  ModalOrderDetailComponent,
+  OrderDetailData,
+} from '../modal-order-detail/modal-order-detail.component';
+import { Client, Order } from 'src/app/interface/client';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
-import * as XLSX from 'xlsx';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
+import { ModalService } from 'src/app/services/modal.service';
 
 interface ClientRow extends Client {
   orderCount: number;
 }
 
 interface OrderRow {
+  id: number;
   code: string;
+  clientId: number;
   clientName: string;
+  clientRut?: string;
+  clientRutNorm?: string;
+  clientAddress?: string;
+  clientCity?: string;
+  clientPhone?: string;
+  date?: Date;
+  description?: string;
+  observation?: string;
+  comment?: string;
   total: number;
   status: string;
 }
+
+/** Campo por el que se filtra la búsqueda de clientes (uno a la vez). */
+type SearchField = 'id' | 'rut' | 'name' | 'email' | 'company' | 'city';
 
 @Component({
   selector: 'app-finder',
@@ -32,19 +50,33 @@ interface OrderRow {
   standalone: true,
   imports: [SHARED_IMPORTS, NamePipe, RutPipe],
 })
-export class FinderComponent implements OnInit {
+export class FinderComponent implements OnInit, OnDestroy {
   private readonly clientsApi = inject(ClientsApiService);
   private readonly ordersApi = inject(OrdersApiService);
   private readonly loadingService = inject(LoadingService);
-  private readonly dialog = inject(MatDialog);
+  private readonly modal = inject(ModalService);
   private readonly snackbarService = inject(SnackbarService);
 
+  /** Clientes del resultado de búsqueda actual (server-side, sin dump completo). */
   clients: ClientRow[] = [];
   ordersTable: OrderRow[] = [];
-  /** Todas las órdenes por cliente (para filtrar el panel al seleccionar). */
-  private ordersByClient = new Map<number, OrderRow[]>();
+  totalClients = 0;
+  /** Total de coincidencias de la búsqueda (puede exceder el límite traído). */
+  totalMatches = 0;
+  /** true cuando hay más coincidencias que las traídas (afinar búsqueda). */
+  truncated = false;
   totalOrders = 0;
   clientSearch = '';
+  /** Campo activo del filtro de clientes (solo se busca con ese campo). */
+  searchField: SearchField = 'name';
+  readonly searchFields: { value: SearchField; label: string }[] = [
+    { value: 'id', label: 'N° Cliente' },
+    { value: 'rut', label: 'RUT' },
+    { value: 'name', label: 'Nombre' },
+    { value: 'email', label: 'Correo' },
+    { value: 'company', label: 'Empresa' },
+    { value: 'city', label: 'Comuna' },
+  ];
   /** Cliente seleccionado: sus órdenes recientes se muestran en el panel derecho. */
   selectedClient: ClientRow | null = null;
 
@@ -52,73 +84,111 @@ export class FinderComponent implements OnInit {
   pageSize = 10;
   pageIndex = 0;
 
-  ngOnInit(): void {
-    this.loadData();
+  /** Ordenamiento por columna (null = orden de la API). */
+  sortField: 'rut' | 'name' | 'phone' | 'orderCount' | null = null;
+  sortDir: 'asc' | 'desc' = 'asc';
+
+  /** Búsqueda con debounce para no golpear al server por cada tecla. */
+  private searchTerms = new Subject<void>();
+  private destroy$ = new Subject<void>();
+
+  constructor() {
+    // Sin distinctUntilChanged: el Subject emite void (siempre "igual") y
+    // tragaría todas las emisiones tras la primera. El debounce basta.
+    this.searchTerms
+      .pipe(debounceTime(250), takeUntil(this.destroy$))
+      .subscribe(() => this.runSearch());
   }
 
-  private loadData(): void {
-    // GET /order/all devuelve clientes con sus órdenes.
-    this.ordersApi.getAllOrders().subscribe((clientsWithOrders) => {
-      const counts = new Map<number, number>();
-      const orders: OrderRow[] = [];
-      this.ordersByClient = new Map();
-      for (const c of clientsWithOrders ?? []) {
-        const list = c.orders ?? [];
-        if (c.id !== undefined) {
-          counts.set(c.id, list.length);
-          this.ordersByClient.set(
-            c.id,
-            list
-              .map((o: any): OrderRow => ({
-                code: o.code ?? this.orderCode(o.id),
-                clientName: c.name,
-                total: o.total ?? 0,
-                status: o.status ?? 'Pendiente',
-              }))
-              .sort((a: OrderRow, b: OrderRow) => b.code.localeCompare(a.code))
-          );
-        }
-        for (const o of list) {
-          orders.push({
-            code: (o as any).code ?? this.orderCode(o.id),
-            clientName: c.name,
-            total: (o as any).total ?? 0,
-            status: o.status ?? 'Pendiente',
-          });
-        }
-      }
-      orders.sort((a, b) => b.code.localeCompare(a.code));
-      this.totalOrders = orders.length;
-      this.ordersTable = orders.slice(0, 6);
+  ngOnInit(): void {
+    this.loadSummary();
+    this.loadRecent();
+  }
 
-      this.clientsApi.getAllClients().subscribe((allClients) => {
-        this.clients = (allClients ?? []).map((c) => ({
-          ...c,
-          orderCount: counts.get(c.id ?? 0) ?? 0,
-        }));
-        // Si había un cliente seleccionado y ya no está en la lista, deseleccionar.
-        if (this.selectedClient) {
-          const stillThere = this.clients.some((c) => c.id === this.selectedClient?.id);
-          if (!stillThere) this.selectClient(null);
-        }
-      });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /** Convierte una orden cruda + su cliente en la fila que consume la UI. */
+  private toOrderRow(o: any, c: any): OrderRow {
+    return {
+      id: o.id ?? 0,
+      code: o.code ?? this.orderCode(o.id),
+      clientId: c.id ?? 0,
+      clientName: c.name ?? '',
+      clientRut: c.rut_raw,
+      clientRutNorm: c.rut_normalizado,
+      clientAddress: c.address,
+      clientCity: c.city,
+      clientPhone: c.phone,
+      date: o.date ? new Date(o.date) : undefined,
+      description: o.description ?? '',
+      observation: o.observation ?? '',
+      comment: o.comment ?? '',
+      total: o.total ?? 0,
+      status: o.status ?? 'Pendiente',
+    };
+  }
+
+  /** Totales para el encabezado (clientes + órdenes registradas). */
+  private loadSummary(): void {
+    this.clientsApi.getCountClients().subscribe((n) => {
+      this.totalClients = Number(n) || 0;
+    });
+  }
+
+  /** Panel de órdenes recientes globales (solo 6 filas desde el server). */
+  private loadRecent(): void {
+    this.ordersApi.getRecentOrders(6).subscribe(({ items, total }) => {
+      this.totalOrders = total;
+      if (!this.selectedClient) {
+        this.ordersTable = items.map((o) => this.toOrderRow(o, o.client ?? {}));
+      }
+    });
+  }
+
+  /** Reintenta la búsqueda activa (tras editar/eliminar/detalle). */
+  private refresh(): void {
+    this.loadSummary();
+    this.loadRecent();
+    if (this.clientSearch.trim()) this.runSearch();
+  }
+
+  /** Búsqueda server-side por el campo activo (se llama con debounce). */
+  private runSearch(): void {
+    const q = this.clientSearch.trim();
+    if (!q) {
+      this.clients = [];
+      this.totalMatches = 0;
+      this.truncated = false;
+      return;
+    }
+    this.clientsApi.searchClients(q, this.searchField).subscribe((res: ClientSearchResult) => {
+      this.clients = res.items as ClientRow[];
+      this.totalMatches = res.total;
+      this.truncated = res.total > res.items.length;
     });
   }
 
   /** Selecciona un cliente (fila) y muestra sus órdenes recientes en el panel. */
   selectClient(client: ClientRow | null): void {
     this.selectedClient = client;
-    if (client?.id !== undefined && this.ordersByClient.has(client.id)) {
-      this.ordersTable = (this.ordersByClient.get(client.id) ?? []).slice(0, 6);
-    } else if (client) {
-      this.ordersTable = [];
-    } else {
-      // Sin selección: mostrar las recientes globales.
-      this.ordersTable = [...this.ordersByClient.values()]
-        .flat()
-        .sort((a, b) => b.code.localeCompare(a.code))
-        .slice(0, 6);
+    if (!client) {
+      this.loadRecent();
+      return;
     }
+    if (client.id === undefined) {
+      this.ordersTable = [];
+      return;
+    }
+    this.ordersApi.findOrderByUser(client).subscribe((data: any) => {
+      const list = data?.orders ?? [];
+      this.ordersTable = list
+        .map((o: any) => this.toOrderRow(o, client))
+        .sort((a: OrderRow, b: OrderRow) => b.code.localeCompare(a.code))
+        .slice(0, 6);
+    });
   }
 
   /** Código de orden estilo prototipo: ORD-1039, ORD-1040... */
@@ -126,14 +196,65 @@ export class FinderComponent implements OnInit {
     return `ORD-${1038 + (id ?? 0)}`;
   }
 
-  get filteredClients(): ClientRow[] {
-    const q = this.clientSearch.trim().toLowerCase().replace(/[.-]/g, '');
-    if (!q) return this.clients;
-    return this.clients.filter((c) => {
-      const name = (c.name ?? '').toLowerCase();
-      const rut = (c.rut_raw ?? '').toLowerCase().replace(/[.-]/g, '');
-      return name.includes(q) || rut.includes(q);
+  /** Placeholder del buscador según el campo activo. */
+  get searchPlaceholder(): string {
+    const map: Record<SearchField, string> = {
+      id: 'Buscar por N° Cliente',
+      rut: 'Buscar por RUT',
+      name: 'Buscar por nombre',
+      email: 'Buscar por correo',
+      company: 'Buscar por empresa',
+      city: 'Buscar por comuna',
+    };
+    return map[this.searchField];
+  }
+
+  /** Al cambiar filtro o texto, vuelve a la primera página y agenda la búsqueda. */
+  onSearchChange(): void {
+    this.pageIndex = 0;
+    this.searchTerms.next();
+  }
+
+  /** Cambia de columna o alterna la dirección de ordenamiento. */
+  sortBy(field: NonNullable<typeof this.sortField>): void {
+    if (this.sortField === field) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDir = 'asc';
+    }
+    this.pageIndex = 0;
+  }
+
+  /** Ordena la lista filtrada según sortField/sortDir. */
+  private sortClients(list: ClientRow[]): ClientRow[] {
+    if (!this.sortField) return list;
+    const dir = this.sortDir === 'asc' ? 1 : -1;
+    const field = this.sortField;
+    return [...list].sort((a, b) => {
+      let cmp = 0;
+      switch (field) {
+        case 'rut':
+          cmp = String(a.rut_raw ?? '').replace(/[.-]/g, '')
+            .localeCompare(String(b.rut_raw ?? '').replace(/[.-]/g, ''));
+          break;
+        case 'name':
+          cmp = (a.name ?? '').localeCompare(b.name ?? '', 'es');
+          break;
+        case 'phone':
+          cmp = (a.phone ?? '').localeCompare(b.phone ?? '');
+          break;
+        case 'orderCount':
+          cmp = (a.orderCount ?? 0) - (b.orderCount ?? 0);
+          break;
+      }
+      return cmp * dir;
     });
+  }
+
+  /** El server ya filtró; aquí solo se ordena el subconjunto traído. */
+  get filteredClients(): ClientRow[] {
+    return this.sortClients(this.clients);
   }
 
   get pageCount(): number { return Math.max(1, Math.ceil(this.filteredClients.length / this.pageSize)); }
@@ -191,83 +312,112 @@ export class FinderComponent implements OnInit {
     });
   }
 
+  /**
+   * Cliente reconstruido desde la fila de órdenes recientes: GET /order/recent
+   * ya trae el cliente joinneado, así que el detalle funciona incluso cuando
+   * el cliente no está en los resultados de búsqueda actuales.
+   */
+  private clientFromRecentRow(row: OrderRow): Client | null {
+    if (!row.clientId) return null;
+    return {
+      id: row.clientId,
+      name: row.clientName,
+      rut_raw: row.clientRut,
+      rut_normalizado: row.clientRutNorm,
+      address: row.clientAddress,
+      city: row.clientCity,
+      phone: row.clientPhone,
+    } as Client;
+  }
+
+  /** Abre el detalle de UNA orden (clic en la fila de órdenes recientes). */
+  openOrderDetail(row: OrderRow): void {
+    const client =
+      this.clients.find((c) => c.id === row.clientId) ??
+      this.selectedClient ??
+      this.clientFromRecentRow(row);
+    if (!client) {
+      this.snackbarService.openSnackBar('No se encontró el cliente de esta orden.');
+      return;
+    }
+    const order: Order = {
+      id: row.id,
+      code: row.code,
+      description: row.description ?? '',
+      observation: row.observation ?? '',
+      date: row.date ?? new Date(),
+      status: row.status,
+      comment: row.comment ?? '',
+    };
+    this.modal.open(ModalOrderDetailComponent, {
+      size: 'md',
+      data: { client, order } as OrderDetailData,
+      disableClose: true,
+    }).afterClosed().subscribe((res: { changed?: boolean } | undefined) => {
+      // Si cambió el estado dentro del detalle, refrescar órdenes y conteos.
+      if (res?.changed) this.refresh();
+    });
+  }
+
   showModalEditUser(client: Client): void {
     const copy = { ...client };
-    this.dialog.open(ModalEditClientComponent, {
-      width: '90vw',
-      maxWidth: '720px',
-      maxHeight: '90vh',
+    this.modal.open(ModalEditClientComponent, {
+      size: 'lg',
       data: copy,
       disableClose: true,
     }).afterClosed().subscribe((newClient: Client) => {
       if (newClient) {
-        this.loadData();
+        this.refresh();
       }
     });
   }
 
   showModalDeleteUser(client: Client): void {
-    this.dialog.open(ModalDeleteClientComponent, {
-      width: '90vw',
-      maxWidth: '400px',
-      maxHeight: '90vh',
+    this.modal.open(ModalDeleteClientComponent, {
+      size: 'sm',
       data: client,
       disableClose: true,
     }).afterClosed().subscribe((id: number) => {
       if (id) {
-        this.dialog.open(ModalConfirmComponent, {
-          width: '90vw',
-          maxWidth: '400px',
-          maxHeight: '90vh',
-          data: { message: 'Cliente eliminado exitosamente' },
-          disableClose: true,
-        });
-        this.loadData();
+        this.snackbarService.success('Cliente eliminado exitosamente');
+        this.refresh();
       }
     });
   }
 
   openOrderModal(client: Client): void {
-    this.dialog.open(ModalOrdersComponent, {
-      width: '95vw',
-      maxWidth: '1100px',
-      maxHeight: '90vh',
+    this.modal.open(ModalOrdersComponent, {
+      size: 'xl',
       data: client,
       disableClose: true,
     });
   }
 
-  exportToExcel(): void {
+  /**
+   * Exporta los clientes como XLSX con formato generado por el backend (GET /client/export):
+   * el RPi ya no sirve un dump JSON completo solo para el botón Exportar.
+   */
+  exportClients(): void {
     this.loadingService.setLoading(true);
-    this.clientsApi.getAllClients().subscribe({
-      next: (allClients) => {
+    this.clientsApi.exportClients().subscribe({
+      next: (blob) => {
         this.loadingService.setLoading(false);
-        if (!allClients || allClients.length === 0) {
-          this.snackbarService.openSnackBar('No hay clientes para exportar.');
-          return;
-        }
-
-        const clientData = allClients.map((client) => ({
-          'N°': client.id || '',
-          'Nombre': client.name || '',
-          'RUT': client.rut_raw || '',
-          'Teléfono': client.phone || '',
-          'Email': client.email || '',
-          'Dirección': client.address || '',
-          'Ciudad': client.city || '',
-          'Empresa': client.company_name || 'Particular',
-        }));
-
-        const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(clientData, { skipHeader: false });
-        const workbook: XLSX.WorkBook = { Sheets: { 'Clientes': worksheet }, SheetNames: ['Clientes'] };
-
-        XLSX.writeFile(workbook, 'Lista_de_Clientes.xlsx');
-        this.snackbarService.openSnackBar(`Exportados ${clientData.length} clientes`);
+        this.downloadBlob(blob, `clientes-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        this.snackbarService.openSnackBar('Clientes exportados.');
       },
       error: () => {
         this.loadingService.setLoading(false);
-        this.snackbarService.openSnackBar('Error al obtener clientes. Intente nuevamente.');
+        this.snackbarService.openSnackBar('Error al exportar clientes. Intente nuevamente.');
       },
     });
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 }

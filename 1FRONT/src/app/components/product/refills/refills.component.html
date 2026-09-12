@@ -2,56 +2,82 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Reposiciones de stock</h1>
-      <p class="page-lead">Registra entradas de inventario</p>
-    </div>
-    <div class="page-actions">
-      <button class="btn btn-primary" (click)="focusForm()">
-        <mat-icon fontIcon="add"></mat-icon> Nueva reposición
-      </button>
+      <p class="page-lead">Registra entradas y descuentos de inventario</p>
     </div>
   </div>
-
   <div class="refill-grid">
-    <!-- Nueva entrada -->
+    <!-- Nuevo movimiento -->
     <div class="card new-entry" id="new-entry">
       <div class="card-head">
-        <h2 class="card-title">Nueva entrada</h2>
+        <h2 class="card-title">Nuevo movimiento</h2>
       </div>
+      <p class="entry-help">
+        Las reposiciones registran <b>entradas de inventario</b>. Con una cantidad
+        negativa se <b>descuenta stock</b> del producto.
+      </p>
       <div class="entry-form">
-        <label class="field-label" for="refill-product">Producto</label>
-        <select id="refill-product" class="select" [(ngModel)]="selectedProductId" (ngModelChange)="onProductChange()">
-          <option [ngValue]="null">Selecciona un producto...</option>
-          <option *ngFor="let p of products" [ngValue]="p.id">{{ p.name }}</option>
-        </select>
-
-        <div class="entry-row">
-          <div class="entry-field">
-            <label class="field-label" for="refill-qty">Cantidad</label>
-            <input id="refill-qty" class="input mono" type="number" min="1" placeholder="10" [(ngModel)]="quantity" />
+        <label class="field-label" for="refill-field">Buscar producto por</label>
+        <div class="search-wrap">
+          <div class="search-filter-row">
+            <select id="refill-field" class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" aria-label="Buscar por">
+              <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label }}</option>
+            </select>
+            <input
+              class="input"
+              placeholder="Escribe para buscar..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange()"
+              [disabled]="!!selectedProduct"
+            />
           </div>
-          <div class="entry-field">
-            <label class="field-label" for="refill-cost">Costo unitario</label>
-            <div class="currency-input">
-              <span class="currency-prefix">$</span>
-              <input id="refill-cost" class="input mono" type="number" min="0" [placeholder]="formatMoney(costPrice)" [(ngModel)]="costPrice" />
-            </div>
+
+          <!-- Resultados de búsqueda (máx 20, server-side, dropdown) -->
+          <div class="search-results" *ngIf="!selectedProduct && searchResults.length">
+          <button
+            *ngFor="let p of searchResults"
+            type="button"
+            class="search-result-row"
+            (click)="selectProduct(p)"
+          >
+            <span class="sr-name">{{ p.name }}</span>
+            <span class="sr-meta mono">stock {{ p.stock ?? 0 }}</span>
+          </button>
+            <p class="sr-truncated muted" *ngIf="searchTotal > searchResults.length">
+              Mostrando {{ searchResults.length }} de {{ searchTotal }} — afina tu búsqueda
+            </p>
           </div>
         </div>
+        <p class="empty-state" *ngIf="!selectedProduct && searchQuery.trim() && !searchResults.length && !searching">
+          Sin productos que coincidan.
+        </p>
 
-        <div class="entry-row">
-          <div class="entry-field">
-            <label class="field-label" for="refill-provider">Proveedor</label>
-            <input id="refill-provider" class="input" type="text" placeholder="Proveedor" [(ngModel)]="provider" />
-          </div>
-          <div class="entry-field">
-            <label class="field-label" for="refill-invoice">N.º factura</label>
-            <input id="refill-invoice" class="input mono" type="text" placeholder="FAC-1023" [(ngModel)]="invoice" />
-          </div>
+        <!-- Producto seleccionado -->
+        <div class="selected-product" *ngIf="selectedProduct">
+          <span class="sp-name">{{ selectedProduct.name }}</span>
+          <span class="sr-meta mono">stock {{ selectedProduct.stock ?? 0 }}</span>
+          <button type="button" class="sp-clear" (click)="clearSelection()" aria-label="Cambiar producto">
+            <mat-icon fontIcon="close"></mat-icon>
+          </button>
         </div>
 
-        <button class="btn btn-accent btn-block entry-submit" [disabled]="submitting || !selectedProductId" (click)="registerEntry()">
+        <div class="entry-field">
+          <label class="field-label" for="refill-qty">Cantidad (+ entra / − descuenta)</label>
+          <input id="refill-qty" class="input mono" type="number" placeholder="10" [(ngModel)]="quantity" />
+        </div>
+
+        <div class="discount-warning" *ngIf="isDiscount">
+          <mat-icon fontIcon="warning"></mat-icon>
+          Si se pone una cantidad negativa, se restará stock al producto seleccionado
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="refill-detail">Detalle (proveedor, factura o comentario)</label>
+          <input id="refill-detail" class="input" placeholder="Opcional" [(ngModel)]="detail" />
+        </div>
+
+        <button class="btn btn-accent btn-block entry-submit" [disabled]="!canSubmit" (click)="registerEntry()">
           <mat-icon fontIcon="package_2"></mat-icon>
-          <span>{{ submitting ? 'Registrando...' : 'Registrar entrada' }}</span>
+          <span>{{ submitting ? 'Guardando...' : (isDiscount ? 'Registrar Descuento' : 'Agregar Reposición') }}</span>
         </button>
       </div>
     </div>
@@ -60,6 +86,7 @@
     <div class="card history">
       <div class="card-head">
         <h2 class="card-title">Historial</h2>
+        <span class="history-range muted">{{ historyRangeLabel }}</span>
       </div>
       <div class="table-wrap">
         <table class="data zebra">
@@ -73,22 +100,31 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let h of history">
-              <td class="mono muted">{{ h.date }}</td>
+            <tr *ngFor="let h of historyRows">
+              <td class="mono muted">{{ shortDate(h.date) }}</td>
               <td>{{ h.product }}</td>
-              <td class="col-num mono">+{{ h.qty }}</td>
+              <td class="col-num mono" [class.qty-negative]="h.qty < 0" [class.qty-positive]="h.qty > 0">{{ h.qty > 0 ? '+' + h.qty : h.qty }}</td>
               <td class="col-num mono">
-                <ng-container *ngIf="h.prevStock !== null; else stockEmpty">
-                  {{ h.prevStock }} → {{ h.postStock }}
+                <ng-container *ngIf="h.postStock !== null; else stockEmpty">
+                  {{ h.postStock }}
                 </ng-container>
                 <ng-template #stockEmpty><span class="muted">—</span></ng-template>
               </td>
-              <td>{{ providerLabel(h) }}</td>
+              <td>{{ detailLabel(h) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="empty-state" *ngIf="!history.length">Sin entradas registradas.</p>
+      <p class="empty-state" *ngIf="!historyRows.length">Sin movimientos registrados.</p>
+      <div class="paginator" *ngIf="historyTotal > pageSize">
+        <button class="pg" [disabled]="historyPage === 0" (click)="goHistoryPage(historyPage - 1)" aria-label="Anterior">
+          <mat-icon fontIcon="chevron_left"></mat-icon>
+        </button>
+        <span class="pg-label">Página {{ historyPage + 1 }} de {{ historyMaxPage + 1 }}</span>
+        <button class="pg" [disabled]="(historyPage + 1) * pageSize >= historyTotal" (click)="goHistoryPage(historyPage + 1)" aria-label="Siguiente">
+          <mat-icon fontIcon="chevron_right"></mat-icon>
+        </button>
+      </div>
     </div>
   </div>
 </div>

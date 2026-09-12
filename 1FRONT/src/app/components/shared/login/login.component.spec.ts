@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LoginComponent } from './login.component';
@@ -52,14 +53,15 @@ describe('LoginComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call AuthService.login on login() and emit user on success', () => {
+  it('should call AuthService.login on login() and navigate to / on success', () => {
     const mockUser = {
       id: 1,
       name: 'Admin',
       email: 'admin@demo.example',
       role: 'admin',
     };
-    const emitSpy = spyOn(component.setLoggedEvent, 'emit');
+    const router = TestBed.inject(Router);
+    const navigateSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
 
     component.email = 'admin@demo.example';
     component.password = 'Admin123!';
@@ -72,7 +74,7 @@ describe('LoginComponent', () => {
     });
     req.flush({ access_token: 'token', user: mockUser });
 
-    expect(emitSpy).toHaveBeenCalledWith(mockUser);
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
   });
 
   it('should set loading to false after successful login', () => {
@@ -110,27 +112,46 @@ describe('LoginComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
-  // === Responsive layout tests ===
+  // === Split-screen layout tests ===
 
-  it('should use .login-wrapper class instead of inline percentage width', () => {
-    fixture.detectChanges();
+  it('should render the split-screen brand panel with the Manage Repair Store logo', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    const wrapper = compiled.querySelector('.login-wrapper');
-    expect(wrapper).withContext('Login should use .login-wrapper CSS class').toBeTruthy();
-    // No inline width/margin-left styles
-    expect(compiled.innerHTML).not.toContain('style="width:30%');
-    expect(compiled.innerHTML).not.toContain('margin-left:35%');
+    expect(compiled.querySelector('.login-brand')).toBeTruthy();
+    expect(compiled.querySelector('.login-form-pane')).toBeTruthy();
+    const logo = compiled.querySelector('.brand-logo') as HTMLImageElement;
+    expect(logo).toBeTruthy();
+    expect(logo?.getAttribute('alt')).toBe('Manage Repair Store');
   });
 
-  it('should not have inline background-color on login button', () => {
-    component.email = 'admin@demo.example';
-    component.password = 'Admin123!';
-    fixture.detectChanges();
+  it('should NOT show demo credentials (ENTRAR COMO box absent)', () => {
     const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('ENTRAR COMO');
+    expect(compiled.querySelector('.demo-box')).toBeNull();
+    expect(compiled.textContent).not.toContain('Demo1234!');
+  });
+
+  it('should toggle password visibility', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(component.showPassword).toBeFalse();
+    let input = compiled.querySelector('#input-pass') as HTMLInputElement;
+    expect(input.type).toBe('password');
+
+    component.togglePassword();
+    fixture.detectChanges();
+    input = fixture.nativeElement.querySelector('#input-pass') as HTMLInputElement;
+    expect(component.showPassword).toBeTrue();
+    expect(input.type).toBe('text');
+
+    component.togglePassword();
+    fixture.detectChanges();
+    input = fixture.nativeElement.querySelector('#input-pass') as HTMLInputElement;
+    expect(input.type).toBe('password');
+  });
+
+  it('should show "Iniciar sesión" submit button', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Iniciar sesión');
     const button = compiled.querySelector('button[type="submit"]');
     expect(button).toBeTruthy();
-    // Background color should come from CSS var, not inline style
-    const hasInlineBg = button!.hasAttribute('style') && button!.getAttribute('style')!.includes('background-color');
-    expect(hasInlineBg).withContext('Button bg should come from CSS, not inline style').toBeFalse();
   });
 });

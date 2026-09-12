@@ -1,12 +1,13 @@
 <div class="login-view">
   <div class="login-brand">
     <div class="brand-lockup">
-      <span class="brand-mark"><mat-icon fontIcon="handyman"></mat-icon></span>
-      <div class="wordmark">Manage Repair Store<span>Gestión de taller · Chile</span></div>
+      <span class="brand-logo-wrap">
+        <img class="brand-logo" src="assets/img/logo-300x80.png" alt="Manage Repair Store" />
+      </span>
     </div>
 
     <div class="login-hero">
-      <h1>Controla tu taller de reparación en un solo lugar</h1>
+      <h1>Gestiona tu negocio de gas y repuestos en un solo lugar</h1>
       <p>Stock en tiempo real, ventas, órdenes de servicio y tickets PDF/QR con RUT y precios en CLP. Hecho para el mercado chileno.</p>
       <div class="hero-feature">
         <mat-icon fontIcon="inventory_2"></mat-icon>
@@ -22,7 +23,7 @@
       </div>
     </div>
 
-    <div class="section-note">Demo · datos 100% sintéticos</div>
+    <div class="section-note">Manage Repair Store · Sistema de gestión</div>
   </div>
 
   <div class="login-form-pane">
@@ -54,7 +55,7 @@
             <input
               id="input-pass"
               class="input"
-              type="password"
+              [type]="showPassword ? 'text' : 'password'"
               placeholder="Contraseña"
               [(ngModel)]="password"
               name="password"
@@ -67,13 +68,6 @@
           </div>
         </div>
 
-        <div class="login-row">
-          <label class="remember">
-            <input type="checkbox" checked /> Recordarme
-          </label>
-          <a href="#" class="forgot-link" (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
-        </div>
-
         <div class="login-actions">
           @if (!loading) {
             <button type="submit" class="btn btn-primary login-btn">Iniciar sesión</button>
@@ -82,25 +76,6 @@
           }
         </div>
       </form>
-
-      <div class="demo-box">
-        <div class="demo-title">ENTRAR COMO</div>
-        <div class="demo-roles">
-          <button type="button" class="demo-role" (click)="demoLogin('admin')">
-            <mat-icon fontIcon="admin_panel_settings"></mat-icon>
-            <div><b>Administrador</b><span>admin@demo.example</span></div>
-          </button>
-          <button type="button" class="demo-role" (click)="demoLogin('seller')">
-            <mat-icon fontIcon="point_of_sale"></mat-icon>
-            <div><b>Vendedor</b><span>clerk@demo.example</span></div>
-          </button>
-          <button type="button" class="demo-role" (click)="demoLogin('warehouse')">
-            <mat-icon fontIcon="inventory_2"></mat-icon>
-            <div><b>Bodega</b><span>bodega@demo.example</span></div>
-          </button>
-        </div>
-        <div class="demo-note">Clave: <code>Demo1234!</code></div>
-      </div>
     </div>
   </div>
 </div>

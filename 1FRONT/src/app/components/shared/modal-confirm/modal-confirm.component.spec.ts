@@ -73,4 +73,62 @@ describe('ModalConfirmComponent', () => {
     component.close();
     expect(dialogRefSpy.close).toHaveBeenCalled();
   });
+
+  it('should call dialogRef.close(true) when confirm() is invoked', () => {
+    component.confirm();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
+  });
+
+  it('should default to confirm mode with Cancelar + Confirmar buttons', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(component.mode).toBe('confirm');
+    expect(compiled.textContent).toContain('Cancelar');
+    expect(compiled.textContent).toContain('Confirmar');
+  });
+
+  describe('notify mode', () => {
+    function buildNotify(data: Partial<{ message: string; okLabel: string; title: string }>) {
+      const notifyRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [ModalConfirmComponent, NoopAnimationsModule],
+        providers: [
+          { provide: MatDialogRef, useValue: notifyRef },
+          { provide: MAT_DIALOG_DATA, useValue: { message: 'Listo', mode: 'notify', ...data } },
+        ],
+      }).compileComponents();
+      const f = TestBed.createComponent(ModalConfirmComponent);
+      f.detectChanges();
+      return { f, compiled: f.nativeElement as HTMLElement };
+    }
+
+    it('should render a single Aceptar button and no cancel/close affordances', () => {
+      const { compiled } = buildNotify({});
+      expect(compiled.textContent).toContain('Aceptar');
+      expect(compiled.textContent).not.toContain('Cancelar');
+      expect(compiled.textContent).not.toContain('Confirmar');
+    });
+
+    it('should use a custom okLabel and title when provided', () => {
+      const { compiled } = buildNotify({ okLabel: 'Entendido', title: 'Hecho' });
+      expect(compiled.textContent).toContain('Entendido');
+      expect(compiled.textContent).toContain('Hecho');
+    });
+  });
+
+  it('should support custom okLabel in confirm mode', () => {
+    const customRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [ModalConfirmComponent, NoopAnimationsModule],
+      providers: [
+        { provide: MatDialogRef, useValue: customRef },
+        { provide: MAT_DIALOG_DATA, useValue: { message: '¿Seguro?', okLabel: 'Eliminar' } },
+      ],
+    }).compileComponents();
+    const customFixture = TestBed.createComponent(ModalConfirmComponent);
+    customFixture.detectChanges();
+    expect(customFixture.nativeElement.textContent).toContain('Eliminar');
+    expect(customFixture.componentInstance.okLabel).toBe('Eliminar');
+  });
 });

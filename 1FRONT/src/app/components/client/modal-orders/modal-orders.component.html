@@ -1,96 +1,115 @@
 <h2 mat-dialog-title>
-  Órdenes de {{client.name | name}}
+  <span>Órdenes de {{ client.name | name }}</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
 </h2>
+
 <mat-dialog-content>
-  <!-- Header Cliente -->
-  <mat-card class="client-info-card">
-    <div class="client-info-row">
-      <span>N°: <b>{{client.id}}</b></span>
-      <span>Cliente: <b>{{client.name | name}}</b></span>
-      <span>Dirección: <b>{{(client.address | name)+', '+(client.city | name)}}</b></span>
+  <!-- Resumen del cliente -->
+  <div class="card card-pad client-summary">
+    <div class="cs-row">
+      <span class="cs-label">N° Cliente</span>
+      <b class="mono">{{ client.id }}</b>
     </div>
-  </mat-card>
-
-  <!-- Tabla Atenciones/Ordenes -->
-  <div class="div-table">
-    <mat-card class="table-card">
-      <table mat-table [dataSource]="dataSource">
-        <!-- id Column -->
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef class="col-id-header">
-            <span>N°</span><br><span>Aviso</span>
-          </th>
-          <td mat-cell *matCellDef="let element"> {{element.id}} </td>
-        </ng-container>
-        <!-- status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef class="col-status-header">Estado</th>
-          <td mat-cell *matCellDef="let element"> {{element.status | name}} </td>
-        </ng-container>
-        <!-- date Column -->
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef class="col-date-header">Fecha</th>
-          <td mat-cell *matCellDef="let element">
-            <div class="text-center">
-              <span>{{element.date | date:'dd-MM-yyyy'}}</span><br>
-              <span>{{element.date | date:'hh:mm'}}</span>
-            </div>
-          </td>
-        </ng-container>
-        <!-- comment Column -->
-        <ng-container matColumnDef="comment">
-          <th mat-header-cell *matHeaderCellDef class="col-comment-header">Comentario</th>
-          <td mat-cell *matCellDef="let element"> {{element.comment | name}} </td>
-        </ng-container>
-        <!-- description Column -->
-        <ng-container matColumnDef="description">
-          <th mat-header-cell *matHeaderCellDef class="col-description-header">Descripción</th>
-          <td mat-cell *matCellDef="let element"> {{element.description | name}} </td>
-        </ng-container>
-        <!-- obs Column -->
-        <ng-container matColumnDef="obs">
-          <th mat-header-cell *matHeaderCellDef class="col-obs-header">Observaciones</th>
-          <td mat-cell *matCellDef="let element"> {{element.observation | name}} </td>
-        </ng-container>
-        <!-- change status Column -->
-        <ng-container matColumnDef="changeStatus">
-          <th mat-header-cell *matHeaderCellDef class="col-change-header">Cambiar Estado</th>
-          <td mat-cell *matCellDef="let element" class="text-center">
-            <mat-icon class="icon-order icon-edit"
-              matTooltip="Editar Estado"
-              matTooltipPosition="above"
-              role="button" tabindex="0"
-              (click)="openStatusModal(element)"
-              (keydown.enter)="openStatusModal(element)"
-              (keydown.space)="openStatusModal(element)"
-              aria-label="Editar estado">edit</mat-icon>
-          </td>
-        </ng-container>
-        <!-- actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef class="col-actions-header">Descargar</th>
-          <td mat-cell *matCellDef="let element" class="text-center">
-            <mat-icon class="icon-pdf"
-              role="button" tabindex="0"
-              (click)="descargarPDF(element)"
-              (keydown.enter)="descargarPDF(element)"
-              (keydown.space)="descargarPDF(element)"
-              aria-label="Descargar PDF">picture_as_pdf</mat-icon>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns;sticky: true"></tr>
-        <tr class="tr-row" mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-        <!-- Row shown when there is no matching data. -->
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell" colspan="4">Sin coincidencias</td>
-        </tr>
-      </table>
-    </mat-card>
+    <div class="cs-row">
+      <span class="cs-label">Cliente</span>
+      <b>{{ client.name | name }}</b>
+    </div>
+    <div class="cs-row">
+      <span class="cs-label">Dirección</span>
+      <b>{{ (client.address | name) + ', ' + (client.city | name) }}</b>
+    </div>
   </div>
+
+  <!-- Tabla de órdenes (el look lo aporta el chrome global de diálogos) -->
+  <div class="table-wrap orders-table" *ngIf="dataSource.data.length; else noOrders">
+    <table mat-table [dataSource]="dataSource">
+      <!-- id Column -->
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>N° Aviso</th>
+        <td mat-cell *matCellDef="let element" class="mono">{{ element.id }}</td>
+      </ng-container>
+
+      <!-- date Column -->
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element.date | date:'dd-MM-yyyy HH:mm' }}
+        </td>
+      </ng-container>
+
+      <!-- status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let element">
+          <span class="badge" [class]="statusBadgeClass(element.status)">
+            <span class="dot"></span> {{ statusLabel(element.status) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- comment Column -->
+      <ng-container matColumnDef="comment">
+        <th mat-header-cell *matHeaderCellDef>Comentario</th>
+        <td mat-cell *matCellDef="let element">{{ element.comment | name }}</td>
+      </ng-container>
+
+      <!-- description Column -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Descripción</th>
+        <td mat-cell *matCellDef="let element">{{ element.description | name }}</td>
+      </ng-container>
+
+      <!-- obs Column -->
+      <ng-container matColumnDef="obs">
+        <th mat-header-cell *matHeaderCellDef>Observaciones</th>
+        <td mat-cell *matCellDef="let element">{{ element.observation | name }}</td>
+      </ng-container>
+
+      <!-- change status Column -->
+      <ng-container matColumnDef="changeStatus">
+        <th mat-header-cell *matHeaderCellDef>Editar</th>
+        <td mat-cell *matCellDef="let element">
+          <button
+            class="icon-btn"
+            matTooltip="Editar estado"
+            matTooltipPosition="above"
+            (click)="openStatusModal(element)"
+            aria-label="Editar estado"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>PDF</th>
+        <td mat-cell *matCellDef="let element">
+          <button
+            class="icon-btn"
+            matTooltip="Descargar PDF"
+            matTooltipPosition="above"
+            (click)="descargarPDF(element)"
+            aria-label="Descargar PDF"
+          >
+            <mat-icon>picture_as_pdf</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+
+  <ng-template #noOrders>
+    <p class="empty-state">Sin órdenes registradas para este cliente.</p>
+  </ng-template>
 </mat-dialog-content>
-<mat-dialog-actions align="center">
-  <button mat-button mat-dialog-close color="primary" aria-label="Cerrar">Cerrar</button>
+
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" mat-dialog-close>Cerrar</button>
 </mat-dialog-actions>
 <app-pdf class="hidden-pdf" [ordenIngreso]="ordenIngreso"></app-pdf>

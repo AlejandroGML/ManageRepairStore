@@ -1,15 +1,93 @@
-mat-form-field {
-    width: 20%; /* Ocupa el ancho completo del contenedor */
+/* Modal historial de transacciones — design system MRS.
+   El chrome del diálogo lo aporta el chrome global. */
+
+/* Selector de columnas adicionales (chips) */
+.col-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
 }
-  
-mat-option {
-    white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+
+.col-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* Tabla de transacciones */
+.table-wrap {
+  overflow-x: auto;
+  /* Con dialog width:auto el contenido manda; al llegar al maxWidth del
+     diálogo, el wrap se ajusta y hace scroll horizontal en vez de clipear. */
+  max-width: 100%;
+}
+
+.tx-table {
+  min-width: 640px;
+}
+
+.tx-table td {
+  white-space: nowrap;
 }
 
 .product-image {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border);
 }
-  
+
+.tx-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tx-title-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--color-border, #ddd);
+  background: #fff;
+}
+
+/* El botón cerrar se queda pinneado en la esquina superior derecha. */
+:host ::ng-deep .mat-mdc-dialog-title .dlg-close,
+h2 .dlg-close {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* Cantidad con signo y color (mismo lenguaje que Repuestos/Reposiciones). */
+.qty-negative { color: #e54822; font-weight: 700; }
+.qty-positive { color: var(--color-success, #1e9e5a); font-weight: 700; }

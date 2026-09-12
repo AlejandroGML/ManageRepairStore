@@ -1,8 +1,7 @@
-import { Component, Output, EventEmitter, inject, AfterViewInit } from '@angular/core';
+import { Component, inject, AfterViewInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
-import { UserProfile } from 'src/app/interface/user-profile';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
@@ -17,47 +16,19 @@ export class LoginComponent implements AfterViewInit {
   password: string = '';
   loading: boolean = false;
   showPassword = false;
-  @Output() setLoggedEvent = new EventEmitter<UserProfile>();
 
   private readonly authService = inject(AuthService);
-  private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
-
-  readonly demoAccounts: Record<string, { email: string; password: string }> = {
-    admin: { email: 'admin@demo.example', password: 'Demo1234!' },
-    seller: { email: 'clerk@demo.example', password: 'Demo1234!' },
-    warehouse: { email: 'bodega@demo.example', password: 'Demo1234!' },
-  };
+  private readonly snackBar = inject(MatSnackBar);
 
   ngAfterViewInit() {
-    if (this.authService.getToken()) {
-      this.router.navigate(['/']);
-      return;
-    }
     setTimeout(() => {
       document.getElementById('input-email')?.focus();
     }, 400);
   }
 
-  demoLogin(role: 'admin' | 'seller' | 'warehouse'): void {
-    const account = this.demoAccounts[role];
-    if (!account) return;
-    this.email = account.email;
-    this.password = account.password;
-    this.login();
-  }
-
   togglePassword(): void {
     this.showPassword = !this.showPassword;
-  }
-
-  forgotPassword(event: Event): void {
-    event.preventDefault();
-    this.snackBar.open('Contacta al administrador para restablecer tu contraseña', 'Cerrar', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-    });
   }
 
   login(): void {
@@ -72,9 +43,9 @@ export class LoginComponent implements AfterViewInit {
 
     this.loading = true;
     this.authService.login(this.email, this.password).subscribe({
-      next: (response) => {
+      next: () => {
         this.loading = false;
-        this.setLoggedEvent.emit(response.user);
+        // The root route resolves the role home via homeRedirectGuard.
         this.router.navigate(['/']);
       },
       error: () => {

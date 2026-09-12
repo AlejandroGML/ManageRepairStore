@@ -51,4 +51,14 @@ describe('SalesApiService', () => {
     expect(req.request.body).toEqual(body);
     req.flush(mockGroup);
   });
+
+  it('should fetch today summary via GET /sales', () => {
+    const mockSummary: any = { total: 45000, count: 3 };
+
+    service.getTodaySummary().subscribe((res) => expect(res).toEqual(mockSummary));
+
+    const req = httpMock.expectOne(`${base}/sales`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockSummary);
+  });
 });

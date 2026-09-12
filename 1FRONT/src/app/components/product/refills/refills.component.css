@@ -12,14 +12,6 @@
   padding: var(--space-base);
 }
 
-.field-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 6px;
-}
-
 .select,
 .input {
   width: 100%;
@@ -37,11 +29,6 @@
   height: 42px;
   font-size: 14.5px;
   font-weight: 600;
-}
-
-/* Zebra history table (prototype) */
-table.data.zebra tbody tr:nth-child(even) {
-  background: var(--color-bg);
 }
 
 .currency-input {
@@ -69,4 +56,143 @@ table.data.zebra tbody tr:nth-child(even) {
 
 @media (max-width: 1000px) {
   .refill-grid { grid-template-columns: 1fr; }
+}
+
+/* Texto de ayuda de la nueva entrada */
+.entry-help {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary-light, #fdf1e6);
+  border-left: 3px solid var(--color-primary, #6d28d9);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text, #374151);
+}
+
+/* Dark theme: el panel crema se vuelve tinte naranjo translúcido para que el
+   texto claro del tema mantenga contraste. Encapsulación de Angular scopia
+   [_ngcontent] en cada parte del selector y [data-theme] vive en <html>, por
+   eso [data-theme='dark'] .entry-help NO matchea desde el CSS del componente:
+   :host-context es la vía correcta. */
+:host-context([data-theme='dark']) .entry-help {
+  background: rgba(109, 40, 217, 0.12);
+  border-left-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+/* Fase 2: búsqueda server-side + negativos + historial paginado */
+
+.refill-grid > .card { min-width: 0; }
+
+.search-wrap { position: relative; }
+
+.search-filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.search-filter-row .filter-select { flex: 0 0 auto; width: auto; }
+.search-filter-row .input { flex: 1 1 auto; min-width: 0; }
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.search-result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-border, #eee);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.search-result-row:hover { background: rgba(109, 40, 217, 0.08); }
+.search-result-row:last-child { border-bottom: 0; }
+.sr-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-meta { color: var(--color-text-muted, #777); flex: 0 0 auto; }
+.sr-truncated { margin: 6px 10px; font-size: 0.8rem; }
+
+.selected-product {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: rgba(109, 40, 217, 0.08);
+}
+.sp-name { flex: 1 1 auto; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-clear {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--color-text-muted, #777);
+  display: flex;
+  padding: 2px;
+}
+.sp-clear:hover { color: var(--color-danger, #c0392b); }
+
+.discount-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #b3261e;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.discount-warning mat-icon { color: #fff; flex: 0 0 auto; }
+
+.qty-negative { color: #e54822; font-weight: 700; }
+.qty-positive { color: var(--color-success, #1e9e5a); font-weight: 700; }
+
+.history-range { font-size: 0.8rem; }
+
+.history .paginator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+.history .pg {
+  background: transparent;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  color: inherit;
+}
+.history .pg:disabled { opacity: 0.4; cursor: default; }
+.pg-label { font-size: 0.8rem; color: var(--color-text-muted, #777); }
+
+.table-wrap { overflow-x: auto; max-width: 100%; }
+
+:host-context([data-theme='dark']) .discount-warning {
+  background: rgba(229, 72, 34, 0.18);
 }

@@ -35,13 +35,4 @@ export class SnackbarService {
       panelClass: ['snackbar-error'],
     });
   }
-
-  info(message: string): void {
-    this.snackBar.open(message, 'Cerrar', {
-      duration: 3000,
-      direction: 'ltr',
-      horizontalPosition: 'right',
-      verticalPosition: 'top',
-    });
-  }
 }

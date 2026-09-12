@@ -3,7 +3,7 @@ import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Client, Log } from 'src/app/interface/client';
 import { ClientsApiService } from 'src/app/services/clients.api.service';
-import { AdminApiService } from 'src/app/services/admin.api.service';
+import { LogApiService } from 'src/app/services/log.api.service';
 import { LoadingService } from 'src/app/services/loading.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
@@ -19,7 +19,7 @@ export class ModalDeleteClientComponent {
   private readonly authService = inject(AuthService);
 
   constructor(private dialogRef: MatDialogRef<ModalDeleteClientComponent>,@Inject(MAT_DIALOG_DATA) public client: Client,
-  private clientsApi:ClientsApiService, private adminApi:AdminApiService, private loadingService:LoadingService, private snackbarService:SnackbarService ) {
+  private clientsApi:ClientsApiService, private logApi:LogApiService, private loadingService:LoadingService, private snackbarService:SnackbarService ) {
   }
 
   deleteClient(){
@@ -36,7 +36,7 @@ export class ModalDeleteClientComponent {
           action: `eliminó`
         };
         this.loadingService.setLoading(false);
-        this.adminApi.addLog(log).subscribe(()=>{});
+        this.logApi.create(log).subscribe(()=>{});
         this.dialogRef.close(this.client.id);
       },error=>{
         this.loadingService.setLoading(false);

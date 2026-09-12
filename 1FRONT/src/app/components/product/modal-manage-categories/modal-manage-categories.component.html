@@ -1,0 +1,80 @@
+<h2 mat-dialog-title>
+  <span>Gestionar categorías</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content>
+  <!-- Alta -->
+  <div class="toolbar">
+    <button class="btn btn-primary" *ngIf="!adding" (click)="startAdd()">
+      <mat-icon fontIcon="add"></mat-icon> Agregar categoría
+    </button>
+  </div>
+
+  <div class="add-row" *ngIf="adding">
+    <input
+      class="input"
+      placeholder="Nombre de la categoría"
+      [(ngModel)]="newName"
+      (keyup.enter)="saveAdd()"
+      maxlength="80" />
+    <button class="btn btn-primary" [disabled]="saving || !newName.trim()" (click)="saveAdd()">
+      <mat-icon fontIcon="check"></mat-icon>
+    </button>
+    <button class="btn btn-ghost" (click)="cancelAdd()">
+      <mat-icon fontIcon="close"></mat-icon>
+    </button>
+  </div>
+
+  <!-- Listado -->
+  <div class="table-wrap">
+    <table class="data zebra">
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th class="col-num">Productos</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of categories">
+          <ng-container *ngIf="editingId !== c.id; else editCell">
+            <td class="strong">{{ c.name }}</td>
+            <td class="col-num mono">{{ c.productCount ?? 0 }}</td>
+            <td class="col-actions">
+              <button class="icon-btn" (click)="startEdit(c)" matTooltip="Editar" aria-label="Editar categoría">
+                <mat-icon fontIcon="edit"></mat-icon>
+              </button>
+              <button class="icon-btn" (click)="confirmDelete(c)" matTooltip="Eliminar" aria-label="Eliminar categoría">
+                <mat-icon fontIcon="delete"></mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <ng-template #editCell>
+            <td colspan="3">
+              <div class="edit-row">
+                <input class="input" [(ngModel)]="editName" (keyup.enter)="saveEdit()" maxlength="80" />
+                <button class="btn btn-primary" [disabled]="saving || !editName.trim()" (click)="saveEdit()">
+                  <mat-icon fontIcon="check"></mat-icon> Guardar
+                </button>
+                <button class="btn btn-ghost" (click)="cancelEdit()">Cancelar</button>
+              </div>
+            </td>
+          </ng-template>
+        </tr>
+        <tr *ngIf="!categories.length && !loading">
+          <td colspan="3" class="empty-state">Sin categorías. Crea la primera.</td>
+        </tr>
+        <tr *ngIf="loading">
+          <td colspan="3" class="empty-state">Cargando categorías…</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" (click)="close()">Cerrar</button>
+</mat-dialog-actions>

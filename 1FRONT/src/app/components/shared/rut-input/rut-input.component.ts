@@ -24,6 +24,12 @@ import { RutPipe } from 'src/app/pipes/rut.pipe';
   ],
 })
 export class RutInputComponent implements ControlValueAccessor, Validator {
+  /**
+   * 'material': mat-form-field (diálogos antiguos).
+   * 'plain': input estándar del design system (formularios nuevos).
+   */
+  @Input() variant: 'material' | 'plain' = 'material';
+
   @Input() placeholder: string = 'Ej: 12.345.678-5';
 
   /** Valor interno sin formato (solo dígitos) */
@@ -75,8 +81,8 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
       this.rutError = '';
     }
 
-    // Durante escritura, mostrar solo los caracteres limpios
-    this.displayValue = cleaned;
+    // Formato progresivo: 12.345.678 (y el DV con guión al completar 9)
+    this.displayValue = this.formatProgressive(cleaned);
 
     this.onChange(this.value);
   }
@@ -159,6 +165,20 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
   }
 
   // ─── Utilidades ───────────────────────────────────────────────────────
+
+  /** Formato en caliente: agrupa con puntos; agrega -DV solo con 9 caracteres. */
+  private formatProgressive(cleaned: string): string {
+    if (cleaned.length >= 9) {
+      return this.formatRutDisplay(cleaned);
+    }
+    let remaining = cleaned;
+    let formatted = '';
+    while (remaining.length > 3) {
+      formatted = `.${remaining.slice(-3)}${formatted}`;
+      remaining = remaining.slice(0, -3);
+    }
+    return `${remaining}${formatted}`;
+  }
 
   private formatRutDisplay(rutStr: string): string {
     if (!rutStr || rutStr.length < 2) return rutStr || '';

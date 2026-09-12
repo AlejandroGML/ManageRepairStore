@@ -1,7 +1,8 @@
-<mat-form-field>
-  <mat-label>RUT</mat-label>
+@if (variant === 'plain') {
   <input
-    matInput
+    class="input rut-input-field"
+    type="text"
+    inputmode="numeric"
     [placeholder]="placeholder"
     [value]="displayValue"
     (input)="onInput($any($event).target.value)"
@@ -9,5 +10,18 @@
     [disabled]="disabled"
     autocomplete="off"
   />
-  <mat-error *ngIf="rutError">{{ rutError }}</mat-error>
-</mat-form-field>
+} @else {
+  <mat-form-field>
+    <mat-label>RUT</mat-label>
+    <input
+      matInput
+      [placeholder]="placeholder"
+      [value]="displayValue"
+      (input)="onInput($any($event).target.value)"
+      (blur)="onBlur()"
+      [disabled]="disabled"
+      autocomplete="off"
+    />
+    <mat-error *ngIf="rutError">{{ rutError }}</mat-error>
+  </mat-form-field>
+}

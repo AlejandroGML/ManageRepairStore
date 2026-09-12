@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatTableDataSource } from '@angular/material/table';
 
 import { ModalChoiceClientComponent } from './modal-choice-client.component';
 import { Client } from 'src/app/interface/client';
@@ -58,5 +59,21 @@ describe('ModalChoiceClientComponent', () => {
 
   it('should include company_name in displayedColumns', () => {
     expect(component.displayedColumns).toContain('company_name');
+  });
+
+  it('should paginate clients 10 per page', () => {
+    const many: Client[] = Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `Client ${i + 1}` }) as unknown as Client);
+    component.dataSource = new MatTableDataSource<Client>(many);
+    expect(component.pageCount).toBe(3);
+    expect(component.pageClients.length).toBe(10);
+    expect(component.pageClients[0].id).toBe(1);
+
+    component.goPage(2);
+    expect(component.pageIndex).toBe(2);
+    expect(component.pageClients.length).toBe(5);
+    expect(component.pageClients[0].id).toBe(21);
+
+    component.goPage(99);
+    expect(component.pageIndex).toBe(2); // fuera de rango: no cambia
   });
 });

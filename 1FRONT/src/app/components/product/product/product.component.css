@@ -1,171 +1,53 @@
-/* Ajuste de márgenes y diseño de contenedor */
-mat-form-field {
-  width: 90%;
-  margin-left: 5%;
-}
-
-.form-register {
-  margin-top: 16px;
-  margin-left: 2%; /* Márgen uniforme */
-  margin-right: 2%;
-}
-
-mat-card {
-  padding-top: 24px;
-  margin: 10px; /* Margen adicional para alineación uniforme */
-}
-
-.div-tabla {
-  width: 90%;
-  margin-left: 5%;
-  max-height: 60vh;
-  margin-top: 20px;
-}
-
-/* Ajuste del botón Agregar Producto */
-button.add-product-button {
-  font-size: 13px;
-  padding: 6px 12px;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  width: auto; /* Ancho reducido para armonía */
-}
-
-/* Imagen de producto en tabla */
-.product-image {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.product-image:hover {
-  transform: scale(1.1);
-}
-
-/* Estilo de texto para cuando no hay imagen */
-.no-image-text {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-/* Ajuste del botón Agregar Producto */
-button.add-product-button {
-  width: 20%;
-  margin-left: 5%;
-  font-size: 13px;
-  padding: 6px 12px;
-  margin-top: 15px;
-  margin-bottom: 15px;
-}
-
-/* Estilo del título de la tabla */
-.table-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  text-align: center;
-  color: var(--color-text);
-}
-
-/* Contenedor para el label e input de imagen */
-.image-upload-container {
-  display: flex;
-  align-items: center; /* Alinea verticalmente el label y el botón */
-  margin-left: 5%; /* Aplica un margen izquierdo para todo el contenedor */
-}
-
-/* Estilo del label de imagen */
-.image-upload-label {
-  font-weight: bold;
-  margin-right: 10px; /* Espacio entre el label y el botón */
-}
-
-/* --- Phase 4 inline style migration --- */
-.product-main-row { margin: 0; margin-left: 2%; }
-.no-padding { padding: 0; }
-.ml-10 { margin-left: 10px; }
-.no-image-btn { cursor: pointer; font-size: 32px; }
-.product-card { display: none; }
-
-/* ===== Port Phase 4 — data-dense restyle ===== */
-.page { padding-top: 4px; }
-.page-actions { display: flex; gap: var(--space-sm); }
-
-.mat-mdc-card { border-radius: var(--radius-lg); }
-mat-form-field { width: 100%; }
-
-.product-main-row { margin-bottom: var(--space-lg); }
-
-.div-tabla { margin-top: 0; }
-
-.table-title { display: none; }
-
-.stock-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  justify-content: flex-end;
-}
-
-.stock-cell .stock-bar { width: 60px; }
-
-.mat-mdc-paginator {
-  border-top: 1px solid var(--color-border);
-  background: transparent;
-}
-
-.image-upload-container {
-  margin: var(--space-sm) 0 var(--space-base);
-}
-
-.add-product-button { margin-top: var(--space-sm); }
-
-/* ===== Port 8.5b — filter bar inline + chips ===== */
-.search-input-wrap {
-  position: relative;
-  flex: 1;
-  min-width: 240px;
-  max-width: 420px;
-}
-
-.search-input-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-  color: var(--color-text-muted);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 38px;
-  padding-left: 38px;
+.filter-bar {
+  justify-content: flex-start;
 }
 
 .stock-seg { flex-shrink: 0; }
 
-.image-tile {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+.table-wrap {
+  min-height: 200px;
 }
 
-.image-tile .mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+/* Fila vacía alineada con el ancho de la tabla */
+.empty-state {
+  white-space: normal;
+}
+
+.paginator .pg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Thumb clicable del catálogo: abre la vista previa grande */
+.thumb-btn {
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.thumb-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* Miniatura con imagen real */
+img.thumb-img {
+  padding: 0;
+  object-fit: cover;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+img.thumb-img:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+img.thumb-img:focus-visible,
+.thumb-btn:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }

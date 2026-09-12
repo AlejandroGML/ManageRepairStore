@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>
+  <span>Empresa con nombre similar</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content>
+  <p class="cs-intro">
+    "<b>{{ query }}</b>" no está inscrita, pero se parece a estas empresas ya registradas:
+  </p>
+
+  <div class="cs-list">
+    <div class="card card-pad cs-item" *ngFor="let c of companies">
+      <div class="cs-item-head">
+        <strong>{{ c.name }}</strong>
+        <span class="badge badge-neutral" *ngIf="c.sucursales > 1">
+          <span class="dot"></span> {{ c.sucursales }} sucursales
+        </span>
+      </div>
+      <div class="cs-item-rut mono" *ngIf="c.rut">RUT: {{ c.rut }}</div>
+      <button class="btn btn-soft btn-sm" (click)="useCompany(c)">
+        <mat-icon fontIcon="check"></mat-icon> Usar esta empresa
+      </button>
+    </div>
+  </div>
+
+  <p class="cs-note">
+    Si ninguna corresponde, puedes crear la empresa nueva. El RUT quedará libre para que lo escribas.
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" (click)="close()">Cancelar</button>
+  <button class="btn btn-primary" (click)="createNew()">
+    <mat-icon fontIcon="add_business"></mat-icon> Crear nueva empresa
+  </button>
+</mat-dialog-actions>

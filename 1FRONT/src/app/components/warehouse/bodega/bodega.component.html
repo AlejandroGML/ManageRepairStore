@@ -17,6 +17,17 @@
   >
     <mat-icon fontIcon="add_box"></mat-icon> Reposiciones
   </a>
+  <a
+    class="bodega-tab"
+    routerLink="repuestos"
+    routerLinkActive="active"
+    role="tab"
+    aria-selected="false"
+  >
+    <mat-icon fontIcon="engineering"></mat-icon> Repuestos
+  </a>
 </div>
 
-<router-outlet></router-outlet>
+<div class="bodega-content">
+  <router-outlet></router-outlet>
+</div>

@@ -4,11 +4,6 @@
       <h1 class="page-title">Punto de venta</h1>
       <p class="page-lead">Busca productos y agrégalos al carrito</p>
     </div>
-    <div class="page-actions">
-      <button class="btn btn-ghost btn-sm" (click)="lastTicket()">
-        <mat-icon fontIcon="receipt_long"></mat-icon> Último ticket
-      </button>
-    </div>
   </div>
 
   <div class="pos-grid">
@@ -29,15 +24,16 @@
             <option value="all">Todas las categorías</option>
             <option *ngFor="let c of categoryNames" [value]="c">{{ c }}</option>
           </select>
-          <button class="btn btn-ghost btn-sm" (click)="scanProduct()">
-            <mat-icon fontIcon="qr_code_scanner"></mat-icon> Escanear
+          <button class="btn btn-ghost btn-sm" (click)="openProductSearch()">
+            <mat-icon fontIcon="search"></mat-icon> Buscar
           </button>
         </div>
         <div class="card-pad catalog-grid" *ngIf="!catalogLoading && catalogFiltered.length; else catalogState">
           <button
             *ngFor="let product of catalogFiltered"
             class="product-tile"
-            [disabled]="productStock(product) <= 0"
+            [class.tile-in-cart]="isInCart(product)"
+            [disabled]="productStock(product) <= 0 || isInCart(product)"
             (click)="addProductToSale(product)"
           >
             <div class="pt-top">
@@ -46,14 +42,18 @@
               </div>
               <div>
                 <div class="pt-name">{{ product.name }}</div>
-                <div class="pt-cat">{{ product.category?.name ?? '—' }}</div>
+                <div class="pt-cat">{{ categoryName(product) }}</div>
               </div>
             </div>
             <div class="pt-price mono">{{ product.sellingPrice | currency:'CLP':'symbol-narrow':'1.0-0' }}</div>
             <div class="pt-stock">
-              <span class="badge" [class]="tileStockClass(productStock(product))">
-                <span class="dot"></span> {{ productStock(product) }} en stock
-              </span>
+              @if (isInCart(product)) {
+                <span class="badge badge-in-cart"><span class="dot"></span> En el carrito</span>
+              } @else {
+                <span class="badge" [class]="tileStockClass(productStock(product))">
+                  <span class="dot"></span> {{ productStock(product) }} en stock
+                </span>
+              }
             </div>
           </button>
         </div>
@@ -64,24 +64,25 @@
       </div>
     </div>
 
-    <!-- Carrito -->
+    <!-- Carrito + resumen -->
+    <div class="pos-side">
     <div class="card pos-cart">
       <div class="card-head">
         <h2 class="card-title">Carrito</h2>
-        <span class="cart-count">{{ dataSource.data.length }} ítems</span>
+        <span class="cart-count">{{ cartItems.length }} ítems</span>
       </div>
 
-      @if (dataSource.data.length === 0) {
+      @if (cartItems.length === 0) {
         <div class="cart-empty">
           <mat-icon fontIcon="shopping_cart" class="cart-empty-icon"></mat-icon>
           <p>Agrega productos para comenzar</p>
         </div>
       } @else {
         <div class="cart-items">
-          <div class="cart-item" *ngFor="let item of dataSource.data; let i = index">
+          <div class="cart-item" *ngFor="let item of cartItems; let i = index">
             <div class="ci-head">
               <span class="ci-name">{{ item.name }}</span>
-              <button mat-icon-button class="icon-btn ci-remove" (click)="removeProductFromSale(i)" matTooltip="Quitar">
+              <button mat-icon-button class="icon-btn ci-remove" (click)="removeProductFromSale(i)" matTooltip="Quitar" aria-label="Quitar">
                 <mat-icon>close</mat-icon>
               </button>
             </div>
@@ -91,7 +92,7 @@
             </div>
             <div class="ci-row">
               <label>Cantidad</label>
-              <input class="input qty-input mono" type="number" min="1" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
+              <input class="input qty-input mono" type="number" min="1" [max]="item.stock ?? 1" [title]="'Máximo disponible: ' + (item.stock ?? 0)" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
             </div>
             <div class="ci-row">
               <label>Descuento</label>
@@ -105,24 +106,47 @@
         </div>
 
         <div class="cart-totals">
-          <div class="ct-row"><span>Subtotal</span><span class="mono">{{ totalSaleValue | currency:'CLP':'symbol-narrow' }}</span></div>
-          <div class="ct-row"><span>Descuento</span><span class="mono">-{{ totalDiscount | currency:'CLP':'symbol-narrow' }}</span></div>
-          <div class="ct-row ct-grand"><span>Total</span><span class="mono">{{ totalSaleValue | currency:'CLP':'symbol-narrow' }}</span></div>
+          <div class="ct-row"><span>Subtotal</span><span class="mono">{{ subtotalValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
+          <div class="ct-row"><span>Descuento</span><span class="mono">-{{ totalDiscount | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
+          <div class="ct-row ct-grand"><span>Total</span><span class="mono">{{ totalSaleValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
         </div>
 
-        <div class="cart-client">
-          <mat-icon fontIcon="person" class="cc-icon"></mat-icon>
-          <button class="btn btn-ghost btn-sm cc-btn" (click)="openClientSelector()">
-            {{ selectedClient ? 'Cliente: ' + selectedClient.name : 'Cliente: Sin cliente' }}
+        <div class="cart-actions">
+          <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
+            <mat-icon fontIcon="check_circle"></mat-icon>
+            {{ submitting ? 'Procesando...' : 'Completar venta' }}
           </button>
+          <button class="btn btn-ghost clear-button" (click)="clearCart()">Vaciar carrito</button>
         </div>
-
-        <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
-          <mat-icon fontIcon="check_circle"></mat-icon>
-          {{ submitting ? 'Procesando...' : 'Completar venta' }}
-        </button>
-        <button class="btn btn-ghost clear-button" (click)="clearCart()">Vaciar carrito</button>
       }
+    </div>
+
+    <!-- Resumen de compra / última venta -->
+    <div class="card card-pad pos-summary" *ngIf="hasSummary">
+      <div class="card-head">
+        <h2 class="card-title">{{ cartItems.length ? 'Resumen de la compra' : 'Última venta completada' }}</h2>
+        <button class="btn btn-ghost btn-sm" *ngIf="!cartItems.length" (click)="lastSale = null" matTooltip="Empezar una venta nueva">
+          <mat-icon fontIcon="add_shopping_cart"></mat-icon> Nueva venta
+        </button>
+      </div>
+      <div class="summary-meta">
+        <span><mat-icon fontIcon="event" class="sm-icon"></mat-icon> {{ summaryDateLabel }}</span>
+        <span><mat-icon fontIcon="person" class="sm-icon"></mat-icon> {{ summarySeller }}</span>
+      </div>
+      <ul class="summary-items">
+        <li *ngFor="let item of summaryItems">
+          <span class="si-name">{{ item.name }} <em>× {{ item.quantity }}</em></span>
+          <span class="mono">{{ item.finalValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+        </li>
+      </ul>
+      <div class="summary-grand">
+        <span>Total</span>
+        <span class="mono">{{ summaryTotal | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+      </div>
+      <button class="btn btn-soft summary-pdf-btn" (click)="generatePurchasePdf()" matTooltip="Descargar comprobante PDF">
+        <mat-icon fontIcon="picture_as_pdf"></mat-icon> {{ cartItems.length ? 'Generar PDF' : 'Descargar PDF' }}
+      </button>
+    </div>
     </div>
   </div>
 </div>

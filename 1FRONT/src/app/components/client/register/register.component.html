@@ -9,32 +9,15 @@
   <form [formGroup]="form" class="form-register">
     <div class="register-grid">
       <!-- Datos del cliente -->
-      <mat-card class="card card-pad register-left">
+      <div class="card card-pad register-left">
         <div class="card-head">
           <h2 class="card-title">Datos del cliente</h2>
-        </div>
-
-        <div class="field-row search-row">
-          <div class="field-group">
-            <label class="field-label" for="input-id-client">N° Cliente</label>
-            <input
-              id="input-id-client"
-              class="input"
-              placeholder="Ej: 70"
-              formControlName="clientId"
-              (keyup.enter)="findByClientId()"
-              autocomplete="off"
-            />
-          </div>
-          <button class="btn btn-soft search-btn" type="button" (click)="findByClientId()">
-            <mat-icon fontIcon="search"></mat-icon> Buscar
-          </button>
         </div>
 
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="input-client">Nombre</label>
-            <input id="input-client" class="input" placeholder="Ej: Comercial Demo SpA" autocomplete="off" formControlName="name" />
+            <input id="input-client" class="input" placeholder="Ej: Comercial Toledo SpA" autocomplete="off" formControlName="name" />
             <span class="field-error" *ngIf="form.get('name')?.invalid">{{ obtenerMensajeError(form.get('name')!) }}</span>
           </div>
           <div class="field-group">
@@ -47,7 +30,8 @@
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="input-rut">RUT</label>
-            <app-rut-input formControlName="rut" placeholder="Ej: 12.345.678-5"></app-rut-input>
+            <app-rut-input formControlName="rut" variant="plain" placeholder="Ej: 12.345.678-5"></app-rut-input>
+            <span class="field-hint" *ngIf="rutLocked">RUT bloqueado con el de la empresa seleccionada.</span>
             <span class="field-error" *ngIf="form.get('rut')?.invalid">{{ obtenerMensajeError(form.get('rut')!) }}</span>
           </div>
           <div class="field-group">
@@ -60,19 +44,39 @@
         <div class="field-row">
           <div class="field-group toggle-group">
             <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
-              Es empresa (razón social)
+              Es empresa
             </mat-slide-toggle>
           </div>
           <div class="field-group">
             <label class="field-label" for="input-company">Nombre Empresa</label>
-            <input id="input-company" class="input" placeholder="Ej: Comercial Demo SpA" autocomplete="off" formControlName="company_name" />
+            <input
+              id="input-company"
+              class="input"
+              placeholder="Elige una empresa o escribe el nombre…"
+              autocomplete="off"
+              formControlName="company_name"
+              [matAutocomplete]="companiesAutocomplete"
+              (blur)="onCompanyBlur()"
+            />
+            <mat-autocomplete
+              #companiesAutocomplete="matAutocomplete"
+              (optionSelected)="onCompanySelected($event)"
+              [displayWith]="companyDisplay"
+            >
+              <mat-option *ngFor="let c of filteredCompanies" [value]="c">
+                <div class="ac-company">
+                  <span>{{ c.name }}</span>
+                  <span class="ac-meta mono" *ngIf="c.rut">{{ c.rut }} · {{ c.sucursales }} suc.</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
           </div>
         </div>
 
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="input-email">Correo</label>
-            <input id="input-email" class="input" placeholder="Ej: info@demo.example" formControlName="email" />
+            <input id="input-email" class="input" placeholder="Ej: info@toledo.example" formControlName="email" />
             <span class="field-error" *ngIf="form.get('email')?.invalid">{{ obtenerMensajeError(form.get('email')!) }}</span>
           </div>
           <div class="field-group">
@@ -93,24 +97,27 @@
           <textarea id="id-observation" class="input textarea" placeholder="Observaciones…" formControlName="observation"></textarea>
           <span class="field-error" *ngIf="form.get('observation')?.invalid">{{ obtenerMensajeError(form.get('observation')!) }}</span>
         </div>
-      </mat-card>
+      </div>
 
       <!-- Panel derecho: resumen de la orden -->
       <div class="register-sidebar">
-        <mat-card class="card right-card">
+        <div class="card right-card">
           <h3 class="right-title">Orden de ingreso</h3>
 
           <div class="summary-row"><span>N° Cliente</span><b class="mono">{{ ordenIngreso.clientId ? ordenIngreso.clientId : '—' }}</b></div>
           <div class="summary-row"><span>Cliente</span><b>{{ ordenIngreso.name ? (ordenIngreso.name | name) : '—' }}</b></div>
           <div class="summary-row"><span>N° Aviso</span><b class="mono">{{ ordenIngreso.code || '—' }}</b></div>
           <div class="summary-row"><span>Fecha</span><b class="mono">{{ ordenIngreso.date ? (ordenIngreso.date | date: 'dd-MM-yyyy HH:mm') : '—' }}</b></div>
+          <div class="summary-row">
+            <span>Estado</span>
+            <span class="badge" [class]="orderStatusBadgeClass(ordenIngreso.status)">
+              <span class="dot"></span> {{ orderStatusLabel(ordenIngreso.status) }}
+            </span>
+          </div>
 
           <p class="summary-hint">Registra la orden para habilitar QR y PDF.</p>
 
           <div class="summary-actions">
-            <button type="button" class="btn btn-soft" [disabled]="!enablePDF" (click)="downloadQR()">
-              <mat-icon fontIcon="qr_code"></mat-icon> QR
-            </button>
             <button type="button" class="btn btn-soft" [disabled]="!enablePDF" (click)="descargarPDF()">
               <mat-icon fontIcon="picture_as_pdf"></mat-icon> PDF
             </button>
@@ -125,7 +132,7 @@
             aria-label="Limpiar datos">
             Limpiar datos
           </span>
-        </mat-card>
+        </div>
       </div>
     </div>
   </form>

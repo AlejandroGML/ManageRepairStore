@@ -84,6 +84,33 @@ describe('RutInputComponent', () => {
     expect(component.value).toBe('12');
   });
 
+  // ─── Formato progresivo (mientras se escribe) ──────────────────────────
+
+  it('onInput agrupa con puntos en caliente (12.345.678)', () => {
+    component.onInput('12345678');
+    expect(component.displayValue).toBe('12.345.678');
+  });
+
+  it('onInput muestra -DV en caliente al completar 9 caracteres', () => {
+    component.onInput('123456785');
+    expect(component.displayValue).toBe('12.345.678-5');
+  });
+
+  // ─── Variantes de presentación ────────────────────────────────────────
+
+  it('variant plain renderiza un input estándar sin mat-form-field', () => {
+    fixture.componentRef.setInput('variant', 'plain');
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('input.rut-input-field')).toBeTruthy();
+    expect(compiled.querySelector('mat-form-field')).toBeNull();
+  });
+
+  it('variant material (default) renderiza mat-form-field', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('mat-form-field')).not.toBeNull();
+  });
+
   it('onBlur formatea a XX.XXX.XXX-X cuando hay ≥8 dígitos', () => {
     component.onInput('12345678');
     component.onBlur();
@@ -128,6 +155,31 @@ describe('RutInputComponent', () => {
     component.onBlur();
     fixture.detectChanges();
     expect(component.rutError).toBe('');
+  });
+
+  // ─── DV explícito sin guión (bug fix: 9 dígitos = base 8 + DV) ─────────
+
+  it('onBlur valida 9 dígitos sin guión como base(8)+DV y formatea (12.345.678-5)', () => {
+    component.onInput('123456785');
+    component.onBlur();
+    fixture.detectChanges();
+    expect(component.rutError).toBe('');
+    expect(component.displayValue).toBe('12.345.678-5');
+  });
+
+  it('onBlur marca DV no válido en 9 dígitos sin guión (no computa DV sobre los 9)', () => {
+    component.onInput('123456789'); // DV esperado es 5, no 9
+    component.onBlur();
+    fixture.detectChanges();
+    expect(component.rutError).toContain('DV no válido — se esperaba 5');
+  });
+
+  it('onBlur acepta DV K en 9 caracteres sin guión (18.153.110-K)', () => {
+    component.onInput('18153110K');
+    component.onBlur();
+    fixture.detectChanges();
+    expect(component.rutError).toBe('');
+    expect(component.displayValue).toBe('18.153.110-K');
   });
 
   // ─── Integración con FormGroup ────────────────────────────────────────

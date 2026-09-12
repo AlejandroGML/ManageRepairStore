@@ -1,0 +1,94 @@
+<div class="page profile-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mi perfil</h1>
+      <p class="page-lead">Tu información y seguridad</p>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+    <div class="card profile-card">
+      <span class="profile-avatar">{{ initials }}</span>
+      <h2 class="profile-name">{{ user?.name }}</h2>
+      <p class="profile-email">{{ user?.email }}</p>
+      <span class="badge badge-success profile-role">
+        <span class="dot"></span> {{ roleLabel }}
+      </span>
+    </div>
+
+    <div class="card card-pad password-card">
+      <div class="card-head">
+        <h2 class="card-title">Cambiar contraseña</h2>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="password-form">
+        <div class="field-group">
+          <label class="field-label" for="input-current">Contraseña actual</label>
+          <div class="password-field">
+            <input
+              id="input-current"
+              class="input"
+              [type]="hideCurrent ? 'password' : 'text'"
+              formControlName="currentPassword"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="toggle-visibility"
+              (click)="hideCurrent = !hideCurrent"
+              [attr.aria-label]="hideCurrent ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+            >
+              <mat-icon [fontIcon]="hideCurrent ? 'visibility' : 'visibility_off'"></mat-icon>
+            </button>
+          </div>
+          <span class="field-error" *ngIf="form.get('currentPassword')?.touched && form.get('currentPassword')?.invalid">
+            Ingresa tu contraseña actual
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="input-new">Nueva contraseña</label>
+          <div class="password-field">
+            <input
+              id="input-new"
+              class="input"
+              [type]="hideNew ? 'password' : 'text'"
+              formControlName="newPassword"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="toggle-visibility"
+              (click)="hideNew = !hideNew"
+              [attr.aria-label]="hideNew ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+            >
+              <mat-icon [fontIcon]="hideNew ? 'visibility' : 'visibility_off'"></mat-icon>
+            </button>
+          </div>
+          <span class="field-error" *ngIf="form.get('newPassword')?.touched && form.get('newPassword')?.hasError('minlength')">
+            Debe tener al menos 8 caracteres
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="input-confirm">Confirmar nueva contraseña</label>
+          <input
+            id="input-confirm"
+            class="input"
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+          />
+          <span class="field-error" *ngIf="passwordsMismatch">
+            Las contraseñas no coinciden
+          </span>
+        </div>
+
+        <button class="btn btn-accent profile-submit" type="submit" [disabled]="saving || form.invalid">
+          <mat-icon fontIcon="lock_reset"></mat-icon>
+          {{ saving ? 'Guardando…' : 'Actualizar contraseña' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

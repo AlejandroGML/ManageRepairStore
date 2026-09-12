@@ -15,16 +15,23 @@ export class OrdersApiService {
   findOrderByUser(user: Client): Observable<Client> {
     return this.http.get<Client>(this.url + '/order/user/' + user.id);
   }
-  getAllOrders(): Observable<Client[]> {
-    return this.http.get<Client[]>(this.url + '/order/all');
-  }
   findOrderByCode(code: string): Observable<Client> {
     return this.http.get<Client>(this.url + '/order/code/' + code);
   }
-  registerOrder(body: OrdenIngreso): Observable<Client> {
+  create(body: OrdenIngreso): Observable<Client> {
     return this.http.post<Client>(this.url + '/order', body);
   }
-  updateOrderStatus(order: Order): Observable<Order> {
+  updateStatus(order: Order): Observable<Order> {
     return this.http.patch<Order>(this.url + '/order/status/' + order.id, order);
+  }
+
+  /** GET /order/all — clientes con sus órdenes (antes en AdminApiService). */
+  getAllOrders(): Observable<any[]> {
+    return this.http.get<any[]>(this.url + '/order/all');
+  }
+
+  /** GET /order/recent — últimas órdenes globales (panel del finder). */
+  getRecentOrders(limit = 6): Observable<{ items: any[]; total: number }> {
+    return this.http.get<{ items: any[]; total: number }>(this.url + '/order/recent?limit=' + limit);
   }
 }

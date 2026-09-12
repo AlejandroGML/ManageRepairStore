@@ -2,18 +2,14 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MatDialog } from '@angular/material/dialog';
 import { Product } from 'src/app/interface/warehouse';
-import { Client } from 'src/app/interface/client';
-import { SalesApiService } from 'src/app/services/sales.api.service';
+import { SalesApiService, SalePdfPayload } from 'src/app/services/sales.api.service';
 import { ProductsApiService } from 'src/app/services/products.api.service';
-import { ClientsApiService } from 'src/app/services/clients.api.service';
-import { AuthService } from 'src/app/services/auth.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
-import { MatTableDataSource } from '@angular/material/table';
-import { ProductSearchModalComponent } from '../../product/product-search-modal/product-search-modal.component';
-import { ModalChoiceClientComponent } from '../../client/modal-choice-client/modal-choice-client.component';
+import { AuthService } from 'src/app/services/auth.service';
+import { ModalProductSearchComponent } from '../../product/modal-product-search/modal-product-search.component';
 import { DataSyncService } from 'src/app/services/data-sync.service';
 import { Subscription } from 'rxjs';
-import jsPDF from 'jspdf';
+import { ModalService } from 'src/app/services/modal.service';
 
 interface SaleProduct extends Product {
   quantity: number;
@@ -29,10 +25,16 @@ interface SaleProduct extends Product {
   imports: [SHARED_IMPORTS],
 })
 export class SalesComponent implements OnInit, OnDestroy {
-  displayedColumns: string[] = ['name', 'sellingPrice', 'quantity', 'purchaseDiscount', 'finalValue', 'delete'];
-  dataSource = new MatTableDataSource<SaleProduct>();
+  cartItems: SaleProduct[] = [];
   totalSaleValue: number = 0;
   submitting = false;
+
+  /**
+   * Última venta completada: su resumen queda visible (con su PDF descargado)
+   * hasta que se empiece a elegir productos para una venta nueva.
+   */
+  lastSale: (SalePdfPayload & { dateLabel: string }) | null = null;
+
   /** Catálogo de productos para el POS (grid clickeable). */
   catalog: Product[] = [];
   catalogFiltered: Product[] = [];
@@ -40,25 +42,17 @@ export class SalesComponent implements OnInit, OnDestroy {
   categoryFilter = 'all';
   categoryNames: string[] = [];
   catalogLoading = true;
-  /** Cliente seleccionado (solo informativo — el batch no recibe clientId). */
-  selectedClient: Client | null = null;
-  clients: Client[] = [];
-  get userLogged(): any { return this.authService.getCurrentUser(); }
 
   private readonly salesApi = inject(SalesApiService);
-  private readonly authService = inject(AuthService);
-  private readonly dialog = inject(MatDialog);
+  private readonly productsApi = inject(ProductsApiService);
+  private readonly modal = inject(ModalService);
   private readonly dataSyncService = inject(DataSyncService);
   private readonly snackbar = inject(SnackbarService);
-  private readonly productsApi = inject(ProductsApiService);
-  private readonly clientsApi = inject(ClientsApiService);
+  private readonly authService = inject(AuthService);
   private readonly saleSubscriptions = new Subscription();
 
   ngOnInit(): void {
     this.loadCatalog();
-    this.clientsApi.getAllClients().subscribe((clients) => {
-      this.clients = clients ?? [];
-    });
   }
 
   ngOnDestroy(): void {
@@ -88,28 +82,15 @@ export class SalesComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Selector de cliente del carrito (modal, estilo ABAGAS). */
-  openClientSelector(): void {
-    const dialogRef = this.dialog.open(ModalChoiceClientComponent, {
-      width: '90vw',
-      maxWidth: '600px',
-      data: { users: this.clients, rut: '' },
-    });
-
-    dialogRef.afterClosed().subscribe((client: Client) => {
-      if (client) {
-        this.selectedClient = client;
-      }
-    });
-  }
-
   filterCatalog(): void {
     const q = this.catalogQuery.trim().toLowerCase();
     let list = q
-      ? this.catalog.filter((p) => p.name.toLowerCase().includes(q) || String(p.id).includes(q))
+      ? this.catalog.filter(
+          (p) => p.name.toLowerCase().includes(q) || String(p.id).includes(q)
+        )
       : this.catalog;
     if (this.categoryFilter !== 'all') {
-      list = list.filter((p) => p.category?.name === this.categoryFilter);
+      list = list.filter((p) => (p as any).category?.name === this.categoryFilter);
     }
     this.catalogFiltered = list;
   }
@@ -119,12 +100,17 @@ export class SalesComponent implements OnInit, OnDestroy {
     this.filterCatalog();
   }
 
-  /** Ícono por categoría (seed: nombre del ícono en product.image). */
+  /** Ícono del tile (product.image guarda el nombre del ícono). */
   productIcon(product: Product): string {
     const img = product.image;
     if (!img) return 'image';
     if (/^(https?:)?\/\//.test(img) || img.includes('/') || img.startsWith('assets/')) return 'image';
     return img;
+  }
+
+  /** Categoría del tile (join del backend; — si no tiene). */
+  categoryName(product: Product): string {
+    return (product as any).category?.name ?? '—';
   }
 
   /** Badge del tile: "X en stock" con tono según stock. */
@@ -134,41 +120,67 @@ export class SalesComponent implements OnInit, OnDestroy {
     return 'badge-success';
   }
 
-  lastTicket(): void {
-    this.snackbar.info('Ticket reimpreso');
-  }
-
-  scanProduct(): void {
-    this.snackbar.info('Lector de código QR abierto');
-  }
-
   /** Descuento total acumulado (para el panel de totales del carrito). */
   get totalDiscount(): number {
-    return this.dataSource.data.reduce((sum, item) => sum + (item.purchaseDiscount ?? 0), 0);
+    return this.cartItems.reduce((sum, item) => sum + (item.purchaseDiscount ?? 0), 0);
+  }
+
+  /** Suma de precios por cantidad, antes de descuentos. */
+  get subtotalValue(): number {
+    return this.cartItems.reduce(
+      (sum, item) => sum + (item.sellingPrice ?? 0) * (item.quantity ?? 0),
+      0
+    );
+  }
+
+  /** Usuario autenticado (para el resumen de compra). */
+  get currentUser() {
+    return this.authService.getCurrentUser();
+  }
+
+  /** Fecha corta actual para el resumen. */
+  get todayLabel(): string {
+    return new Intl.DateTimeFormat('es-CL', {
+      day: 'numeric',
+      month: 'long',
+    }).format(new Date());
   }
 
   clearCart(): void {
-    this.dataSource.data = [];
+    this.cartItems = [];
     this.updateTotalSaleValue();
   }
 
-  catalogStockTone(stock?: number): string {
-    if (stock === undefined || stock <= 3) return 'crit';
-    if (stock <= 8) return 'warn';
-    return 'ok';
-  }
-
-  /** Stock efectivo para mostrar en el catálogo (última transacción si falta). */
+  /** Stock efectivo para mostrar en el catálogo. */
   productStock(product: Product): number {
     if (product.stock !== undefined) return product.stock;
-    const last = product.transactions?.[0];
-    return last?.finalStock ?? 0;
+    return 0;
+  }
+
+  /** true si el producto ya está en el carrito (bloquea re-agregado). */
+  isInCart(product: Product): boolean {
+    return this.cartItems.some((item) => item.id === product.id);
+  }
+
+  /**
+   * Tope de descuento vigente del producto: lo porta la última transacción
+   * que NO es venta (registro/reposición/edición). Las ventas no deben
+   * alterar la política de descuento — leer la última a secas devolvía 0.
+   */
+  private effectiveMaxDiscount(product: Product): number {
+    const txs = product.transactions ?? [];
+    for (let i = txs.length - 1; i >= 0; i--) {
+      if (txs[i].operation !== 'Venta Producto') {
+        return txs[i].maxDiscount ?? 0;
+      }
+    }
+    return 0;
   }
 
   openProductSearch(): void {
-    const addedProductIds = this.dataSource.data.map(item => item.id);
-    const dialogRef = this.dialog.open(ProductSearchModalComponent, {
-      width: '70%',
+    const addedProductIds = this.cartItems.map((item) => item.id);
+    const dialogRef = this.modal.open(ModalProductSearchComponent, {
+      size: 'xl',
       data: { addedProductIds }
     });
 
@@ -180,83 +192,184 @@ export class SalesComponent implements OnInit, OnDestroy {
   }
 
   addProductToSale(product: Product): void {
-    // Use transactions[0] consistently (first = most recent if DESC ordering)
-    const lastTransaction = product.transactions ? product.transactions[0] : null;
+    // Un producto se elige una sola vez: después se ajusta cantidad en el carrito.
+    if (this.isInCart(product)) {
+      this.snackbar.openSnackBar(
+        `${product.name} ya está en el carrito — ajusta la cantidad ahí`
+      );
+      return;
+    }
+
+    // Empezó una venta nueva: se descarta el resumen de la última completada.
+    this.lastSale = null;
+
+    // La última transacción es la más reciente (orden de inserción ASC).
+    const lastTransaction =
+      product.transactions && product.transactions.length > 0
+        ? product.transactions[product.transactions.length - 1]
+        : null;
 
     const saleProduct: SaleProduct = {
-        ...product,
-        quantity: 1,
-        sellingPrice: lastTransaction ? lastTransaction.sellingPrice ?? 0 : 0,
-        purchaseDiscount: 0,
-        maxDiscount: lastTransaction?.maxDiscount ?? 0,
+      ...product,
+      quantity: 1,
+      sellingPrice: product.sellingPrice ?? lastTransaction?.sellingPrice ?? 0,
+      purchaseDiscount: 0,
+      maxDiscount: this.effectiveMaxDiscount(product),
     };
 
-    // Compute finalValue with proper formula: sellingPrice * quantity - purchaseDiscount
-    saleProduct.finalValue = (saleProduct.sellingPrice ?? 0) * saleProduct.quantity - saleProduct.purchaseDiscount;
+    // Valor final: sellingPrice * quantity - purchaseDiscount
+    saleProduct.finalValue =
+      (saleProduct.sellingPrice ?? 0) * saleProduct.quantity - saleProduct.purchaseDiscount;
 
-    this.dataSource.data = [...this.dataSource.data, saleProduct];
+    this.cartItems = [...this.cartItems, saleProduct];
     this.updateTotalSaleValue();
-}
+  }
 
-adjustQuantity(index: number, quantity: number): void {
-    const product = this.dataSource.data[index];
+  adjustQuantity(index: number, requested: number): void {
+    const product = this.cartItems[index];
+    const maxStock = Math.max(product.stock ?? 0, 0);
+    // Tope duro: no se puede vender más que el stock disponible.
+    const quantity = Math.min(Math.max(Math.floor(requested) || 1, 1), Math.max(maxStock, 1));
     product.quantity = quantity;
-    product.finalValue = (product.sellingPrice ?? 0) * product.quantity - product.purchaseDiscount;
+    product.finalValue =
+      (product.sellingPrice ?? 0) * product.quantity - product.purchaseDiscount;
     this.updateTotalSaleValue();
-}
+  }
 
-updateTotalSaleValue(): void {
-    this.totalSaleValue = this.dataSource.data.reduce((sum: number, item: SaleProduct) => sum + (item.finalValue ?? 0), 0);
-}
+  updateTotalSaleValue(): void {
+    this.totalSaleValue = this.cartItems.reduce(
+      (sum: number, item: SaleProduct) => sum + (item.finalValue ?? 0),
+      0
+    );
+  }
 
-  
+  applyDiscount(index: number, discount: number): void {
+    const product = this.cartItems[index];
 
-applyDiscount(index: number, discount: number): void {
-  const product = this.dataSource.data[index];
-  
-  // Cap discount to maxDiscount
-  product.purchaseDiscount = discount > (product.maxDiscount ?? 0) ? (product.maxDiscount ?? 0) : discount;
+    // Tope de descuento según maxDiscount (política vigente del producto)
+    const capped = Math.max(
+      Math.min(discount ?? 0, product.maxDiscount ?? 0),
+      0
+    );
+    product.purchaseDiscount = capped;
 
-  // Recalculate finalValue
-  product.finalValue = (product.sellingPrice ?? 0) * product.quantity - product.purchaseDiscount;
-  
-  // Force Angular change detection by replacing the dataSource reference
-  this.dataSource.data = [...this.dataSource.data];
-  this.updateTotalSaleValue();
-}
+    // Recalcular finalValue
+    product.finalValue =
+      (product.sellingPrice ?? 0) * product.quantity - product.purchaseDiscount;
 
-  generatePDF(): void {
-    const doc = new jsPDF();
-    doc.text("Detalle de Venta", 10, 10);
-    let yOffset = 20;
-
-    this.dataSource.data.forEach((item: SaleProduct, index: number) => {
-      const lastTransaction = item.transactions ? item.transactions[0] : null;
-      doc.text(`${index + 1}. Producto: ${item.name}`, 10, yOffset);
-      doc.text(`   Precio: ${lastTransaction ? lastTransaction.sellingPrice : 0}`, 10, yOffset + 10);
-      doc.text(`   Cantidad: ${item.quantity}`, 10, yOffset + 20);
-      doc.text(`   Descuento: ${item.purchaseDiscount}`, 10, yOffset + 30);
-      doc.text(`   Valor Total: ${item.finalValue}`, 10, yOffset + 40);
-      yOffset += 50;
-    });
-
-    doc.text(`Valor Total de Venta: ${this.totalSaleValue}`, 10, yOffset);
-    doc.save('detalle_venta.pdf');
+    // Forzar change detection reemplazando la referencia
+    this.cartItems = [...this.cartItems];
+    this.updateTotalSaleValue();
   }
 
   removeProductFromSale(index: number): void {
-    const data = this.dataSource.data;
+    const data = [...this.cartItems];
     data.splice(index, 1);
-    this.dataSource.data = [...data];
+    this.cartItems = data;
     this.updateTotalSaleValue();
+  }
+
+  /** Carrito vacío: la acción queda bloqueada (spec: no se envía request). */
+  get cartEmpty(): boolean {
+    return this.cartItems.length === 0;
+  }
+
+  /** Hay resumen que mostrar: carrito activo o última venta completada. */
+  get hasSummary(): boolean {
+    return this.cartItems.length > 0 || !!this.lastSale;
+  }
+
+  /** Líneas del resumen (carrito actual o última venta). */
+  get summaryItems(): Array<{ name: string; quantity: number; finalValue: number }> {
+    if (this.cartItems.length) {
+      return this.cartItems.map((i) => ({
+        name: i.name,
+        quantity: i.quantity,
+        finalValue: i.finalValue ?? 0,
+      }));
+    }
+    return (this.lastSale?.products ?? []).map((p) => ({
+      name: p.name,
+      quantity: p.quantity,
+      finalValue: p.finalValue ?? 0,
+    }));
+  }
+
+  get summarySubtotal(): number {
+    return this.cartItems.length ? this.subtotalValue : (this.lastSale?.subtotal ?? 0);
+  }
+
+  get summaryDiscount(): number {
+    return this.cartItems.length ? this.totalDiscount : (this.lastSale?.discount ?? 0);
+  }
+
+  get summaryTotal(): number {
+    return this.cartItems.length ? this.totalSaleValue : (this.lastSale?.total ?? 0);
+  }
+
+  get summarySeller(): string {
+    return this.cartItems.length ? (this.currentUser?.name ?? '—') : (this.lastSale?.seller ?? '—');
+  }
+
+  get summaryDateLabel(): string {
+    return this.cartItems.length ? this.todayLabel : (this.lastSale?.dateLabel ?? this.todayLabel);
+  }
+
+  /** Payload del PDF según la fuente actual del resumen. */
+  private buildPdfPayload(): SalePdfPayload {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    return {
+      code: `VENTA-${stamp}`,
+      date: now.toISOString(),
+      seller: this.currentUser?.name ?? '—',
+      products: this.cartItems.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        sellingPrice: item.sellingPrice ?? 0,
+        purchaseDiscount: item.purchaseDiscount ?? 0,
+        finalValue: item.finalValue ?? 0,
+      })),
+      subtotal: this.subtotalValue,
+      discount: this.totalDiscount,
+      total: this.totalSaleValue,
+    };
+  }
+
+  /** Descarga el comprobante PDF (server-side) para un payload dado. */
+  private downloadPdf(payload: SalePdfPayload): void {
+    this.salesApi.generateSalePdf(payload).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${payload.code}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.snackbar.error('No se pudo generar el PDF de la venta'),
+    });
+  }
+
+  /**
+   * Comprobante PDF de la venta (server-side, mismo diseño que la orden).
+   * Si hay carrito lo genera del carrito; si ya se completó, de la última venta.
+   */
+  generatePurchasePdf(): void {
+    if (!this.hasSummary) return;
+    const payload = this.cartItems.length ? this.buildPdfPayload() : this.lastSale!;
+    this.downloadPdf(payload);
   }
 
   completeSale(): void {
     if (this.submitting) return;
-    if (this.dataSource.data.length === 0) return;
+    if (this.cartItems.length === 0) return;
     this.submitting = true;
 
-    const batchProducts = this.dataSource.data.map(product => ({
+    const batchProducts = this.cartItems.map((product) => ({
       productId: product.id!,
       quantity: -Math.abs(product.quantity),
       sellingPrice: product.sellingPrice ?? 0,
@@ -269,18 +382,30 @@ applyDiscount(index: number, discount: number): void {
 
     this.saleSubscriptions.add(
       this.salesApi.createSaleBatch({ products: batchProducts, total }).subscribe({
-        next: (sale) => {
-          this.dataSource.data = [];
+        next: () => {
+          // Capturamos el resumen ANTES de limpiar el carrito.
+          const payload = this.buildPdfPayload();
+          const now = new Date();
+          this.lastSale = {
+            ...payload,
+            dateLabel: now.toLocaleString('es-CL', {
+              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+            }),
+          };
+          this.cartItems = [];
           this.totalSaleValue = 0;
           this.submitting = false;
-          this.selectedClient = null;
-          this.snackbar.success('Venta realizada correctamente');
+          this.snackbar.success('Venta realizada correctamente — PDF descargado');
           this.dataSyncService.notifyTransactionUpdate();
+          this.loadCatalog();
+          // Auto-descarga del comprobante para no perder la venta.
+          this.downloadPdf(payload);
         },
         error: (err: any) => {
           this.submitting = false;
+          // 409 (stock insuficiente) u otros errores: el mensaje del backend se muestra al usuario.
           this.snackbar.error(err.error?.message || 'Error al realizar la venta');
-        }
+        },
       })
     );
   }

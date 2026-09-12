@@ -1,10 +1,8 @@
 <div class="shell" [class.sidebar-collapsed]="sidebarCollapsed">
   <aside class="sidebar" [class.open]="sidebarOpen">
     <div class="brand">
-      <span class="brand-mark"><mat-icon fontIcon="handyman"></mat-icon></span>
-      <span class="brand-text">
-        <span class="brand-name">Manage Repair Store</span>
-        <span class="brand-sub">Panel de gestión</span>
+      <span class="brand-logo-wrap">
+        <img class="brand-logo" src="assets/img/logo-300x80.png" alt="Manage Repair Store" />
       </span>
     </div>
 
@@ -16,7 +14,6 @@
           class="nav-link"
           [routerLink]="item.path"
           routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
           [matTooltip]="sidebarCollapsed ? item.label : ''"
         >
           <mat-icon class="nav-icon" [fontIcon]="item.icon"></mat-icon>
@@ -56,19 +53,18 @@
         <h1 class="topbar-title">{{ pageTitle }}</h1>
         <span class="topbar-sub">{{ pageSub }}</span>
       </div>
-      <div class="global-search">
-        <mat-icon fontIcon="search" class="gs-icon"></mat-icon>
-        <input
-          id="global-search"
-          [(ngModel)]="globalSearch"
-          (keyup.enter)="runGlobalSearch()"
-          placeholder="Buscar global (Ctrl+K)..."
-          aria-label="Búsqueda global"
-        />
-      </div>
       <div class="topbar-actions">
-        <button class="icon-btn topbar-icon" matTooltip="Notificaciones" aria-label="Notificaciones">
-          <mat-icon fontIcon="notifications_none"></mat-icon>
+        <button
+          class="topbar-user"
+          (click)="goProfile()"
+          matTooltip="Mi perfil"
+          aria-label="Ver mi perfil"
+        >
+          <span class="topbar-user-avatar">{{ initials }}</span>
+          <span class="topbar-user-meta">
+            <strong>{{ displayName }}</strong>
+            <span>{{ roleLabel }}</span>
+          </span>
         </button>
         <app-theme-toggle></app-theme-toggle>
       </div>

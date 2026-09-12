@@ -1,53 +1,86 @@
-<h2 mat-dialog-title>Editar Producto</h2>
+<h2 mat-dialog-title>
+  <span>{{ isNew ? 'Agregar producto' : 'Editar producto' }}</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="form-register">
-    <!-- Nombre del Producto -->
-    <mat-form-field>
-      <mat-label>Nombre de Producto</mat-label>
-      <input matInput placeholder="Ej: Cocina a Gas" formControlName="name" required>
-    </mat-form-field>
-
-    <!-- Selector para añadir o descontar -->
-    <div class="flex-center-row">
-      <mat-form-field class="flex-1">
-        <mat-label>Cantidad</mat-label>
-        <input matInput type="number" placeholder="Cantidad" formControlName="quantity" required>
-      </mat-form-field>
+  <form [formGroup]="form">
+    <!-- Stock actual (solo lectura en edición) -->
+    <div class="stock-banner" *ngIf="!isNew">
+      <mat-icon fontIcon="inventory_2"></mat-icon>
+      <span class="stock-label">Stock actual</span>
+      <b class="stock-value mono">{{ data.product.stock ?? 0 }}</b>
     </div>
 
-    <mat-form-field>
-      <mat-label>Precio de Costo</mat-label>
-      <input matInput type="number" placeholder="Precio de Costo" formControlName="costPrice" required>
-    </mat-form-field>
+    <div class="form-grid">
+      <div class="field-group">
+        <label class="field-label" for="pf-name">Nombre de producto</label>
+        <input id="pf-name" class="input" placeholder="Ej: Cocina a Gas" formControlName="name" />
+      </div>
 
-    <mat-form-field>
-      <mat-label>Precio de Venta</mat-label>
-      <input matInput type="number" placeholder="Precio de Venta" formControlName="sellingPrice" required>
-    </mat-form-field>
+      <div class="field-group">
+        <label class="field-label" for="pf-category">Categoría</label>
+        <select id="pf-category" class="select" formControlName="categoryId" *ngIf="categories.length">
+          <option [ngValue]="''">Sin categoría</option>
+          <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
+        </select>
+        <input id="pf-category" class="input" value="Sin categorías" disabled *ngIf="!categories.length" />
+      </div>
 
-    <mat-form-field>
-      <mat-label>Descuento Máximo</mat-label>
-      <input matInput type="number" placeholder="Descuento Máximo" formControlName="maxDiscount" required>
-    </mat-form-field>
+      <div class="field-group" *ngIf="isNew">
+        <label class="field-label" for="pf-quantity">Stock inicial</label>
+        <input id="pf-quantity" class="input mono" type="number" placeholder="Cantidad" formControlName="quantity" />
+      </div>
 
-    <mat-form-field>
-      <mat-label>Localización</mat-label>
-      <input matInput placeholder="Ubicación en bodega" formControlName="location">
-    </mat-form-field>
+      <div class="field-group">
+        <label class="field-label" for="pf-cost">Precio de costo</label>
+        <div class="currency-input">
+          <span class="currency-prefix">$</span>
+          <input id="pf-cost" class="input mono" type="number" placeholder="0" formControlName="costPrice" />
+        </div>
+      </div>
 
-    <mat-form-field>
-      <mat-label>Descripción</mat-label>
-      <textarea matInput placeholder="Descripción" formControlName="description"></textarea>
-    </mat-form-field>
+      <div class="field-group">
+        <label class="field-label" for="pf-price">Precio de venta</label>
+        <div class="currency-input">
+          <span class="currency-prefix">$</span>
+          <input id="pf-price" class="input mono" type="number" placeholder="0" formControlName="sellingPrice" />
+        </div>
+      </div>
 
-    <!-- Campo de Imagen y Vista Previa -->
-    <label for="image-upload" class="image-upload-label">Imagen</label>
-    <input id="image-upload" type="file" (change)="onFileSelected($event)" />
-    <img *ngIf="imageUrl" [src]="imageUrl" alt="Vista previa de imagen" class="product-image-preview">
+      <div class="field-group">
+        <label class="field-label" for="pf-discount">Descuento máximo (%)</label>
+        <input id="pf-discount" class="input mono" type="number" placeholder="0" formControlName="maxDiscount" />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="pf-location">Localización</label>
+        <input id="pf-location" class="input" placeholder="Ubicación en bodega" formControlName="location" />
+      </div>
+
+      <div class="field-group span-2">
+        <label class="field-label" for="pf-description">Descripción</label>
+        <textarea id="pf-description" class="input" rows="2" placeholder="Descripción" formControlName="description"></textarea>
+      </div>
+
+      <div class="field-group span-2">
+        <span class="field-label">Imagen</span>
+        <div class="image-row">
+          <label class="btn btn-soft image-btn" for="image-upload">
+            <mat-icon fontIcon="upload"></mat-icon> Subir imagen
+          </label>
+          <input id="image-upload" type="file" accept="image/*" (change)="onFileSelected($event)" class="image-input" />
+          <img *ngIf="imageUrl" [src]="imageUrl" alt="Vista previa de imagen" class="product-image-preview" />
+        </div>
+      </div>
+    </div>
   </form>
 </mat-dialog-content>
 
-<mat-dialog-actions>
-  <button mat-button (click)="close()">Cancelar</button>
-  <button mat-button color="primary" (click)="saveChanges()">Actualizar</button>
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" (click)="close()">Cancelar</button>
+  <button class="btn btn-primary" (click)="saveChanges()">
+    <mat-icon fontIcon="check"></mat-icon> {{ isNew ? 'Crear' : 'Actualizar' }}
+  </button>
 </mat-dialog-actions>

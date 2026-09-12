@@ -276,3 +276,118 @@ button, .mat-mdc-button {
 
 // .hidden — print/PDF visibility helper (used by pdf component)
 .hidden { display: none !important; }
+
+// --- Dialogs: unified chrome (unified dialog chrome) ----------
+// One chrome for every dialog (legacy + new): surface, title, content and
+// actions all read from the design tokens, so dark mode works everywhere.
+.mat-mdc-dialog-surface {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  background: var(--color-surface);
+  padding: 0;
+  overflow: hidden;
+}
+
+.mat-mdc-dialog-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 18px 24px 14px;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mat-mdc-dialog-content {
+  padding: 20px 24px;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.mat-mdc-dialog-actions {
+  margin: 0;
+  min-height: 0;
+  padding: 14px 24px 20px;
+  gap: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+// Close button slot for dialog titles (h2 + .dlg-close pattern).
+.dlg-close {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: background 0.15s, color 0.15s;
+  .mat-icon { font-size: 20px; width: 20px; height: 20px; }
+  &:hover { background: var(--color-primary-light); color: var(--color-primary-dark); }
+}
+
+// Material tables inside dialogs get the table.data look.
+.mat-mdc-dialog-content .mat-mdc-table {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.mat-mdc-dialog-content .mat-mdc-header-cell {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mat-mdc-dialog-content .mat-mdc-cell {
+  font-size: 13.5px;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mat-mdc-dialog-content .mat-mdc-row:hover .mat-mdc-cell {
+  background: var(--color-primary-light);
+}
+
+// --- Skip link ---
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: var(--space-sm) var(--space-base);
+  z-index: 10000;
+  transition: top 0.2s;
+  &:focus { top: 0; }
+}
+
+// --- Responsive modals (fullscreen on mobile) ---
+@media (max-width: 600px) {
+  .mat-mdc-dialog-container {
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    border-radius: 0;
+  }
+}
+
+// --- Utility classes (Phase 4: UI Consistency) ---
+.w-full { width: 100%; }
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.gap-sm { gap: var(--space-sm); }
+.gap-base { gap: var(--space-base); }

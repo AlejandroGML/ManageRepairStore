@@ -13,7 +13,7 @@ import { getApiUrl } from 'src/app/services/api-url';
 })
 export class ModalViewTransactionsComponent implements OnInit {
   // Columnas obligatorias
-  mandatoryColumns = ['id', 'createdAt', 'operation', 'image', 'name', 'quantity', 'finalStock'];
+  mandatoryColumns = ['id', 'createdAt', 'operation', 'quantity', 'finalStock'];
 
   // Columnas opcionales que pueden ser seleccionadas
   optionalColumns = [
@@ -23,7 +23,6 @@ export class ModalViewTransactionsComponent implements OnInit {
     { value: 'sellingPrice', label: 'Precio de Venta' },
     { value: 'maxDiscount', label: 'Descuento Máximo' },
     { value: 'purchaseDiscount', label: 'Descuento de Compra' },
-    { value: 'finalValue', label: 'Valor Final' },
     { value: 'assignedWorker', label: 'Trabajador Asignado' }
   ];
 
@@ -32,6 +31,15 @@ export class ModalViewTransactionsComponent implements OnInit {
 
   // Columnas visibles en la tabla
   displayedColumns: string[] = [];
+
+  // Etiquetas legibles de las columnas obligatorias
+  private readonly columnLabels: Record<string, string> = {
+    id: 'ID',
+    createdAt: 'Fecha',
+    operation: 'Operación',
+    quantity: 'Cantidad',
+    finalStock: 'Stock Final',
+  };
 
   constructor(
     public dialogRef: MatDialogRef<ModalViewTransactionsComponent>,
@@ -52,10 +60,37 @@ export class ModalViewTransactionsComponent implements OnInit {
     this.displayedColumns = [...this.mandatoryColumns, ...this.selectedColumns];
   }
 
-  // Obtiene el nombre legible de cada columna
+  /** Chips de columnas: estado y toggle. */
+  isSelected(value: string): boolean {
+    return this.selectedColumns.includes(value);
+  }
+
+  toggleColumn(value: string): void {
+    this.selectedColumns = this.isSelected(value)
+      ? this.selectedColumns.filter((c) => c !== value)
+      : [...this.selectedColumns, value];
+    this.updateDisplayedColumns();
+  }
+
+  // Obtiene el nombre legible de cada columna (obligatorias + opcionales)
+  headerLabel(column: string): string {
+    return this.columnLabels[column] ?? this.getColumnLabel(column);
+  }
+
+  // Obtiene el nombre legible de una columna opcional
   getColumnLabel(column: string): string {
     const col = this.optionalColumns.find(opt => opt.value === column);
     return col ? col.label : column;
+  }
+
+  /** Valor de celda para columnas no-imagen: raíz o snapshot según la columna. */
+  /**
+   * La columna de la fila es la fuente de verdad (registra el valor AL
+   * momento de la transacción). snapshotData queda solo como respaldo de
+   * filas históricas hasta que la columna muera en la normalización.
+   */
+  cellValue(t: any, col: string): string {
+    return t[col] ?? t.snapshotData?.[col] ?? 'Sin Dato';
   }
 
   // Método para obtener la URL completa de la imagen

@@ -2,26 +2,31 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { UserManagementComponent } from './user-management.component';
 import { UsersService } from '../../../services/users.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 import { SystemUser } from '../../../interface/system-user';
-import { of } from 'rxjs';
 
 describe('UserManagementComponent', () => {
   let component: UserManagementComponent;
   let fixture: ComponentFixture<UserManagementComponent>;
   let usersServiceSpy: jasmine.SpyObj<UsersService>;
+  let dialogSpy: jasmine.SpyObj<MatDialog>;
+  let snackbarSpy: jasmine.SpyObj<SnackbarService>;
 
   const mockUsers: SystemUser[] = [
-    { id: 1, name: 'Admin', email: 'admin@demo.example', role: 'admin', active: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-    { id: 2, name: 'Vendedor Uno', email: 'vendedor@demo.example', role: 'seller', active: true, createdAt: '2025-01-02T00:00:00Z', updatedAt: '2025-01-02T00:00:00Z' },
-    { id: 3, name: 'Bodega Uno', email: 'bodega@demo.example', role: 'warehouse', active: false, createdAt: '2025-01-03T00:00:00Z', updatedAt: '2025-01-03T00:00:00Z' },
+    { id: 1, name: 'Ana Pérez', email: 'test@demo.example', role: 'admin', active: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
+    { id: 2, name: 'Vendedor Uno', email: 'test@demo.example', role: 'seller', active: true, createdAt: '2025-01-02T00:00:00Z', updatedAt: '2025-01-02T00:00:00Z' },
+    { id: 3, name: 'Bodega Uno', email: 'test@demo.example', role: 'warehouse', active: false, createdAt: '2025-01-03T00:00:00Z', updatedAt: '2025-01-03T00:00:00Z' },
   ];
 
   beforeEach(async () => {
-    const spy = jasmine.createSpyObj('UsersService', ['getAll', 'create', 'update', 'deactivate']);
-    spy.getAll.and.returnValue(of(mockUsers));
+    usersServiceSpy = jasmine.createSpyObj('UsersService', ['getAll', 'create', 'update', 'deactivate', 'activate']);
+    usersServiceSpy.getAll.and.returnValue(of(mockUsers));
+    dialogSpy = jasmine.createSpyObj('MatDialog', ['open']);
+    snackbarSpy = jasmine.createSpyObj('SnackbarService', ['openSnackBar', 'success', 'error']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -31,10 +36,17 @@ describe('UserManagementComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: UsersService, useValue: spy },
-        { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
+        { provide: UsersService, useValue: usersServiceSpy },
+        { provide: MatDialog, useValue: dialogSpy },
+        { provide: SnackbarService, useValue: snackbarSpy },
       ],
     }).compileComponents();
+
+    // MatDialogModule provides MatDialog at module level (Material 21),
+    // shadowing the root TestBed provider — override at component level.
+    TestBed.overrideComponent(UserManagementComponent, {
+      set: { providers: [{ provide: MatDialog, useValue: dialogSpy }] },
+    });
 
     fixture = TestBed.createComponent(UserManagementComponent);
     component = fixture.componentInstance;
@@ -56,71 +68,62 @@ describe('UserManagementComponent', () => {
     expect(component.users.length).toBe(3);
 
     const compiled = fixture.nativeElement as HTMLElement;
-    // Email column
-    expect(compiled.textContent).toContain('admin@demo.example');
-    expect(compiled.textContent).toContain('vendedor@demo.example');
-    expect(compiled.textContent).toContain('bodega@demo.example');
-    // Name column
-    expect(compiled.textContent).toContain('Admin');
-    expect(compiled.textContent).toContain('Vendedor Uno');
-    expect(compiled.textContent).toContain('Bodega Uno');
+    expect(compiled.textContent).toContain('test@demo.example');
+    expect(compiled.textContent).toContain('Ana Pérez');
   });
 
-  it('should show Activo badge for active users and Inactivo for inactive', () => {
-    fixture.detectChanges();
+  it('should show avatar with the first letter of the name (Ana Pérez → A)', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    const activeUser = mockUsers[0]; // active
-    const inactiveUser = mockUsers[2]; // inactive
-
-    // Should show Activo badge somewhere
-    const activoElements = compiled.querySelectorAll('.activo-badge, .activo');
-    const inactivoElements = compiled.querySelectorAll('.inactivo-badge, .inactivo');
-
-    // At least one element references "Activo" and "Inactivo"
-    expect(compiled.textContent).toContain('Activo');
-    expect(compiled.textContent).toContain('Inactivo');
+    const avatars = Array.from(compiled.querySelectorAll('.user-avatar-sm'));
+    expect(avatars.length).toBe(3);
+    expect(avatars[0].textContent?.trim()).toBe('A');
+    expect(component.userInitials('Ana Pérez')).toBe('A');
+    expect(component.userInitials('vendedor')).toBe('V');
   });
 
-  it('should render role names in Spanish', () => {
-    fixture.detectChanges();
+  it('should display roles in readable Spanish', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Administrador');
     expect(compiled.textContent).toContain('Vendedor');
     expect(compiled.textContent).toContain('Bodega');
   });
 
-  it('should have action buttons for each user row', () => {
-    fixture.detectChanges();
-    const buttons = fixture.nativeElement.querySelectorAll('button');
-    expect(buttons.length).toBeGreaterThanOrEqual(3); // create + edit per user + deactivate per user
-  });
-
-  it('should have a "Nuevo Usuario" create button', () => {
-    fixture.detectChanges();
+  it('should show Desactivado badge for inactive users and Activo for active', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Nuevo Usuario');
+    expect(compiled.textContent).toContain('Activo');
+    expect(compiled.textContent).toContain('Desactivado');
+    // Etiqueta junto al nombre del usuario desactivado
+    const inactiveTag = compiled.querySelector('.badge-inactive');
+    expect(inactiveTag?.textContent).toContain('Desactivado');
   });
 
-  it('should call openCreateDialog when create button is clicked', () => {
-    spyOn(component, 'openCreateDialog');
-    fixture.detectChanges();
-
-    const buttons: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
-    const createBtn = buttons.find(
-      (btn) => btn.textContent?.includes('Nuevo Usuario')
-    );
-
-    if (createBtn) {
-      createBtn.click();
-      expect(component.openCreateDialog).toHaveBeenCalled();
-    }
+  it('should have a "Nuevo usuario" create button', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Nuevo usuario');
   });
 
-  it('should render the user table with data', () => {
-    fixture.detectChanges();
-    const table = fixture.nativeElement.querySelector('table');
-    expect(table).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('admin@demo.example');
+  it('should open create dialog when clicking Nuevo usuario', () => {
+    dialogSpy.open.and.returnValue({ afterClosed: () => of(null) } as any);
+    component.openCreateDialog();
+    expect(dialogSpy.open).toHaveBeenCalled();
+  });
+
+  it('should open edit and delete dialogs for a user', () => {
+    dialogSpy.open.and.returnValue({ afterClosed: () => of(null) } as any);
+    component.openEditDialog(mockUsers[0]);
+    expect(dialogSpy.open).toHaveBeenCalled();
+    component.openDeleteDialog(mockUsers[0]);
+    expect(dialogSpy.open).toHaveBeenCalled();
+  });
+
+  it('should activate a deactivated user and refresh the list', () => {
+    usersServiceSpy.activate.and.returnValue(of({ ...mockUsers[2], active: true }));
+
+    component.activateUser(mockUsers[2]);
+
+    expect(usersServiceSpy.activate).toHaveBeenCalledWith(3);
+    expect(usersServiceSpy.getAll).toHaveBeenCalled();
+    expect(snackbarSpy.openSnackBar).toHaveBeenCalledWith('Usuario activado exitosamente');
   });
 
   it('should handle empty user list gracefully', () => {
@@ -130,7 +133,7 @@ describe('UserManagementComponent', () => {
 
     expect(component.users.length).toBe(0);
     const compiled = fixture.nativeElement as HTMLElement;
-    // Table should be empty — no email display
-    expect(compiled.textContent).not.toContain('admin@demo.example');
+    expect(compiled.textContent).toContain('Sin usuarios registrados');
+    expect(compiled.textContent).not.toContain('test@demo.example');
   });
 });

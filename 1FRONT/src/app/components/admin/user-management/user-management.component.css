@@ -1,64 +1,19 @@
-.user-management-container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.user-table {
-  width: 100%;
-  margin-top: 16px;
-}
-
-.header-actions {
-  margin-left: auto;
-}
-
-.activo-badge {
-  display: inline-block;
-  background-color: var(--color-success-soft);
-  color: var(--color-success);
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.inactivo-badge {
-  display: inline-block;
-  background-color: var(--color-error-soft);
-  color: var(--color-error);
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px;
-  color: var(--color-text-muted);
-  font-size: 16px;
-}
-
-mat-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* ===== Port Phase 7 — admin restyle ===== */
-.page { padding-top: 4px; }
-.header-actions { display: flex; align-items: center; gap: var(--space-sm); }
-.close-btn { display: none; }
-
-/* ===== Port 8.5c — admin table ===== */
-.page-actions { display: flex; align-items: center; gap: var(--space-sm); }
-.close-btn { display: none; }
-
 .user-cell {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+/* Etiqueta de cuenta desactivada: gris pizarra apagado (estado, no error).
+   Dark mode vía :host-context — el scoping [_ngcontent] no matchea html[data-theme]. */
+.badge-inactive {
+  background: rgba(108, 117, 125, 0.16);
+  color: #6c757d;
+}
+
+:host-context([data-theme='dark']) .badge-inactive {
+  background: rgba(160, 168, 176, 0.18);
+  color: var(--color-text-muted-dark);
 }
 
 .user-avatar-sm {
@@ -73,9 +28,4 @@ mat-card-header {
   font-size: 13px;
   font-weight: 600;
   flex-shrink: 0;
-}
-
-.user-name {
-  font-weight: 600;
-  color: var(--color-text);
 }

@@ -39,4 +39,26 @@ describe('ProductsApiService', () => {
     expect(req.request.method).toBe('GET');
     req.flush(true);
   });
+
+  it('should fetch active products via GET /product/active', () => {
+    const mockProducts: any[] = [
+      { id: 1, name: 'Regulador', stock: 12, minimum: 4 },
+    ];
+
+    service.getActiveProducts().subscribe((res) => expect(res).toEqual(mockProducts));
+
+    const req = httpMock.expectOne(`${base}/product/active`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockProducts);
+  });
+
+  it('should soft delete a product via DELETE /product/delete/:id', () => {
+    const mockProduct: any = { id: 5, name: 'Batería', active: false };
+
+    service.softDeleteProduct(5).subscribe((res) => expect(res).toEqual(mockProduct));
+
+    const req = httpMock.expectOne(`${base}/product/delete/5`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(mockProduct);
+  });
 });

@@ -64,4 +64,17 @@ export class UsersService {
       { active: false }
     );
   }
+
+  /** Reactiva un usuario desactivado. */
+  activate(id: number): Observable<SystemUser> {
+    return this.http.patch<SystemUser>(
+      `${this.getBackendUrl()}/users/${id}`,
+      { active: true }
+    );
+  }
+
+  /** Borrado definitivo (solo usuarios ya desactivados). */
+  remove(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.getBackendUrl()}/users/${id}`);
+  }
 }

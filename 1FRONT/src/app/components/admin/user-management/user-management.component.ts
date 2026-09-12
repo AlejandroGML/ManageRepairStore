@@ -1,21 +1,19 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatTableModule } from '@angular/material/table';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UsersService } from '../../../services/users.service';
 import { SystemUser } from '../../../interface/system-user';
-import { UserFormDialogComponent, UserFormData } from './user-form-dialog.component';
-import { UserDeleteDialogComponent } from './user-delete-dialog.component';
+import { ModalUserFormComponent, UserFormData } from './modal-user-form.component';
+import { ModalUserDeleteComponent, UserDeleteDialogData } from './modal-user-delete.component';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { ModalService } from 'src/app/services/modal.service';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, MatIconModule, MatTooltipModule],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.css'],
 })
@@ -23,9 +21,10 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   users: SystemUser[] = [];
 
   private readonly usersService = inject(UsersService);
-  private readonly dialog = inject(MatDialog);
+  private readonly modal = inject(ModalService);
   private readonly snackbar = inject(SnackbarService);
-  readonly dialogRef = inject(MatDialogRef<UserManagementComponent>, { optional: true });
+  // Optional: la pantalla se monta como ruta (no dentro de un dialog).
+  private readonly dialogRef = inject(MatDialogRef<UserManagementComponent>, { optional: true });
   private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
@@ -38,7 +37,7 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
 
   loadUsers(): void {
     this.usersService.getAll().subscribe((users) => {
-      this.users = users;
+      this.users = users ?? [];
       this.cdr.detectChanges();
     });
   }
@@ -56,6 +55,7 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
     }
   }
 
+  /** Avatar: primera letra del nombre en mayúscula. */
   userInitials(name: string): string {
     return (name.trim().charAt(0) ?? '').toUpperCase();
   }
@@ -74,8 +74,8 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   }
 
   openCreateDialog(): void {
-    const dialogRef = this.dialog.open(UserFormDialogComponent, {
-      width: '500px',
+    const dialogRef = this.modal.open(ModalUserFormComponent, {
+      size: 'md',
       disableClose: true,
       data: null as UserFormData | null,
     });
@@ -89,8 +89,8 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   }
 
   openEditDialog(user: SystemUser): void {
-    const dialogRef = this.dialog.open(UserFormDialogComponent, {
-      width: '500px',
+    const dialogRef = this.modal.open(ModalUserFormComponent, {
+      size: 'md',
       disableClose: true,
       data: { user } as UserFormData,
     });
@@ -103,17 +103,32 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
     });
   }
 
+  /** Reactiva un usuario desactivado (acción directa, no destructiva). */
+  activateUser(user: SystemUser): void {
+    this.usersService.activate(user.id).subscribe({
+      next: () => {
+        this.loadUsers();
+        this.snackbar.openSnackBar('Usuario activado exitosamente');
+      },
+      error: () => this.snackbar.openSnackBar('Error al activar el usuario'),
+    });
+  }
+
   openDeleteDialog(user: SystemUser): void {
-    const dialogRef = this.dialog.open(UserDeleteDialogComponent, {
-      width: '420px',
+    // Usuario activo → desactivar. Ya desactivado → borrado definitivo.
+    const hard = !user.active;
+    const dialogRef = this.modal.open(ModalUserDeleteComponent, {
+      size: 'sm',
       disableClose: true,
-      data: user,
+      data: { user, hard } as UserDeleteDialogData,
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.loadUsers();
-        this.snackbar.openSnackBar('Usuario desactivado exitosamente');
+        this.snackbar.openSnackBar(
+          hard ? 'Usuario eliminado definitivamente' : 'Usuario desactivado exitosamente'
+        );
       }
     });
   }

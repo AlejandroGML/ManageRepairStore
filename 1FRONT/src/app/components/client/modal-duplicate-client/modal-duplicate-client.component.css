@@ -1,0 +1,56 @@
+.dc-intro {
+  margin: 0 0 14px;
+  font-size: var(--text-sm, 13.5px);
+  color: var(--color-text, #1f2937);
+}
+
+.dc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 48vh;
+  overflow-y: auto;
+}
+
+.dc-item {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dc-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dc-item-head strong {
+  font-size: 15px;
+}
+
+.dc-item-id {
+  font-size: 12px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.dc-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.dc-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dc-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

@@ -23,7 +23,7 @@ export class ModalProductQrComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<ModalProductQrComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { product: Product },
-    private readonly qrService: QrService,
+    private readonly qrService: QrService
   ) {}
 
   ngOnInit(): void {

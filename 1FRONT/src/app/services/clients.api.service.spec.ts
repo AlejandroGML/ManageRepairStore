@@ -22,14 +22,15 @@ describe('ClientsApiService', () => {
     httpMock.verify();
   });
 
-  it('should fetch all clients from /client/data', () => {
-    const mockClients: any[] = [{ id: 1, name: 'ACME' }];
+  it('should download the clients CSV blob from /client/export', () => {
+    const csv = new Blob(['a;b'], { type: 'text/csv' });
 
-    service.getAllClients().subscribe((clients) => expect(clients).toEqual(mockClients));
+    service.exportClients().subscribe((blob) => expect(blob).toEqual(csv));
 
-    const req = httpMock.expectOne(`${base}/client/data`);
+    const req = httpMock.expectOne(`${base}/client/export`);
     expect(req.request.method).toBe('GET');
-    req.flush(mockClients);
+    expect(req.request.responseType).toBe('blob');
+    req.flush(csv);
   });
 
   it('should update a client via PATCH /client/:id', () => {

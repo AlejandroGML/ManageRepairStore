@@ -1,29 +1,14 @@
-.form-card {
-  width: 100%;
-  padding: var(--space-base);
-}
-
-.status-selector-row {
+/* Modal cambiar estado: usa .select/.input/.field-* del design system. */
+.form-field-block {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
-.selector-label {
-  font-size: var(--text-lg);
-  white-space: nowrap;
-}
-
-.status-select {
-  flex: 1;
-}
-
-.comment-field {
-  width: 100%;
-}
-
-.cancel-btn {
-  background-color: var(--color-text-muted) !important;
-  color: white !important;
+.textarea {
+  height: auto;
+  min-height: 72px;
+  resize: vertical;
+  padding: 10px 12px;
 }

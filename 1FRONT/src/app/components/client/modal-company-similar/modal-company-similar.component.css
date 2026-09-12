@@ -1,0 +1,43 @@
+.cs-intro {
+  margin: 0 0 14px;
+  font-size: var(--text-sm, 13.5px);
+  color: var(--color-text, #1f2937);
+}
+
+.cs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.cs-item {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.cs-item-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cs-item-head strong {
+  font-size: 15px;
+}
+
+.cs-item-rut {
+  font-size: 13px;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.cs-note {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-muted, #6b7280);
+}

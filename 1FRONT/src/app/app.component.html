@@ -1,7 +1,5 @@
-@if (isLoading) {
-  <div class="loading">
-    <mat-spinner color="primary"></mat-spinner>
-  </div>
-}
+<div class="loading" *ngIf="isLoading">
+    <mat-spinner color="warn"></mat-spinner>
+</div>
 <router-outlet></router-outlet>
 <div aria-live="polite" aria-atomic="true" class="visually-hidden" id="announcer"></div>

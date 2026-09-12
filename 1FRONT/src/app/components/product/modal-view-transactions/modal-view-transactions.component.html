@@ -1,76 +1,67 @@
-<h2 mat-dialog-title>Transacciones de {{ data.product.name }}</h2>
+<h2 mat-dialog-title>
+  <span class="tx-title">
+    <img
+      *ngIf="getImageUrl(data.product.image)"
+      [src]="getImageUrl(data.product.image)"
+      [alt]="data.product.name"
+      class="tx-title-img"
+    />
+    Transacciones de {{ data.product.name }}
+  </span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
 
 <mat-dialog-content>
-  <!-- Filtro de columnas con ancho ajustado -->
-  <mat-form-field appearance="fill" class="w-full">
-    <mat-label>Selecciona las columnas adicionales</mat-label>
-    <mat-select multiple [(value)]="selectedColumns" (selectionChange)="updateDisplayedColumns()">
-      <mat-option *ngFor="let column of optionalColumns" [value]="column.value">
-        {{ column.label }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <!-- Selector de columnas adicionales (chips MRS) -->
+  <div class="col-picker">
+    <span class="field-label">Columnas adicionales</span>
+    <div class="col-chips">
+      <button
+        type="button"
+        class="chip"
+        *ngFor="let c of optionalColumns"
+        [class.active]="isSelected(c.value)"
+        (click)="toggleColumn(c.value)">
+        {{ c.label }}
+      </button>
+    </div>
+  </div>
 
-  <table mat-table [dataSource]="data.transactions" class="mat-elevation-z8">
-    <!-- Columna de ID (obligatoria) -->
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef> ID Transacción </th>
-      <td mat-cell *matCellDef="let transaction"> {{ transaction.id ?? 'Sin Dato' }} </td>
-    </ng-container>
-
-    <!-- Columna de Fecha (obligatoria) -->
-    <ng-container matColumnDef="createdAt">
-      <th mat-header-cell *matHeaderCellDef> Fecha </th>
-      <td mat-cell *matCellDef="let transaction">
-        {{ transaction.createdAt | date:'dd-MM-yyyy HH:mm:ss' }}
-      </td>
-    </ng-container>    
-
-    <!-- Columna de Operación (obligatoria) -->
-    <ng-container matColumnDef="operation">
-      <th mat-header-cell *matHeaderCellDef> Operación </th>
-      <td mat-cell *matCellDef="let transaction"> {{ transaction.operation || 'Sin Dato' }} </td>
-    </ng-container>
-
-    <!-- Columna de Imagen del Producto (obligatoria) -->
-    <ng-container matColumnDef="image">
-      <th mat-header-cell *matHeaderCellDef> Imagen </th>
-      <td mat-cell *matCellDef="let transaction">
-        <img [src]="getImageUrl(transaction.snapshotData?.image)" alt="Imagen del producto" class="product-image" />
-      </td>
-    </ng-container>    
-
-    <!-- Columna de Nombre del Producto (obligatoria) -->
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef> Nombre del Producto </th>
-      <td mat-cell *matCellDef="let transaction"> {{ transaction.snapshotData?.name || 'Sin Dato' }} </td>
-    </ng-container>
-
-    <!-- Columna de cantidad (obligatoria) -->
-    <ng-container matColumnDef="quantity">
-      <th mat-header-cell *matHeaderCellDef> Cantidad </th>
-      <td mat-cell *matCellDef="let transaction"> {{ transaction.quantity ?? 'Sin Dato' }} </td>
-    </ng-container>
-
-    <!-- Columna de Stock Final (obligatoria) -->
-    <ng-container matColumnDef="finalStock">
-      <th mat-header-cell *matHeaderCellDef> Stock Final</th>
-      <td mat-cell *matCellDef="let transaction"> {{ transaction.finalStock ?? 'Sin Dato' }} </td>
-    </ng-container>
-
-    <!-- Columnas opcionales basadas en el filtro -->
-    <ng-container *ngFor="let column of selectedColumns" [matColumnDef]="column">
-      <th mat-header-cell *matHeaderCellDef> {{ getColumnLabel(column) }} </th>
-      <td mat-cell *matCellDef="let transaction"> {{ transaction.snapshotData?.[column] ?? 'Sin Dato' }} </td>
-    </ng-container>
-
-    <!-- Fila de encabezado -->
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <!-- Fila de datos -->
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
+  <div class="table-wrap">
+    <table class="data zebra tx-table">
+      <thead>
+        <tr>
+          <th *ngFor="let col of displayedColumns">{{ headerLabel(col) }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of data.transactions">
+          <td *ngFor="let col of displayedColumns" [ngSwitch]="col">
+            <img
+              *ngSwitchCase="'image'"
+              [src]="getImageUrl(t.snapshotData?.image)"
+              alt="Imagen del producto"
+              class="product-image" />
+            <ng-container *ngSwitchCase="'createdAt'">{{ t.createdAt | date:'dd-MM-yyyy HH:mm:ss' }}</ng-container>
+            <span
+              *ngSwitchCase="'quantity'"
+              class="mono"
+              [class.qty-negative]="t.quantity < 0"
+              [class.qty-positive]="t.quantity > 0"
+            >{{ t.quantity > 0 ? '+' + t.quantity : t.quantity }}</span>
+            <ng-container *ngSwitchDefault>{{ cellValue(t, col) }}</ng-container>
+          </td>
+        </tr>
+        <tr *ngIf="!data.transactions?.length">
+          <td [attr.colspan]="displayedColumns.length" class="empty-state">Sin transacciones.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </mat-dialog-content>
 
-<mat-dialog-actions>
-  <button mat-button (click)="close()">Cerrar</button>
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" (click)="close()">Cerrar</button>
 </mat-dialog-actions>

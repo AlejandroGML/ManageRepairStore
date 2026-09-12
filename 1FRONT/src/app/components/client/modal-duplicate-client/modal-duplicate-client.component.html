@@ -1,0 +1,47 @@
+<h2 mat-dialog-title>
+  <span>Posibles clientes duplicados</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content>
+  <p class="dc-intro">
+    Se encontraron <b>{{ matches.length }}</b> cliente(s) con datos parecidos. Revisa las coincidencias antes de continuar:
+  </p>
+
+  <div class="dc-list">
+    <div class="card card-pad dc-item" *ngFor="let m of matches">
+      <div class="dc-item-head">
+        <strong>{{ m.client.name | name }}</strong>
+        <span class="dc-item-id mono">N° {{ m.client.id }}</span>
+      </div>
+      <div class="dc-item-meta">
+        <span *ngIf="m.client.rut_raw" class="mono">{{ m.client.rut_raw | rut }}</span>
+        <span *ngIf="m.client.phone">{{ m.client.phone }}</span>
+        <span *ngIf="m.client.address">{{ (m.client.address | name) + (m.client.city ? ', ' + (m.client.city | name) : '') }}</span>
+        <span *ngIf="m.client.company_name">Empresa: {{ m.client.company_name }}</span>
+      </div>
+      <div class="dc-fields">
+        <span class="badge badge-warning" *ngFor="let f of m.fields" matTooltip="Similitud {{ pct(f.similarity) }}">
+          <span class="dot"></span> {{ fieldLabel(f.field) }}
+        </span>
+      </div>
+      <div class="dc-actions">
+        <button class="btn btn-soft btn-sm" (click)="useExisting(m.client)" matTooltip="Registra la orden con este cliente tal cual">
+          <mat-icon fontIcon="person_add"></mat-icon> Usar existente
+        </button>
+        <button class="btn btn-ghost btn-sm" (click)="editExisting(m.client)" matTooltip="Corrige los datos del cliente antes de registrar la orden">
+          <mat-icon fontIcon="edit"></mat-icon> Editar
+        </button>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" (click)="close()">Cancelar</button>
+  <button class="btn btn-primary" (click)="createAnyway()">
+    <mat-icon fontIcon="add_box"></mat-icon> Crear de todas formas
+  </button>
+</mat-dialog-actions>

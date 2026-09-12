@@ -2,6 +2,7 @@ import { Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { getApiUrl } from 'src/app/services/api-url';
 
 @Component({
   selector: 'app-image-modal',
@@ -26,9 +27,10 @@ import { MatIconModule } from '@angular/material/icon';
 export class ImageModalComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: { imageUrl: string }) {}
 
-  // Build full URL if image is relative
+  // Build full URL if image is relative (assets/ pass through untouched)
   getFullImageUrl(imagePath: string): string {
     if (!imagePath) return '';
-    return imagePath.startsWith('http') ? imagePath : `http://localhost:3000${imagePath}`;
+    if (imagePath.startsWith('http') || imagePath.startsWith('assets/')) return imagePath;
+    return `${getApiUrl()}/${imagePath.replace(/^\/+/, '')}`;
   }
 }

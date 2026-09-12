@@ -1,0 +1,142 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Repuestos de trabajadores</h1>
+      <p class="page-lead">Asigna repuestos a tu equipo y registra devoluciones</p>
+    </div>
+  </div>
+
+  <div class="rep-grid">
+    <!-- Trabajadores -->
+    <div class="card workers-card">
+      <div class="card-head">
+        <h2 class="card-title">Trabajadores</h2>
+      </div>
+      <div class="worker-create">
+        <input
+          class="input"
+          placeholder="Nombre del trabajador"
+          [(ngModel)]="newWorkerName"
+          (keyup.enter)="createWorker()"
+        />
+        <button class="btn btn-accent" [disabled]="!newWorkerName.trim()" (click)="createWorker()">
+          <mat-icon fontIcon="person_add"></mat-icon> Crear
+        </button>
+      </div>
+      <div class="worker-list">
+        <button
+          *ngFor="let w of workers"
+          type="button"
+          class="worker-row"
+          [class.selected]="selectedWorker?.id === w.id"
+          (click)="selectWorker(w)"
+        >
+          <mat-icon fontIcon="engineering"></mat-icon>
+          <span class="worker-name">{{ w.name }}</span>
+        </button>
+        <p class="empty-state" *ngIf="!workers.length">Crea el primer trabajador.</p>
+      </div>
+    </div>
+
+    <!-- Asignación -->
+    <div class="card assign-card">
+      <div class="card-head">
+        <h2 class="card-title">Movimiento</h2>
+        <span class="muted" *ngIf="selectedWorker">{{ selectedWorker.name }}</span>
+      </div>
+
+      <ng-container *ngIf="selectedWorker; else pickWorker">
+        <div class="search-filter-row">
+          <select class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" aria-label="Buscar por">
+            <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label }}</option>
+          </select>
+          <input class="input" placeholder="Buscar producto..." [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" />
+        </div>
+
+        <div class="search-results" *ngIf="searchResults.length">
+          <button *ngFor="let p of searchResults" type="button" class="search-result-row" (click)="addLine(p)">
+            <span class="sr-name">{{ p.name }}</span>
+            <span class="sr-meta mono">stock {{ p.stock ?? 0 }}</span>
+          </button>
+        </div>
+
+        <div class="lines" *ngIf="lines.length">
+          <div class="line" *ngFor="let l of lines; let i = index">
+            <span class="line-name">{{ l.name }}</span>
+            <input
+              class="input mono line-qty"
+              type="number"
+              placeholder="+asigna / −devuelve"
+              [(ngModel)]="l.quantity"
+            />
+            <button type="button" class="line-remove" (click)="removeLine(i)" aria-label="Quitar">
+              <mat-icon fontIcon="close"></mat-icon>
+            </button>
+            <p class="line-hint muted" *ngIf="(l.quantity ?? 0) < 0">
+              Devuelve {{ l.quantity }} — saldo asignado: {{ assignedFor(l.productId!) }}
+            </p>
+          </div>
+        </div>
+        <p class="empty-state" *ngIf="!lines.length">Busca y agrega productos para asignar o recibir devoluciones.</p>
+
+        <div class="discount-warning" *ngIf="hasNegative">
+          <mat-icon fontIcon="warning_amber"></mat-icon>
+          <span>Las cantidades negativas son <b>devoluciones</b>: el stock vuelve a bodega y no puede superar el saldo asignado al trabajador.</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="rep-detail">Detalle (opcional)</label>
+          <input id="rep-detail" class="input" placeholder="Ej: instalación cliente, fiado, reposición fija..." [(ngModel)]="detail" />
+        </div>
+
+        <button class="btn btn-accent btn-block" [disabled]="!canSubmit" (click)="submitMovements()">
+          <mat-icon fontIcon="swap_horiz"></mat-icon>
+          <span>{{ submitting ? 'Guardando...' : 'Registrar Movimiento' }}</span>
+        </button>
+      </ng-container>
+      <ng-template #pickWorker>
+        <p class="empty-state">Selecciona un trabajador para asignar repuestos.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Historial -->
+  <div class="card movements-card">
+    <div class="card-head">
+      <h2 class="card-title">Historial de movimientos</h2>
+      <span class="muted">Página {{ movementPage + 1 }} de {{ movementMaxPage + 1 }}</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data zebra">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Trabajador</th>
+            <th>Producto</th>
+            <th class="col-num">Cant.</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of movementRows">
+            <td class="mono muted">{{ shortDate(m.date) }}</td>
+            <td>{{ m.worker }}</td>
+            <td>{{ m.product }}</td>
+            <td class="col-num mono" [class.qty-negative]="m.qty < 0" [class.qty-positive]="m.qty > 0">{{ m.qty > 0 ? '+' + m.qty : m.qty }}</td>
+            <td>{{ detailLabel(m) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="empty-state" *ngIf="!movementRows.length">Sin movimientos registrados.</p>
+    <div class="paginator" *ngIf="movementTotal > pageSize">
+      <button class="pg" [disabled]="movementPage === 0" (click)="goMovementPage(movementPage - 1)" aria-label="Anterior">
+        <mat-icon fontIcon="chevron_left"></mat-icon>
+      </button>
+      <span class="pg-label">{{ movementPage + 1 }} / {{ movementMaxPage + 1 }}</span>
+      <button class="pg" [disabled]="movementPage >= movementMaxPage" (click)="goMovementPage(movementPage + 1)" aria-label="Siguiente">
+        <mat-icon fontIcon="chevron_right"></mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

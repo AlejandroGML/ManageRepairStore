@@ -1,38 +1,54 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 
 import { RefillsComponent } from './refills.component';
-import { AdminApiService } from 'src/app/services/admin.api.service';
-import { SalesApiService } from 'src/app/services/sales.api.service';
-import { DataSyncService } from 'src/app/services/data-sync.service';
+import { SalesApiService } from '../../../services/sales.api.service';
+import { ProductsApiService } from '../../../services/products.api.service';
+import { DataSyncService } from '../../../services/data-sync.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 describe('RefillsComponent', () => {
   let component: RefillsComponent;
   let fixture: ComponentFixture<RefillsComponent>;
-  let adminApiSpy: jasmine.SpyObj<AdminApiService>;
   let salesApiSpy: jasmine.SpyObj<SalesApiService>;
-  let dataSyncSpy: jasmine.SpyObj<DataSyncService>;
+  let productsApiSpy: jasmine.SpyObj<ProductsApiService>;
+  let snackbarSpy: jasmine.SpyObj<SnackbarService>;
+
+  const product = (id: number, name: string, stock = 10): any => ({
+    id, name, stock, costPrice: 5000,
+  });
+
+  const historyPage = (total = 25): any => ({
+    items: Array.from({ length: Math.min(20, total) }, (_, i) => ({
+      id: 1000 - i,
+      date: new Date().toISOString(),
+      product: `producto ${i}`,
+      qty: i === 0 ? -3 : 10,
+      postStock: 50,
+      description: i === 0 ? 'Descuento de stock · ajuste' : 'Reposición de stock · proveedor x',
+    })),
+    total,
+  });
 
   beforeEach(async () => {
-    adminApiSpy = jasmine.createSpyObj('AdminApiService', [
-      'getActiveUsers',
-      'getAllOrders',
-    ]);
     salesApiSpy = jasmine.createSpyObj('SalesApiService', ['createRefillBatch']);
-    salesApiSpy.createRefillBatch.and.returnValue(of({ id: 1, totalValue: 0 }));
-    adminApiSpy.getActiveUsers.and.returnValue(of([{ id: 1, name: 'Técnico 1' }, { id: 2, name: 'Técnico 2' }]));
-    adminApiSpy.getAllOrders.and.returnValue(of([{ id: 10, description: 'Orden 1', orders: [{ id: 100, status: 'open' }] }]));
+    productsApiSpy = jasmine.createSpyObj('ProductsApiService', [
+      'searchProducts', 'getRefillHistory', 'getProductTransactions',
+    ]);
+    const syncSpy = jasmine.createSpyObj('DataSyncService', ['notifyTransactionUpdate']);
+    snackbarSpy = jasmine.createSpyObj('SnackbarService', ['openSnackBar', 'success', 'error']);
 
-    dataSyncSpy = jasmine.createSpyObj('DataSyncService', ['notifyTransactionUpdate']);
-    dataSyncSpy.transactionUpdated$ = of();
+    productsApiSpy.searchProducts.and.returnValue(of({ items: [product(7, 'cocina gas'), product(9, 'calefon')], total: 2 }));
+    productsApiSpy.getRefillHistory.and.returnValue(of(historyPage()));
+    salesApiSpy.createRefillBatch.and.returnValue(of({} as any));
 
     await TestBed.configureTestingModule({
-      imports: [ RefillsComponent, NoopAnimationsModule ],
+      imports: [RefillsComponent],
       providers: [
-        { provide: AdminApiService, useValue: adminApiSpy },
         { provide: SalesApiService, useValue: salesApiSpy },
-        { provide: DataSyncService, useValue: dataSyncSpy },
+        { provide: ProductsApiService, useValue: productsApiSpy },
+        { provide: DataSyncService, useValue: syncSpy },
+        { provide: SnackbarService, useValue: snackbarSpy },
       ],
     }).compileComponents();
 
@@ -45,101 +61,84 @@ describe('RefillsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render the refill table', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const table = compiled.querySelector('table');
-    expect(table).toBeTruthy();
+  it('should load the first history page server-side (20 rows max)', () => {
+    expect(productsApiSpy.getRefillHistory).toHaveBeenCalledWith(20, 0);
+    expect(component.historyRows.length).toBe(20);
+    expect(component.historyTotal).toBe(25);
   });
 
-  it('should render "Buscar Producto" button', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const buttons = Array.from(compiled.querySelectorAll('button'));
-    const searchBtn = buttons.find(btn => btn.textContent?.includes('Buscar Producto'));
-    expect(searchBtn).toBeTruthy();
+  it('should paginate the history server-side', () => {
+    component.goHistoryPage(1);
+    expect(productsApiSpy.getRefillHistory).toHaveBeenCalledWith(20, 20);
   });
 
-  it('should load active users on init for technician selector', () => {
-    expect(adminApiSpy.getActiveUsers).toHaveBeenCalled();
-    expect(component.technicians.length).toBe(2);
-    expect(component.technicians[0].name).toBe('Técnico 1');
+  it('should search products server-side by the chosen field', fakeAsync(() => {
+    component.searchField = 'location';
+    component.searchQuery = 'BODEGA';
+    component.onSearchChange();
+    tick(250); // debounce
+    expect(productsApiSpy.searchProducts).toHaveBeenCalledWith('BODEGA', 'location', 20);
+    expect(component.searchResults.length).toBe(2);
+  }));
+
+  it('should select a product from results and clear the results list', () => {
+    component.selectProduct(product(7, 'cocina gas'));
+    expect(component.selectedProduct?.id).toBe(7);
+    expect(component.searchResults).toEqual([]);
   });
 
-  it('should call createRefillBatch once when completing refill', () => {
-    // Add a product to the table
-    component.dataSource.data = [{
-      id: 1,
-      name: 'Test Product',
-      quantity: 1,
-      assignedWorker: 'Técnico 1',
-      operation: 'entrega',
-      transactions: [],
-      costPrice: 100,
-      sellingPrice: 200,
-    } as any];
+  it('DOM-level: typing quantity into #refill-qty enables the submit button', () => {
+    // Reproduce el flujo real del usuario: seleccionar producto por el
+    // dropdown y ESCRIBIR la cantidad en el input (binding completo).
+    component.selectProduct(product(7, 'cocina gas'));
+    fixture.detectChanges();
 
-    component.completeRefill();
+    const qtyInput: HTMLInputElement = fixture.nativeElement.querySelector('#refill-qty');
+    qtyInput.value = '10';
+    qtyInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
 
-    expect(salesApiSpy.createRefillBatch).toHaveBeenCalledTimes(1);
-    expect(dataSyncSpy.notifyTransactionUpdate).toHaveBeenCalled();
+    expect(component.quantity).toBe(10);
+    expect(component.canSubmit).toBeTrue();
+
+    const submitBtn: HTMLButtonElement = fixture.nativeElement.querySelector('.entry-submit');
+    expect(submitBtn.disabled).toBeFalse();
   });
 
-  it('should alert when assignedWorker is missing for any product', () => {
-    spyOn(window, 'alert');
-    component.dataSource.data = [{
-      id: 1,
-      name: 'Test Product',
-      quantity: 1,
-      assignedWorker: '', // empty!
-      operation: 'entrega',
-      transactions: [],
-      costPrice: 100,
-      sellingPrice: 200,
-    } as any];
+  it('should warn when the quantity is negative', () => {
+    component.quantity = -3;
+    expect(component.isDiscount).toBeTrue();
+  });
 
-    component.completeRefill();
+  it('should submit a discount with negative quantity and its operation', () => {
+    component.selectProduct(product(7, 'cocina gas'));
+    component.quantity = -3;
+    component.detail = 'unidad dañada';
+    component.registerEntry();
 
-    expect(window.alert).toHaveBeenCalledWith('Por favor, asigne un técnico antes de realizar la operación.');
+    const payload = salesApiSpy.createRefillBatch.calls.mostRecent().args[0];
+    expect(payload.products[0].quantity).toBe(-3);
+    expect(payload.products[0].operation).toBe('Descuento de stock');
+    expect(payload.products[0].description).toBe('Descuento de stock · unidad dañada');
+  });
+
+  it('should submit a refill with positive quantity and the detail appended', () => {
+    component.selectProduct(product(7, 'cocina gas'));
+    component.quantity = 10;
+    component.detail = 'proveedor x';
+    component.registerEntry();
+
+    const payload = salesApiSpy.createRefillBatch.calls.mostRecent().args[0];
+    expect(payload.products[0].quantity).toBe(10);
+    expect(payload.products[0].operation).toBe('Entrada Producto');
+    expect(payload.products[0].description).toBe('Reposición de stock · proveedor x');
+  });
+
+  it('should reject zero quantity without calling the API', () => {
+    component.selectProduct(product(7, 'cocina gas'));
+    component.quantity = 0;
+    component.registerEntry();
     expect(salesApiSpy.createRefillBatch).not.toHaveBeenCalled();
-  });
-
-  it('should clear dataSource.data only after successful batch', () => {
-    component.dataSource.data = [{
-      id: 1,
-      name: 'Test Product',
-      quantity: 1,
-      assignedWorker: 'Técnico 1',
-      operation: 'entrega',
-      transactions: [],
-      costPrice: 100,
-      sellingPrice: 200,
-    } as any];
-
-    component.completeRefill();
-
-    // After successful batch, dataSource should be cleared
-    expect(component.dataSource.data.length).toBe(0);
-  });
-
-  it('should compute totalRefillValue from products', () => {
-    component.dataSource.data = [
-      { id: 1, name: 'P1', quantity: 2, assignedWorker: 'T1', operation: 'entrega', transactions: [], sellingPrice: 50, costPrice: 30 } as any,
-      { id: 2, name: 'P2', quantity: 1, assignedWorker: 'T1', operation: 'entrega', transactions: [], sellingPrice: 100, costPrice: 70 } as any,
-    ];
-
-    // total value = (50 * 2) + (100 * 1) = 200
-    const total = component.totalRefillValue;
-    expect(total).toBe(200);
-  });
-
-  it('should remove product from refill list', () => {
-    component.dataSource.data = [
-      { id: 1, name: 'P1', quantity: 1, assignedWorker: '', operation: 'entrega', transactions: [] } as any,
-      { id: 2, name: 'P2', quantity: 1, assignedWorker: '', operation: 'entrega', transactions: [] } as any,
-    ];
-
-    component.removeProductFromRefill(0);
-
-    expect(component.dataSource.data.length).toBe(1);
-    expect(component.dataSource.data[0].id).toBe(2);
+    expect(snackbarSpy.error).toHaveBeenCalled();
   });
 });

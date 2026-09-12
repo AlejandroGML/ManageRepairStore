@@ -5,8 +5,27 @@
   align-items: start;
 }
 
+/* Fix del bug "tabla cortada al entrar": los hijos de un CSS Grid tienen
+   min-width:auto por defecto → una tabla ancha (nowrap + min-width) desbordaba
+   su columna 1fr y cortaba la última columna (estado). min-width:0 deja que el
+   track se ajuste y la tabla haga scroll dentro de .table-responsive. */
+.finder-grid > .card {
+  min-width: 0;
+}
+
+.search-filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.filter-select {
+  width: 140px;
+  flex-shrink: 0;
+}
+
 .client-search {
-  width: 220px;
+  width: 240px;
 }
 
 .client-search .search-input {
@@ -25,20 +44,90 @@
   transition: background 0.12s;
 }
 .client-row:hover { background: var(--color-primary-light, #fdf1e6); }
-.client-row.selected { background: var(--color-primary-light, #fdf1e6); box-shadow: inset 3px 0 0 var(--color-primary, #e67a1b); }
+.client-row.selected { background: var(--color-primary-light, #fdf1e6); box-shadow: inset 3px 0 0 var(--color-primary, #6d28d9); }
+
+/* --- Acciones de fila --- */
+.col-actions {
+  white-space: nowrap;
+}
+.col-actions-head {
+  white-space: nowrap;
+}
+.col-actions .icon-btn,
+.col-actions .btn {
+  margin-right: 4px;
+}
+
+/* --- Cabeceras ordenables --- */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.sortable .mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-left: 2px;
+  color: var(--color-text-muted, #6b7280);
+}
+.sortable.sorted {
+  color: var(--color-primary, #6d28d9);
+}
+.sortable.sorted .mat-icon {
+  color: var(--color-primary, #6d28d9);
+}
 
 /* Contexto de la selección en el panel de recientes */
 .recent-context {
   font-size: 0.85rem;
-  color: var(--color-primary, #e67a1b);
+  color: var(--color-primary, #6d28d9);
   font-weight: 600;
 }
 
-/* La tabla de órdenes recientes no debe desbordar su tarjeta */
+/* La tabla de órdenes recientes debe caber en su tarjeta: sin min-width
+   forzado y con las celdas pudiendo envolver (evita el estado cortado). */
 .card .table-responsive {
   max-width: 100%;
   overflow-x: auto;
 }
-.card .table-responsive table.data {
-  min-width: 480px;
+
+.recent-table td {
+  white-space: normal;
+  vertical-align: middle;
 }
+.recent-table .desc-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recent-table .order-row {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.recent-table .order-row:hover { background: var(--color-primary-light, #fdf1e6); }
+
+/* --- Resumen del cliente seleccionado --- */
+.client-mini {
+  margin: 12px 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cm-row {
+  display: flex;
+  gap: 10px;
+  font-size: var(--text-sm, 13.5px);
+}
+.cm-row span {
+  min-width: 82px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted, #6b7280);
+  flex-shrink: 0;
+}
+.cm-row b { font-weight: 600; color: var(--color-text); }

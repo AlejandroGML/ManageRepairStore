@@ -31,13 +31,13 @@ describe('ModalProductQrComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should encode ABAGAS|PROD|{id}|{name} as QR data', () => {
-    expect(component.qrData).toBe('ABAGAS|PROD|42|Presostato SPLENDID');
+  it('should encode MRS|PROD|{id}|{name} as QR data', () => {
+    expect(component.qrData).toBe('MRS|PROD|42|Presostato SPLENDID');
   });
 
   it('should render the QR canvas on init', async () => {
     await fixture.whenStable();
-    expect(qrServiceSpy.toCanvas).toHaveBeenCalledWith('ABAGAS|PROD|42|Presostato SPLENDID', 240);
+    expect(qrServiceSpy.toCanvas).toHaveBeenCalledWith('MRS|PROD|42|Presostato SPLENDID', 240);
     expect(component.qrHost.nativeElement.querySelector('canvas')).toBeTruthy();
   });
 
@@ -45,7 +45,7 @@ describe('ModalProductQrComponent', () => {
     const clickSpy = spyOn(HTMLAnchorElement.prototype, 'click');
     component.download();
     await fixture.whenStable();
-    expect(qrServiceSpy.toDataURL).toHaveBeenCalledWith('ABAGAS|PROD|42|Presostato SPLENDID', 480);
+    expect(qrServiceSpy.toDataURL).toHaveBeenCalledWith('MRS|PROD|42|Presostato SPLENDID', 480);
     expect(clickSpy).toHaveBeenCalled();
   });
 });

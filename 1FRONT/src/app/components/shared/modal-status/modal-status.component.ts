@@ -68,7 +68,7 @@ export class ModalStatusComponent {
     
     // Ejecutar la llamada fuera de Angular para evitar problemas de detección de cambios
     this.ngZone.runOutsideAngular(() => {
-      this.ordersApi.updateOrderStatus(updatedOrder).subscribe(
+      this.ordersApi.updateStatus(updatedOrder).subscribe(
         (response: Order) => {
           this.ngZone.run(() => {
             this.loadingService.setLoading(false);

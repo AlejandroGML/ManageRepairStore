@@ -1,0 +1,14 @@
+/* Formulario de usuario con diseño MRS: inputs con label visible
+   (mismas clases globales .field-label/.input/.select que finder/register). */
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 14px);
+  padding-top: var(--space-xs, 6px);
+}
+
+.user-form .field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

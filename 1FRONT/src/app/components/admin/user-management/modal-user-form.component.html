@@ -1,0 +1,63 @@
+<h2 mat-dialog-title>
+  <span>{{ isEditMode ? 'Editar usuario' : 'Nuevo usuario' }}</span>
+  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="user-form">
+    <div class="field-group">
+      <label class="field-label" for="uf-name">Nombre</label>
+      <input id="uf-name" class="input" type="text" placeholder="Nombre completo" formControlName="name">
+      @if (form.get('name')?.invalid && form.get('name')?.touched) {
+        <span class="field-error">El nombre es requerido</span>
+      }
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="uf-email">Email</label>
+      <input id="uf-email" class="input" type="email" placeholder="correo@ejemplo.cl" formControlName="email">
+      @if (form.get('email')?.invalid && form.get('email')?.touched) {
+        <span class="field-error">
+          {{ form.get('email')?.hasError('required') ? 'El email es requerido' : 'Email no válido' }}
+        </span>
+      }
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="uf-password">Contraseña</label>
+      <input
+        id="uf-password"
+        class="input"
+        type="password"
+        [placeholder]="isEditMode ? 'Dejar en blanco para no cambiar' : 'Mínimo 8 caracteres'"
+        formControlName="password"
+      >
+      @if (form.get('password')?.invalid && form.get('password')?.touched) {
+        <span class="field-error">
+          {{ form.get('password')?.hasError('required') ? 'La contraseña es requerida' : 'Mínimo 8 caracteres' }}
+        </span>
+      }
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="uf-role">Rol</label>
+      <select id="uf-role" class="select" formControlName="role">
+        <option value="admin">Administrador</option>
+        <option value="seller">Vendedor</option>
+        <option value="warehouse">Bodega</option>
+      </select>
+      @if (form.get('role')?.invalid && form.get('role')?.touched) {
+        <span class="field-error">El rol es requerido</span>
+      }
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+  <button class="btn btn-primary" type="button" (click)="save()">
+    <mat-icon fontIcon="save"></mat-icon> Guardar
+  </button>
+</mat-dialog-actions>

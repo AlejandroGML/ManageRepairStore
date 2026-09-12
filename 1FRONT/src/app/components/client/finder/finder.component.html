@@ -2,11 +2,11 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Clientes y órdenes</h1>
-      <p class="page-lead">{{ clients.length }} clientes · {{ totalOrders }} órdenes registradas</p>
+      <p class="page-lead">{{ totalClients }} clientes · {{ totalOrders }} órdenes registradas</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-ghost btn-sm" (click)="exportToExcel()">
-        <mat-icon fontIcon="download"></mat-icon> Exportar
+      <button class="btn btn-ghost btn-sm" (click)="exportClients()">
+        <mat-icon fontIcon="download"></mat-icon> Exportar todos los Clientes
       </button>
     </div>
   </div>
@@ -16,25 +16,43 @@
     <div class="card">
       <div class="card-head">
         <h2 class="card-title">Clientes</h2>
-        <div class="search-input-wrap client-search">
-          <mat-icon fontIcon="search" class="search-input-icon"></mat-icon>
-          <input
-            class="input search-input"
-            placeholder="Buscar por RUT o nombre..."
-            [(ngModel)]="clientSearch"
-            [ngModelOptions]="{standalone: true}"
-          />
+        <div class="search-filter-row">
+          <select class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" aria-label="Filtrar por">
+            <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label }}</option>
+          </select>
+          <div class="search-input-wrap client-search">
+            <mat-icon fontIcon="search" class="search-input-icon"></mat-icon>
+            <input
+              class="input search-input"
+              [placeholder]="searchPlaceholder"
+              [(ngModel)]="clientSearch"
+              [ngModelOptions]="{standalone: true}"
+              (ngModelChange)="onSearchChange()"
+            />
+          </div>
         </div>
       </div>
       <div class="table-responsive">
         <table class="data">
           <thead>
             <tr>
-              <th>RUT</th>
-              <th>Cliente</th>
-              <th>Teléfono</th>
-              <th class="col-num">Órdenes</th>
-              <th></th>
+              <th class="sortable" [class.sorted]="sortField === 'rut'" (click)="sortBy('rut')" role="button" tabindex="0" (keydown.enter)="sortBy('rut')">
+                RUT
+                <mat-icon [fontIcon]="sortField === 'rut' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
+              </th>
+              <th class="sortable" [class.sorted]="sortField === 'name'" (click)="sortBy('name')" role="button" tabindex="0" (keydown.enter)="sortBy('name')">
+                Cliente
+                <mat-icon [fontIcon]="sortField === 'name' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
+              </th>
+              <th class="sortable" [class.sorted]="sortField === 'phone'" (click)="sortBy('phone')" role="button" tabindex="0" (keydown.enter)="sortBy('phone')">
+                Teléfono
+                <mat-icon [fontIcon]="sortField === 'phone' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
+              </th>
+              <th class="col-num sortable" [class.sorted]="sortField === 'orderCount'" (click)="sortBy('orderCount')" role="button" tabindex="0" (keydown.enter)="sortBy('orderCount')">
+                Órdenes
+                <mat-icon [fontIcon]="sortField === 'orderCount' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
+              </th>
+              <th class="col-actions-head">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -51,11 +69,11 @@
               <td class="strong">{{ client.name | name }}</td>
               <td>{{ client.phone }}</td>
               <td class="col-num mono">{{ client.orderCount }}</td>
-              <td class="col-num" (click)="$event.stopPropagation()">
+              <td class="col-actions" (click)="$event.stopPropagation()">
                 <button class="icon-btn" (click)="showOrderDetails(client)" matTooltip="Ver órdenes" aria-label="Ver órdenes">
                   <mat-icon fontIcon="receipt_long"></mat-icon>
                 </button>
-                <button class="icon-btn" (click)="showModalEditUser(client)" matTooltip="Editar" aria-label="Editar cliente">
+                <button class="icon-btn" (click)="showModalEditUser(client)" matTooltip="Editar cliente" aria-label="Editar cliente">
                   <mat-icon fontIcon="edit"></mat-icon>
                 </button>
                 <button class="icon-btn" (click)="showModalDeleteUser(client)" matTooltip="Eliminar" aria-label="Eliminar cliente">
@@ -64,13 +82,18 @@
               </td>
             </tr>
             <tr *ngIf="!pageClients.length">
-              <td colspan="5" class="empty-state">Sin clientes que coincidan.</td>
+              <td colspan="5" class="empty-state">
+                {{ clientSearch.trim() ? 'Sin clientes que coincidan.' : 'Escribe en el buscador para ver clientes.' }}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="paginator">
-        <span>Mostrando {{ filteredClients.length ? startIndex + 1 : 0 }}-{{ endIndex }} de {{ filteredClients.length }}</span>
+        <span>
+          Mostrando {{ totalMatches ? startIndex + 1 : 0 }}-{{ endIndex }} de {{ totalMatches }}
+          <em *ngIf="truncated" class="pg-ellipsis">· primeros {{ clients.length }}, afina tu búsqueda</em>
+        </span>
         <div class="pages" *ngIf="pageCount > 1">
           <button class="pg" [disabled]="pageIndex === 0" (click)="goPage(pageIndex - 1)" aria-label="Anterior">
             <mat-icon fontIcon="chevron_left"></mat-icon>
@@ -92,21 +115,38 @@
         <h2 class="card-title">Órdenes recientes</h2>
         <span class="recent-context" *ngIf="selectedClient">{{ selectedClient.name | name }}</span>
       </div>
+
+      <!-- Resumen del cliente seleccionado -->
+      <div class="card card-pad client-mini" *ngIf="selectedClient">
+        <div class="cm-row"><span>N° Cliente</span><b class="mono">{{ selectedClient.id }}</b></div>
+        <div class="cm-row"><span>Nombre</span><b>{{ selectedClient.name | name }}</b></div>
+        <div class="cm-row"><span>Dirección</span><b>{{ (selectedClient.address | name) + ', ' + (selectedClient.city | name) }}</b></div>
+        <div class="cm-row"><span>Teléfono</span><b class="mono">{{ selectedClient.phone }}</b></div>
+      </div>
+
       <div class="table-responsive">
-        <table class="data">
+        <table class="data recent-table">
           <thead>
             <tr>
               <th>Código</th>
-              <th>Cliente</th>
-              <th class="col-num">Total</th>
+              <th *ngIf="!selectedClient">Cliente</th>
+              <th *ngIf="selectedClient">Descripción</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let o of ordersTable">
+            <tr
+              *ngFor="let o of ordersTable"
+              class="order-row"
+              (click)="openOrderDetail(o)"
+              (keydown.enter)="openOrderDetail(o)"
+              tabindex="0"
+              role="button"
+              [title]="'Ver detalle de ' + o.code"
+            >
               <td class="mono strong">{{ o.code }}</td>
-              <td>{{ o.clientName }}</td>
-              <td class="col-num mono">{{ o.total | currency:'CLP':'symbol-narrow':'1.0-0' }}</td>
+              <td *ngIf="!selectedClient">{{ o.clientName | name }}</td>
+              <td *ngIf="selectedClient" class="desc-cell" [title]="o.description">{{ o.description || '—' }}</td>
               <td>
                 <span class="badge" [class]="statusBadgeClass(o.status)">
                   <span class="dot"></span> {{ statusLabel(o.status) }}
@@ -114,7 +154,7 @@
               </td>
             </tr>
             <tr *ngIf="!ordersTable.length">
-              <td colspan="4" class="empty-state">
+              <td [attr.colspan]="3" class="empty-state">
                 {{ selectedClient ? 'Este cliente no tiene órdenes.' : 'Sin órdenes registradas. Selecciona un cliente para ver las suyas.' }}
               </td>
             </tr>

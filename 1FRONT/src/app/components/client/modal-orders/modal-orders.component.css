@@ -1,53 +1,43 @@
-td {
-  font-size: 13px;
-}
-.icon-edit {
-  color: var(--color-success);
-  padding-right: 6px;
-  cursor: pointer;
-}
-.icon-edit:hover {
-  color: color-mix(in srgb, var(--color-success) 75%, #000);
-}
-.div-table {
-  max-height: 75vh;
-  overflow: auto;
-}
-.icon-pdf {
-  font-size: 24px;
-  color: var(--color-primary);
-  cursor: pointer;
-}
-.icon-pdf:hover {
-  color: var(--color-primary-dark);
+/* Modal de órdenes: el chrome del diálogo (título, contenido, acciones y
+   tabla Material) lo aporta el chrome global de styles.scss. Aquí solo va
+   lo específico: resumen del cliente y ritmo de la tabla. */
+
+.client-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-/* --- Dialog migration classes --- */
-.client-info-card {
-  margin-bottom: var(--space-sm);
-}
-.client-info-row {
+.cs-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-base);
-  justify-content: center;
-  padding: var(--space-sm) var(--space-base);
+  align-items: baseline;
+  gap: 10px;
   font-size: var(--text-sm);
 }
-.table-card {
-  padding: 0;
-  overflow-x: auto;
+
+.cs-label {
+  min-width: 90px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }
+
+.orders-table {
+  border-radius: var(--radius-md);
+}
+
+.empty-state {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+  padding: 24px 0;
+  margin: 0;
+}
+
 .hidden-pdf {
   display: none;
 }
-
-/* Column widths — text columns get more space */
-.col-id-header { width: 45px; text-align: center; }
-.col-status-header { width: 85px; }
-.col-date-header { width: 80px; text-align: center; }
-.col-comment-header { min-width: 120px; }
-.col-description-header { min-width: 120px; }
-.col-obs-header { min-width: 120px; }
-.col-change-header { width: 65px; text-align: center; }
-.col-actions-header { width: 75px; text-align: center; }

@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatDialogRef } from '@angular/material/dialog';
@@ -9,6 +9,7 @@ import { OrdenIngreso } from 'src/app/interface/ficha-tecnica';
 import { ModalStatusComponent } from '../../shared/modal-status/modal-status.component';
 import { PdfComponent } from '../../shared/pdf/pdf.component';
 import { NamePipe } from 'src/app/pipes/name.pipe';
+import { ModalService } from 'src/app/services/modal.service';
 
 @Component({
   selector: 'app-modal-orders',
@@ -18,11 +19,12 @@ import { NamePipe } from 'src/app/pipes/name.pipe';
   imports: [SHARED_IMPORTS, PdfComponent, NamePipe],
 })
 export class ModalOrdersComponent {
+  private readonly modal = inject(ModalService);
   client!:Client;
   ordenIngreso!: OrdenIngreso;
   displayedColumns: string[] = ['id','date','status','comment', 'description', 'obs', 'changeStatus','actions'];
   dataSource = new MatTableDataSource<Order>([]);
-  constructor(private dialogRef: MatDialogRef<ModalOrdersComponent>, private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: Client,
+  constructor(private dialogRef: MatDialogRef<ModalOrdersComponent>, @Inject(MAT_DIALOG_DATA) public data: Client,
     private pdfService: PdfService) {
     this.client=data;
     this.dataSource=new MatTableDataSource<Order>(data.orders);
@@ -54,9 +56,9 @@ export class ModalOrdersComponent {
   }
 
   openStatusModal(order: Order) {
-    const dialogRef = this.dialog.open(ModalStatusComponent, {
-      height: 'auto',
-      width: '550px',
+    const dialogRef = this.modal.open(ModalStatusComponent, {
+      size: 'md',
+      maxHeight: 'auto',
       data: order,
       disableClose: true
     });
@@ -77,5 +79,27 @@ export class ModalOrdersComponent {
 
   close() {
     this.dialogRef.close();
+  }
+
+  /** Badge tone per order status (same mapping as the register screen). */
+  statusBadgeClass(status?: string): string {
+    switch ((status ?? '').toLowerCase()) {
+      case 'entregado':
+      case 'completado':
+        return 'badge-success';
+      case 'en reparacion':
+      case 'en reparación':
+        return 'badge-neutral';
+      case 'cancelado':
+        return 'badge-error';
+      case 'pendiente':
+      default:
+        return 'badge-warning';
+    }
+  }
+
+  statusLabel(status?: string): string {
+    if (!status) return '—';
+    return status === 'En reparacion' ? 'En reparación' : status;
   }
 }

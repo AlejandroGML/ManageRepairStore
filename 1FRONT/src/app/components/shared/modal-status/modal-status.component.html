@@ -1,33 +1,34 @@
-<h2 mat-dialog-title>Cambiar Estado</h2>
-<mat-dialog-content>
-  <mat-card class="form-card">
-    <form [formGroup]="form">
-      <div class="status-selector-row">
-        <span class="selector-label">Seleccionar:</span>
-        <mat-form-field appearance="outline" class="status-select">
-          <mat-label>Estado</mat-label>
-          <mat-select formControlName="status" required>
-            <mat-option value="Pendiente">Pendiente</mat-option>
-            <mat-option value="En Revisión">En Revisión</mat-option>
-            <mat-option value="Espera Resolución">Espera Resolución</mat-option>
-            <mat-option value="Finalizado">Finalizado</mat-option>
-          </mat-select>
-          <mat-error *ngIf="form.get('status')?.invalid">Debes seleccionar un estado</mat-error>
-        </mat-form-field>
-      </div>
-      <mat-form-field class="comment-field">
-        <mat-label>Comentario:</mat-label>
-        <textarea matInput id="input-comment" formControlName="comment"></textarea>
-        <mat-error *ngIf="form.get('comment')?.invalid">{{obtenerMensajeError(form.get('comment')!)}}</mat-error>
-      </mat-form-field>
-    </form>
-  </mat-card>
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-raised-button color="primary" type="button" (click)="changeStatus()">
-    Aplicar<mat-icon>edit</mat-icon>
+<h2 mat-dialog-title>
+  <span>Cambiar estado</span>
+  <button class="dlg-close" mat-dialog-close aria-label="Cerrar">
+    <mat-icon>close</mat-icon>
   </button>
-  <button mat-raised-button class="cancel-btn" type="button" mat-dialog-close aria-label="Cerrar">
-    Cerrar<mat-icon>close</mat-icon>
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <div class="form-field-block">
+      <label class="field-label" for="status-select">Estado</label>
+      <select id="status-select" class="select" formControlName="status">
+        <option value="Pendiente">Pendiente</option>
+        <option value="En Revisión">En Revisión</option>
+        <option value="Espera Resolución">Espera Resolución</option>
+        <option value="Finalizado">Finalizado</option>
+      </select>
+      <span class="field-error" *ngIf="form.get('status')?.invalid">Debes seleccionar un estado</span>
+    </div>
+
+    <div class="form-field-block">
+      <label class="field-label" for="input-comment">Comentario</label>
+      <textarea id="input-comment" class="input textarea" formControlName="comment" rows="3"></textarea>
+      <span class="field-error" *ngIf="form.get('comment')?.invalid">{{ obtenerMensajeError(form.get('comment')!) }}</span>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="btn btn-ghost" type="button" mat-dialog-close>Cerrar</button>
+  <button class="btn btn-primary" type="button" (click)="changeStatus()">
+    <mat-icon fontIcon="edit"></mat-icon> Aplicar
   </button>
 </mat-dialog-actions>

@@ -4,10 +4,10 @@
   grid-template-columns: minmax(420px, 46%) 1fr;
 }
 
-/* ===== Brand panel ===== */
+/* ===== Brand panel (brand violet) ===== */
 .login-brand {
-  background: linear-gradient(160deg, #312E81 0%, #4C3FA6 55%, #6D28D9 100%);
-  color: var(--color-text-dark);
+  background: linear-gradient(160deg, var(--color-primary-dark) 0%, var(--color-primary) 55%, #f09a4a 100%);
+  color: var(--color-on-primary);
   padding: 56px;
   display: flex;
   flex-direction: column;
@@ -22,7 +22,7 @@
   width: 420px;
   height: 420px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 65%);
   bottom: -140px;
   right: -120px;
 }
@@ -30,34 +30,26 @@
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
-.brand-mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(140deg, #6D28D9, #4C3FA6);
-  color: #fff;
+/* Logo Manage Repair Store sobre fondo blanco (sus colores necesitan fondo claro). */
+.brand-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 10px 18px;
+  height: 77px;
+  box-shadow: var(--shadow-md);
 }
 
-.brand-mark .mat-icon { font-size: 22px; width: 22px; height: 22px; }
-
-.wordmark {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--color-text-dark);
-}
-
-.wordmark span {
+.brand-logo {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
   display: block;
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--color-text-muted-dark);
+  object-fit: contain;
 }
 
 .login-hero {
@@ -77,7 +69,7 @@
 .login-hero > p {
   font-size: 15px;
   line-height: 1.6;
-  color: var(--color-text-muted-dark);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0 0 24px;
 }
 
@@ -88,14 +80,14 @@
   padding: 12px 0;
 }
 
-.hero-feature .mat-icon { color: var(--color-primary-light); font-size: 22px; }
+.hero-feature .mat-icon { color: #fff3e0; font-size: 22px; width: 22px; height: 22px; }
 
-.hero-feature b { display: block; font-size: 14px; color: var(--color-text-dark); }
-.hero-feature span { font-size: 13px; color: var(--color-text-muted-dark); }
+.hero-feature b { display: block; font-size: 14px; color: #ffffff; }
+.hero-feature span { font-size: 13px; color: rgba(255, 255, 255, 0.85); }
 
 .section-note {
   font-size: 12px;
-  color: var(--color-text-muted-dark);
+  color: rgba(255, 255, 255, 0.8);
   position: relative;
   z-index: 1;
 }
@@ -172,6 +164,7 @@
   color: var(--color-text-muted);
   width: 32px;
   height: 32px;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,36 +174,6 @@
 .eye-toggle:hover {
   color: var(--color-text);
   background: var(--color-primary-light);
-}
-
-/* Recordarme / olvidé contraseña */
-.login-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 4px 0 22px;
-  font-size: 13px;
-}
-
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.remember input {
-  accent-color: var(--color-primary);
-}
-
-.forgot-link {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.forgot-link:hover {
-  text-decoration: underline;
 }
 
 .login-actions {
@@ -225,74 +188,6 @@
 }
 
 .login-spinner { margin: 8px auto; display: block; }
-
-/* ===== Demo access ===== */
-.demo-box {
-  margin-top: 26px;
-  background: var(--color-primary-light);
-  border: 1px dashed var(--color-primary-disabled);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-}
-
-.demo-title {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-primary-dark);
-  margin-bottom: 8px;
-}
-
-.demo-roles {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.demo-role {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, background-color 0.15s;
-}
-
-.demo-role:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-light);
-}
-
-.demo-role .mat-icon {
-  color: var(--color-primary);
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.demo-role b { display: block; font-size: 13.5px; color: var(--color-text); }
-.demo-role span { font-size: 12px; color: var(--color-text-muted); font-family: var(--font-mono); }
-
-.demo-note {
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: var(--color-text-muted);
-}
-
-.demo-note code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-text-muted);
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-}
 
 /* ===== Responsive ===== */
 @media (max-width: 900px) {

@@ -1,0 +1,52 @@
+/* Modal gestionar categorías — design system MRS.
+   El chrome del diálogo lo aporta el chrome global. */
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+/* Fila de alta */
+.add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  border-left: 3px solid var(--color-primary);
+}
+
+.add-row .input {
+  flex: 1;
+}
+
+/* Dark theme: crema → tinte translúcido. Si no, el .btn-ghost (texto claro
+   del tema) y el .btn-primary disabled (fondo pálido) se pierden sobre crema. */
+:host-context([data-theme='dark']) .add-row {
+  background: rgba(109, 40, 217, 0.12);
+}
+
+/* Tabla */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.col-actions {
+  width: 96px;
+  text-align: right;
+}
+
+/* Edición inline */
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-row .input {
+  flex: 1;
+  min-width: 140px;
+}

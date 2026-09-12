@@ -11,10 +11,10 @@ describe('UsersService', () => {
 
   const mockUsers: SystemUser[] = [
     { id: 1, name: 'Admin', email: 'admin@demo.example', role: 'admin', active: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
-    { id: 2, name: 'Vendedor', email: 'seller@demo.example', role: 'seller', active: true, createdAt: '2025-01-02T00:00:00Z', updatedAt: '2025-01-02T00:00:00Z' },
+    { id: 2, name: 'Vendedor', email: 'test@demo.example', role: 'seller', active: true, createdAt: '2025-01-02T00:00:00Z', updatedAt: '2025-01-02T00:00:00Z' },
   ];
 
-  const mockSingleUser: SystemUser = { id: 3, name: 'Bodega', email: 'warehouse@demo.example', role: 'warehouse', active: false, createdAt: '2025-01-03T00:00:00Z', updatedAt: '2025-01-03T00:00:00Z' };
+  const mockSingleUser: SystemUser = { id: 3, name: 'Bodega', email: 'test@demo.example', role: 'warehouse', active: false, createdAt: '2025-01-03T00:00:00Z', updatedAt: '2025-01-03T00:00:00Z' };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -90,12 +90,12 @@ describe('UsersService', () => {
   // ─── Task: create() ────────────────────────────────────────
   describe('create', () => {
     it('should create a user via POST /users', () => {
-      const newUser = { name: 'Nuevo', email: 'nuevo@demo.example', password: 'Password1', role: 'warehouse' as const };
+      const newUser = { name: 'Nuevo', email: 'test@demo.example', password: 'Password1', role: 'warehouse' as const };
       const createdUser: SystemUser = { id: 4, ...newUser, active: true, createdAt: '2025-01-04T00:00:00Z', updatedAt: '2025-01-04T00:00:00Z' };
 
       service.create(newUser).subscribe((user) => {
         expect(user).toEqual(createdUser);
-        expect(user.email).toBe('nuevo@demo.example');
+        expect(user.email).toBe('test@demo.example');
       });
 
       const req = httpMock.expectOne(`${baseUrl}/users`);
@@ -105,7 +105,7 @@ describe('UsersService', () => {
     });
 
     it('should fail when email already exists (409)', () => {
-      const duplicate = { name: 'Duplicado', email: 'existing@demo.example', password: 'Password1', role: 'seller' as const };
+      const duplicate = { name: 'Duplicado', email: 'test@demo.example', password: 'Password1', role: 'seller' as const };
 
       service.create(duplicate).subscribe({
         next: () => fail('Expected 409 error'),

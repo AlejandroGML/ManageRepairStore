@@ -1,23 +1,20 @@
-import { Component, OnInit, AfterViewInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductsApiService } from 'src/app/services/products.api.service';
-import { AuthService } from 'src/app/services/auth.service';
 import { getApiUrl } from 'src/app/services/api-url';
 import { Product } from 'src/app/interface/warehouse';
+import { ModalProductQrComponent } from '../modal-product-qr/modal-product-qr.component';
 import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
 import { ImageModalComponent } from '../../shared/image-modal/image-modal.component';
 import { ModalEditProductComponent } from '../modal-edit-product/modal-edit-product.component';
 import { ModalViewTransactionsComponent } from '../modal-view-transactions/modal-view-transactions.component';
-import { ModalProductQrComponent } from '../modal-product-qr/modal-product-qr.component';
-import { ModalProductExistsComponent } from '../modal-product-exists/modal-product-exists.component';
-import { ModalSearchResultsComponent } from '../modal-search-results/modal-search-results.component';
+import { ModalManageCategoriesComponent } from '../modal-manage-categories/modal-manage-categories.component';
 import { DataSyncService } from 'src/app/services/data-sync.service';
-import * as XLSX from 'xlsx';
-import { QrService } from 'src/app/services/qr.service';
-import { LoadingService } from 'src/app/services/loading.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
+import { CategoriesApiService } from 'src/app/services/categories.api.service';
+import { ModalService } from 'src/app/services/modal.service';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-product',
@@ -26,152 +23,136 @@ import { SnackbarService } from 'src/app/services/snackbar.service';
   standalone: true,
   imports: [SHARED_IMPORTS],
 })
-export class ProductComponent implements OnInit, AfterViewInit {
-  private readonly authService = inject(AuthService);
-
-  get userLogged(): any { return this.authService.getCurrentUser(); }
-
-  searchForm: FormGroup;
-  allProducts: Product[] = [];
-  filteredProducts: Product[] = [];
+export class ProductComponent implements OnInit {
+  /** Página actual (server-side, máx 20 filas). */
+  pageItems: Product[] = [];
+  /** Total de la consulta activa (filtros incluidos). */
+  totalCount = 0;
+  /** Total de productos activos para el encabezado. */
+  catalogTotal = 0;
   stockFilter: 'all' | 'stock' | 'low' = 'all';
   categoryFilter: string = 'all';
-  categoryNames: string[] = [];
-  pageSize = 8;
-  pageIndex = 0;
-
-  get totalProducts(): number { return this.allProducts.length; }
-  get totalCategories(): number { return this.categoryNames.length; }
-  get filteredCount(): number { return this.filteredProducts.length; }
-  get pageCount(): number { return Math.max(1, Math.ceil(this.filteredCount / this.pageSize)); }
-  get startIndex(): number { return Math.min(this.pageIndex * this.pageSize, this.filteredCount); }
-  get endIndex(): number { return Math.min(this.startIndex + this.pageSize, this.filteredCount); }
-  get pageItems(): Product[] { return this.filteredProducts.slice(this.startIndex, this.endIndex); }
-  get pageNumbers(): number[] { return Array.from({ length: this.pageCount }, (_, i) => i); }
-
-  // Variables para búsqueda
-  searchCriteria: string = 'id';
-  searchValue: string = '';
-  selectedPlaceholder: string = 'Buscar por ID';
-  searchOptions = [
-    { value: 'id', viewValue: 'ID del Producto', placeHolder: 'Buscar por ID' },
-    { value: 'name', viewValue: 'Nombre del Producto', placeHolder: 'Buscar por Nombre' },
-    { value: 'location', viewValue: 'Localización', placeHolder: 'Buscar por Localización' }
+  searchField: 'name' | 'id' | 'location' | 'category' = 'name';
+  readonly searchFields: { value: string; label: string }[] = [
+    { value: 'name', label: 'Nombre' },
+    { value: 'id', label: 'ID' },
+    { value: 'location', label: 'Ubicación' },
+    { value: 'category', label: 'Categoría' },
   ];
+  searchQuery = '';
+  /** Catálogo completo desde la API (incluye categorías sin productos). */
+  categories: { id: number; name: string }[] = [];
+  categoryNames: string[] = [];
+  pageSize = 20;
+  pageIndex = 0;
+  loading = true;
 
-  constructor(private productsApi: ProductsApiService, private dialog: MatDialog, private dataSyncService: DataSyncService, private qrService: QrService, private loadingService: LoadingService, private snackbarService: SnackbarService) {
-    this.searchForm = new FormGroup({
-      id: new FormControl(''),
-      name: new FormControl(''),
-      location: new FormControl('')
-    });
-  }
+  private searchTerms = new Subject<void>();
+  private searchSub?: Subscription;
 
-  downloadProductQR(product: Product): void {
-    if (!product.id) return;
-    this.loadingService.setLoading(true);
-    const price = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(product.sellingPrice || 0);
-    const data = `ID: ${product.id}, Nombre: ${product.name}, Valor: ${price}, Ubicación: ${product.location}`;
-    this.qrService.toCanvas(data, 240).then((canvas) => {
-      const link = document.createElement('a');
-      link.download = `producto_${product.id}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      this.loadingService.setLoading(false);
-    }).catch((err) => {
-      console.error('Error al generar el QR del producto', err);
-      this.loadingService.setLoading(false);
-      this.snackbarService.openSnackBar('Error al generar QR del producto');
-    });
-  }
+  private readonly productsApi = inject(ProductsApiService);
+  private readonly categoriesApi = inject(CategoriesApiService);
+  private readonly modal = inject(ModalService);
+  private readonly dataSyncService = inject(DataSyncService);
+  private readonly snackbarService = inject(SnackbarService);
 
-/** Tone for the stock bar: crit <= 2, warn <= 6, ok otherwise */
-  stockTone(stock?: number): string {
-    if (stock === undefined || stock <= 2) return 'crit';
-    if (stock <= 6) return 'warn';
-    return 'ok';
-  }
-
-  // Método para exportar datos a Excel
-  exportToExcel(): void {
-    const productData = this.filteredProducts.map((product) => {
-      // Obtén la transacción más reciente del producto
-      const lastTransaction = product.transactions ? product.transactions[product.transactions.length - 1] : null;
-      
-      return {
-        ID: product.id,
-        Nombre: product.name,
-        Stock: product.stock ?? 0,
-        Localización: product.location,
-        'Valor de Venta': lastTransaction ? 
-          new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(lastTransaction.sellingPrice ?? 0) : 'CLP 0'
-      };
-    });
-
-    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(productData, { skipHeader: false });
-    const workbook: XLSX.WorkBook = { Sheets: { 'Productos': worksheet }, SheetNames: ['Productos'] };
-
-    XLSX.writeFile(workbook, 'Lista_de_Productos.xlsx');
+  get totalProducts(): number { return this.catalogTotal; }
+  get totalCategories(): number { return this.categoryNames.length; }
+  get filteredCount(): number { return this.totalCount; }
+  get pageCount(): number { return Math.max(1, Math.ceil(this.totalCount / this.pageSize)); }
+  get startIndex(): number { return Math.min(this.pageIndex * this.pageSize, this.totalCount); }
+  get endIndex(): number { return Math.min(this.startIndex + this.pageItems.length, this.totalCount); }
+  /**
+   * Páginas visibles con ventana compacta (primera, última, actual ±1 y elipsis)
+   * para que la paginación no desborde el marco con decenas de botones.
+   */
+  get visiblePages(): (number | '…')[] {
+    const total = this.pageCount;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+    const current = this.pageIndex;
+    const pages: (number | '…')[] = [0];
+    if (current > 2) pages.push('…');
+    for (let i = Math.max(1, current - 1); i <= Math.min(total - 2, current + 1); i++) pages.push(i);
+    if (current < total - 3) pages.push('…');
+    pages.push(total - 1);
+    return pages;
   }
 
   ngOnInit(): void {
-    this.loadProductsWithLastTransaction();
+    this.loadCatalogTotal();
+    this.loadProducts();
+    this.loadCategories();
+    // Búsqueda server-side con debounce (no golpear al server por tecla).
+    this.searchTerms.pipe(debounceTime(250)).subscribe(() => this.loadProducts(0));
     // Escucha las notificaciones de actualización de transacción
     this.dataSyncService.transactionUpdated$.subscribe(() => {
-      this.loadProductsWithLastTransaction(); // Recarga los productos
+      this.loadProducts();
     });
   }
 
-  ngAfterViewInit(): void {}
+  /** Catálogo de categorías desde la API (fuente única, sin duplicados). */
+  loadCategories(): void {
+    this.categoriesApi.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = (categories ?? []).map((c) => ({ id: c.id, name: c.name }));
+        this.categoryNames = this.categories.map((c) => c.name);
+      },
+      error: () => {
+        this.categories = [];
+        this.categoryNames = [];
+      },
+    });
+  }
 
-  loadProductsWithLastTransaction(): void {
-    this.productsApi.getProductsWithLastTransaction().subscribe((products: Product[]) => {
-      this.allProducts = products.map(product => {
-        const lastTransaction = product.transactions ? product.transactions[product.transactions.length - 1] : null;
-        return {
-          ...product,
-          costPrice: lastTransaction ? lastTransaction.costPrice : 0,
-          sellingPrice: lastTransaction ? lastTransaction.sellingPrice : 0,
-          maxDiscount: lastTransaction ? lastTransaction.maxDiscount : 0,
-          purchaseDiscount: lastTransaction ? lastTransaction.purchaseDiscount : 0,
-          location: lastTransaction ? lastTransaction.location : 'Sin Datos',
-          stock: product.stock ?? (lastTransaction ? lastTransaction.finalStock : 0), // Prefer server-side stock, fallback to lastTransaction
-        };
+  loadProducts(page = this.pageIndex): void {
+    this.loading = true;
+    this.pageIndex = page;
+    this.productsApi
+      .searchProducts(
+        this.searchQuery.trim(),
+        this.searchField,
+        this.pageSize,
+        page * this.pageSize,
+        this.categoryFilter,
+        this.stockFilter,
+      )
+      .subscribe({
+        next: (res) => {
+          this.pageItems = res.items;
+          this.totalCount = res.total;
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+          this.pageItems = [];
+          this.totalCount = 0;
+        },
       });
-
-      this.categoryNames = [...new Set(this.allProducts.map((p) => p.category?.name).filter((n): n is string => !!n))].sort();
-      this.applyFilters();
-    });
   }
 
-  /** Stock filter chips (prototype: Todos / Con stock / Stock bajo). */
+  loadCatalogTotal(): void {
+    this.productsApi.countActive().subscribe((n) => (this.catalogTotal = Number(n) || 0));
+  }
+
+  /** Búsqueda server-side (debounced desde el template). */
+  onSearchChange(): void {
+    this.searchTerms.next();
+  }
+
+  /** Stock filter chips: el filtro corre en el server (recarga página 0). */
   setStockFilter(filter: 'all' | 'stock' | 'low'): void {
     this.stockFilter = filter;
-    this.applyFilters();
-  }
-
-  private applyFilters(): void {
-    let list = [...this.allProducts];
-    if (this.categoryFilter !== 'all') {
-      list = list.filter((p) => p.category?.name === this.categoryFilter);
-    }
-    if (this.stockFilter === 'stock') {
-      list = list.filter((p) => (p.stock ?? 0) > 0);
-    } else if (this.stockFilter === 'low') {
-      list = list.filter((p) => p.stock !== undefined && p.minimum !== undefined && p.stock < p.minimum);
-    }
-    this.filteredProducts = list;
-    this.pageIndex = 0;
+    this.loadProducts(0);
   }
 
   /** Public alias para el template (ngModelChange). */
   onCategoryChange(): void {
-    this.applyFilters();
+    this.loadProducts(0);
   }
 
   goPage(page: number): void {
     if (page >= 0 && page < this.pageCount) {
-      this.pageIndex = page;
+      this.loadProducts(page);
     }
   }
 
@@ -181,12 +162,7 @@ export class ProductComponent implements OnInit, AfterViewInit {
     return `P-${String(id).padStart(3, '0')}`;
   }
 
-  /** Categoría visible en la fila (join del backend; — si no tiene). */
-  categoryName(product: Product): string {
-    return (product as any).category?.name ?? '—';
-  }
-
-  /** Ícono por categoría (seed usa el nombre del ícono en product.image). */
+  /** Ícono por categoría (product.image guarda el nombre del ícono). */
   productIcon(product: Product): string {
     const img = product.image;
     if (!img) return 'image';
@@ -194,87 +170,21 @@ export class ProductComponent implements OnInit, AfterViewInit {
     return img;
   }
 
-  // Método para obtener la URL completa de la imagen
-  getImageUrl(imagePath: string | null): string {
-    return imagePath ? `${getApiUrl()}/${imagePath.replace(/^\/+/, '')}` : '';
+  /** ¿El producto tiene una imagen real (ruta/URL) y no solo un nombre de ícono? */
+  hasRealImage(product: Product): boolean {
+    const img = product.image;
+    if (!img) return false;
+    return /^(https?:)?\/\//.test(img) || img.includes('/') || img.startsWith('assets/');
   }
 
-  openImageModal(imageUrl?: string): void {
-    this.dialog.open(ImageModalComponent, {
-      width: '85%',
-      data: { imageUrl: imageUrl || 'assets/no-image-available.png' }
-    });
+  /** Abre la vista previa grande: imagen real o placeholder "Sin imagen". */
+  openProductImage(product: Product): void {
+    this.openImageModal(
+      this.hasRealImage(product) ? this.getImageUrl(product.image) : 'assets/img/no-image-available.png',
+    );
   }
 
-  openTransactionModal(product: Product): void {
-    if (product.id !== undefined) {
-      this.productsApi.getProductTransactions(product.id).subscribe(transactions => {
-        this.dialog.open(ModalViewTransactionsComponent, {
-          width: '70%',
-          data: { product, transactions }
-        });
-      });
-    } else {
-      console.error("El ID del producto es indefinido");
-    }
-  }
-
-  /** Abre el modal con el QR de identificación del producto. */
-  openProductQrModal(product: Product): void {
-    this.dialog.open(ModalProductQrComponent, {
-      width: '420px',
-      data: { product },
-    });
-  }
-
-  openEditProductModal(product: Product): void {
-    const dialogRef = this.dialog.open(ModalEditProductComponent, {
-      width: '60%',
-      data: { product }
-    });
-
-    // Recargar productos después de actualizar un producto
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === 'updated') {
-        this.loadProductsWithLastTransaction();
-      }
-    });
-  }
-
-  /** Abre el modal de creación de producto (prototipo: "+ Agregar producto"). */
-  openAddProductModal(): void {
-    const dialogRef = this.dialog.open(ModalEditProductComponent, {
-      width: '600px',
-      data: { product: { name: '', transactions: [] } },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result === 'created' || result === 'updated') {
-        this.loadProductsWithLastTransaction();
-      }
-    });
-  }
-
-  /** Soft delete with confirmation (prototype row action: eliminar). */
-  openDeleteProductModal(product: Product): void {
-    const dialogRef = this.dialog.open(ModalConfirmComponent, {
-      width: '90vw',
-      maxWidth: '400px',
-      data: { message: `¿Eliminar "${product.name}"? Se marcará como inactivo.` },
-      disableClose: true,
-    });
-
-    dialogRef.afterClosed().subscribe((confirmed) => {
-      if (confirmed && product.id) {
-        this.productsApi.deleteProduct(product.id).subscribe(() => {
-          this.snackbarService.success('Producto eliminado');
-          this.loadProductsWithLastTransaction();
-        });
-      }
-    });
-  }
-
-  /** Stock state badge for the ESTADO column (prototype: ≤2 Crítico, 3-6 Bajo, ≥7 En stock). */
+  /** Stock state badge (prototype: ≤2 Crítico, 3-6 Bajo, ≥7 En stock). */
   stockBadgeClass(stock?: number): string {
     if (stock === undefined || stock <= 2) return 'badge-error';
     if (stock <= 6) return 'badge-warning';
@@ -287,67 +197,101 @@ export class ProductComponent implements OnInit, AfterViewInit {
     return 'En stock';
   }
 
-  onSelectOption(): void {
-    const selectedOption = this.searchOptions.find(option => option.value === this.searchCriteria);
-    this.selectedPlaceholder = selectedOption?.placeHolder || 'Buscar';
+  /** Categoría visible en la fila (join del backend; — si no tiene). */
+  categoryName(product: Product): string {
+    return (product as any).category?.name ?? '—';
   }
 
-  performSearch(): void {
-    if (this.searchCriteria === 'id' && this.searchValue) {
-      const id = parseInt(this.searchValue, 10);
-      this.productsApi.searchProductById(id).subscribe(
-        product => {
-          if (product) {
-            this.dialog.open(ModalSearchResultsComponent, {
-              width: '70%',
-              data: { products: [product] } // Se envuelve en un array para consistencia
-            });
-          } else {
-            this.openConfirmModal("No se encontró ningún producto con este ID.");
-          }
-        },
-        () => this.openConfirmModal("Error al buscar por ID.")
-      );
-    } else if (this.searchCriteria === 'name' && this.searchValue) {
-      this.productsApi.searchProductsByName(this.searchValue).subscribe(
-        products => {
-          if (products.length > 0) {
-            this.dialog.open(ModalSearchResultsComponent, {
-              width: '70%',
-              data: { products }
-            });
-          } else {
-            this.openConfirmModal("No se encontraron productos con este nombre.");
-          }
-        },
-        () => this.openConfirmModal("Error al buscar por nombre.")
-      );
-    } else if (this.searchCriteria === 'location' && this.searchValue) {
-      this.productsApi.searchProductsByLocation(this.searchValue).subscribe(
-        products => {
-          if (products.length > 0) {
-            this.dialog.open(ModalSearchResultsComponent, {
-              width: '70%',
-              data: { products }
-            });
-          } else {
-            this.openConfirmModal("No se encontraron productos en esta ubicación.");
-          }
-        },
-        () => this.openConfirmModal("Error al buscar por ubicación.")
-      );
+  // Método para obtener la URL completa de la imagen
+  getImageUrl(imagePath: string | null | undefined): string {
+    return imagePath ? `${getApiUrl()}/${imagePath.replace(/^\/+/, '')}` : '';
+  }
+
+  openImageModal(imageUrl?: string): void {
+    this.modal.open(ImageModalComponent, {
+      size: 'full',
+      data: { imageUrl: imageUrl || 'assets/img/no-image-available.png' }
+    });
+  }
+
+  openTransactionModal(product: Product): void {
+    if (product.id !== undefined) {
+      this.productsApi.getProductTransactions(product.id).subscribe(transactions => {
+        this.modal.open(ModalViewTransactionsComponent, {
+          // Ancho según contenido: crece con las columnas activadas hasta el tope.
+          size: 'auto',
+          data: { product, transactions }
+        });
+      });
     } else {
-      this.openConfirmModal("Por favor, ingrese un valor de búsqueda válido.");
+      console.error('El ID del producto es indefinido');
     }
   }
 
-  clearSearch(): void {
-    this.searchValue = '';
+  /** Abre el modal con el QR de identificación del producto. */
+  openProductQrModal(product: Product): void {
+    this.modal.open(ModalProductQrComponent, {
+      size: 'sm',
+      data: { product },
+    });
   }
 
-  openConfirmModal(message: string): void {
-    this.dialog.open(ModalConfirmComponent, {
-      data: { message }
+  openEditProductModal(product: Product): void {
+    const dialogRef = this.modal.open(ModalEditProductComponent, {
+      size: 'lg',
+      data: { product, categories: this.categories },
+    });
+
+    // Recargar productos después de actualizar un producto
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'updated') {
+        this.loadProducts();
+      }
+    });
+  }
+
+  /** Abre el modal de creación de producto (prototipo: "+ Agregar producto"). */
+  openAddProductModal(): void {
+    const dialogRef = this.modal.open(ModalEditProductComponent, {
+      size: 'lg',
+      data: { product: { name: '', transactions: [] }, categories: this.categories },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'created' || result === 'updated') {
+        this.loadProducts();
+      }
+    });
+  }
+
+  /** Abre el CRUD de categorías; recarga catálogo y filtro si hubo cambios. */
+  openManageCategories(): void {
+    this.modal
+      .open(ModalManageCategoriesComponent, { size: 'md' })
+      .afterClosed()
+      .subscribe((changed) => {
+        if (changed) {
+          this.loadCategories();
+          this.loadProducts();
+        }
+      });
+  }
+
+  /** Soft delete con confirmación (acción de fila: eliminar). */
+  openDeleteProductModal(product: Product): void {
+    const dialogRef = this.modal.open(ModalConfirmComponent, {
+      size: 'sm',
+      data: { message: `¿Eliminar "${product.name}"? Se marcará como inactivo.` },
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed && product.id) {
+        this.productsApi.softDeleteProduct(product.id).subscribe(() => {
+          this.snackbarService.success('Producto eliminado');
+          this.loadProducts();
+        });
+      }
     });
   }
 }

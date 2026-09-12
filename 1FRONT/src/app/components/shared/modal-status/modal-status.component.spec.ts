@@ -14,7 +14,7 @@ describe('ModalStatusComponent', () => {
       providers: [
         { provide: MatDialogRef, useValue: jasmine.createSpyObj('MatDialogRef', ['close']) },
         { provide: MAT_DIALOG_DATA, useValue: { status: 'pending' } },
-        { provide: OrdersApiService, useValue: jasmine.createSpyObj('OrdersApiService', ['updateOrderStatus']) },
+        { provide: OrdersApiService, useValue: jasmine.createSpyObj('OrdersApiService', ['updateStatus']) },
       ],
     })
     .compileComponents();
