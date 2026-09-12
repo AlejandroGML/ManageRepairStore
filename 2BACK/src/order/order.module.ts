@@ -7,9 +7,10 @@ import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 import { OrderMapperService } from './order.mapper.service';
 import { OrderPdfService } from './order-pdf.service';
+import { LogModule } from '../log/log.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OrderEntity, ClientEntity, ClientGroupEntity])],
+  imports: [TypeOrmModule.forFeature([OrderEntity, ClientEntity, ClientGroupEntity]), LogModule],
   controllers: [OrderController],
   providers: [OrderService, OrderMapperService, OrderPdfService],
 })

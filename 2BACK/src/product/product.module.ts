@@ -12,9 +12,10 @@ import { ProductService } from './product.service';
 import { TransactionService } from './transaction.service';
 import { StockService } from './stock.service';
 import { RefillService } from './refill.service';
+import { LogModule } from '../log/log.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductEntity, TransactionEntity, CategoryEntity, UserEntity, RefillGroupEntity, OrderEntity])],
+  imports: [TypeOrmModule.forFeature([ProductEntity, TransactionEntity, CategoryEntity, UserEntity, RefillGroupEntity, OrderEntity]), LogModule],
   controllers: [ProductController, TransactionController],
   providers: [ProductService, TransactionService, StockService, RefillService],
   exports: [ProductService, StockService, RefillService],

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, UsePipes, ValidationPipe, UseInterceptors, Patch, Delete, UploadedFile, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, UsePipes, ValidationPipe, UseInterceptors, Patch, Delete, UploadedFile, Query, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
@@ -8,6 +8,8 @@ import { ProductEntity } from '../entities/product.entity';
 import { extname } from 'path';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { RefillGroupEntity } from '../entities/refill-group.entity';
+import { LogService } from '../log/log.service';
+import { LogEntity } from '../entities/log.entity';
 
 @ApiTags('Product-controller')
 @Controller('product')
@@ -15,6 +17,7 @@ export class ProductController {
   constructor(
     private readonly productService: ProductService,
     private readonly refillService: RefillService,
+    private readonly logService: LogService,
   ) {}
 
   // Endpoint para crear un nuevo producto, manejando carga de imagen
@@ -76,9 +79,20 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Update a product by ID with new transaction' })
   async updateProductById(
     @Param('id') id: number,
-    @Body() updateData: Partial<ProductEntity>
+    @Body() updateData: Partial<ProductEntity>,
+    @Req() req: any,
   ): Promise<ProductEntity> {
-    return this.productService.updateProductById(id, updateData);
+    const updated = await this.productService.updateProductById(id, updateData);
+    // Actividad reciente del panel (fire-and-forget).
+    this.logService
+      .createLog({
+        userName: req.user?.name ?? 'Sistema',
+        clientId: 0,
+        clientName: updateData.name || `Producto #${id}`,
+        action: 'Modificó producto',
+      } as LogEntity)
+      .catch((err) => console.error('Failed to write product-update log', err));
+    return updated;
   }
 
 

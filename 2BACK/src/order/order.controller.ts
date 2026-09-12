@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe, Patch, Header, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe, Patch, Header, Res, Req } from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { OrderService } from './order.service';
@@ -11,6 +11,8 @@ import { OrderEntity } from '../entities/order.entity';
 import { OrderPdfDto } from '../dto/order-pdf.dto';
 import { OrderPdfService } from './order-pdf.service';
 import { Public } from '../auth/public.decorator';
+import { LogService } from '../log/log.service';
+import { LogEntity } from '../entities/log.entity';
 
 @ApiTags('Order-controller')
 @Controller('order')
@@ -19,6 +21,7 @@ export class OrderController {
     private readonly orderService: OrderService,
     private readonly orderPdfService: OrderPdfService,
     private readonly orderMapperService: OrderMapperService,
+    private readonly logService: LogService,
   ) {}
   @Get('/all')
   @ApiResponse({ status: 200, description: 'Todos los elementos', type: [ClientEntity], isArray:true})
@@ -64,8 +67,24 @@ export class OrderController {
   @ApiBody({ type: OrderStatusFront, examples: OrderStatusExample })
   @ApiOkResponse({ description: 'Update a status entry order.'})
   @ApiOperation({ summary: 'Update a status entry order' })
-  async updateStatus(@Param() value: any, @Body() newOrder: OrderStatusFront): Promise<OrderEntity | null> {
-    return this.orderService.updateOrder(Number(value.id), this.orderMapperService.mapToOrderStatusEntity(newOrder));
+  async updateStatus(@Req() req: any, @Param() value: any, @Body() newOrder: OrderStatusFront): Promise<OrderEntity | null> {
+    const updated = await this.orderService.updateOrder(
+      Number(value.id),
+      this.orderMapperService.mapToOrderStatusEntity(newOrder),
+    );
+    const status = (updated?.status ?? '').toLowerCase();
+    if (['entregado', 'completado', 'cancelado'].includes(status)) {
+      // Actividad reciente del panel (fire-and-forget).
+      this.logService
+        .createLog({
+          userName: req.user?.name ?? 'Sistema',
+          clientId: 0,
+          clientName: updated?.code ?? `Orden #${value.id}`,
+          action: `Finalizó orden (${updated?.status})`,
+        } as LogEntity)
+        .catch((err) => console.error('Failed to write order-status log', err));
+    }
+    return updated;
   }
 
   @Public()
