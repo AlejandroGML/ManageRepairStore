@@ -72,4 +72,10 @@ export class UsersService {
     user.active = false;
     return this.userRepository.save(user);
   }
+
+  /** Borrado definitivo (solo para usuarios ya desactivados). */
+  async remove(id: number): Promise<void> {
+    await this.findById(id);
+    await this.userRepository.delete(id);
+  }
 }

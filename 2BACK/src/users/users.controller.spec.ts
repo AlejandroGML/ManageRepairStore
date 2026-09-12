@@ -3,6 +3,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { LogService } from '../log/log.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -14,6 +15,7 @@ describe('UsersController', () => {
     create: jest.fn(),
     update: jest.fn(),
     deactivate: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -23,6 +25,10 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: LogService,
+          useValue: { createLog: jest.fn().mockResolvedValue({}) },
         },
       ],
     }).compile();
@@ -79,20 +85,36 @@ describe('UsersController', () => {
       const updatedUser = { id: 1, name: 'Updated', email: 'admin@demo.example', role: 'admin' };
       mockUsersService.update.mockResolvedValue(updatedUser);
 
-      const result = await controller.update(1, updateDto);
+      const result = await controller.update(1, updateDto, { user: { name: 'Admin' } } as any);
       expect(result.name).toBe('Updated');
       expect(usersService.update).toHaveBeenCalledWith(1, updateDto);
+    });
+
+    it('should deactivate a user via active:false', async () => {
+      const deactivatedUser = { id: 1, name: 'Admin', active: false };
+      mockUsersService.update.mockResolvedValue(deactivatedUser);
+
+      const result = await controller.update(1, { active: false } as UpdateUserDto, { user: { name: 'Admin' } } as any);
+      expect(result.active).toBe(false);
+      expect(usersService.update).toHaveBeenCalledWith(1, { active: false });
+    });
+
+    it('should reactivate a user via active:true', async () => {
+      const reactivatedUser = { id: 1, name: 'Admin', active: true };
+      mockUsersService.update.mockResolvedValue(reactivatedUser);
+
+      const result = await controller.update(1, { active: true } as UpdateUserDto, { user: { name: 'Admin' } } as any);
+      expect(result.active).toBe(true);
+      expect(usersService.update).toHaveBeenCalledWith(1, { active: true });
     });
   });
 
   describe('DELETE /users/:id', () => {
-    it('should deactivate a user', async () => {
-      const deactivatedUser = { id: 1, name: 'Admin', active: false };
-      mockUsersService.deactivate.mockResolvedValue(deactivatedUser);
+    it('should definitively remove a deactivated user', async () => {
+      mockUsersService.remove.mockResolvedValue(undefined);
 
-      const result = await controller.deactivate(1);
-      expect(result.active).toBe(false);
-      expect(usersService.deactivate).toHaveBeenCalledWith(1);
+      await expect(controller.remove(1, { user: { name: 'Admin' } } as any)).resolves.toBeUndefined();
+      expect(usersService.remove).toHaveBeenCalledWith(1);
     });
   });
 
