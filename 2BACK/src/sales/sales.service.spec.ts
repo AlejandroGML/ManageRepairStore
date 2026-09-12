@@ -20,7 +20,12 @@ describe('SalesService', () => {
     name: 'test product',
     active: true,
     stock: 10,
-    minimum: 5,
+    minimum: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    maxDiscount: 0,
+    location: '',
+    description: '',
     image: null,
     transactions: [],
     ...overrides,
@@ -66,6 +71,7 @@ describe('SalesService', () => {
             create: jest.fn(),
             save: jest.fn(),
             findOne: jest.fn(),
+            createQueryBuilder: jest.fn(),
           },
         },
         {
@@ -280,7 +286,8 @@ describe('SalesService', () => {
       expect(queryRunner.startTransaction).not.toHaveBeenCalled();
     });
 
-    it('should populate sale.snapshot with per-product data', async () => {
+
+      it('should populate sale.snapshot with per-product data', async () => {
       const product1 = mockProduct({ id: 1, name: 'widget', stock: 10 });
 
       (queryRunner.manager.findOne as jest.Mock).mockResolvedValueOnce(product1);

@@ -52,6 +52,11 @@ export class TransactionEntity {
   description?: string;
 
   // Almacena solo los valores necesarios en cada transacción
+  /**
+   * @deprecated Era una copia "congelada" de datos que la propia fila ya
+   * registra (precios, ubicación, etc.). Sin escritores ni lectores desde
+   * 2026-09-12; la columna se elimina en la normalización de la BD nueva.
+   */
   @Column({ type: 'json', nullable: true })
   snapshotData?: Record<string, any>;
 

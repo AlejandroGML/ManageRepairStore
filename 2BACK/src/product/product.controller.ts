@@ -2,15 +2,16 @@ import { Controller, Get, Param, Post, Body, UsePipes, ValidationPipe, UseInterc
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { Response } from 'express';
 import { ProductService } from './product.service';
 import { RefillService } from './refill.service';
+import { Response } from 'express';
 import { ProductEntity } from '../entities/product.entity';
+import { CategoryEntity } from '../entities/category.entity';
 import { extname } from 'path';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { RefillGroupEntity } from '../entities/refill-group.entity';
-import { LogService } from '../log/log.service';
 import { LogEntity } from '../entities/log.entity';
+import { LogService } from '../log/log.service';
 
 @ApiTags('Product-controller')
 @Controller('product')
@@ -43,6 +44,12 @@ export class ProductController {
     // Guardar la ruta de la imagen en la base de datos si se sube un archivo
     if (file) {
       product.image = `/uploads/${file.filename}`;
+    }
+
+    // FormData envía categoryId como string; mapear a la relación de categoría
+    const rawCategoryId = (product as any).categoryId;
+    if (rawCategoryId !== undefined && rawCategoryId !== '' && Number(rawCategoryId) > 0) {
+      product.category = { id: Number(rawCategoryId) } as CategoryEntity;
     }
     
     // Guardar el producto y devolver la respuesta
@@ -108,11 +115,24 @@ export class ProductController {
   }
 
    // Endpoint para obtener todos los productos con active en true
-  @Get('/active')
-  @ApiOperation({ summary: 'Get all active products' })
-  @ApiResponse({ status: 200, description: 'Return all active products' })
-  async getActiveProducts(): Promise<ProductEntity[]> {
-    return this.productService.getActiveProducts();
+  @Get('/search')
+  @ApiOperation({ summary: 'Server-side product search (refills form)' })
+  async searchProducts(
+    @Query('q') q: string = '',
+    @Query('field') field: string = 'name',
+    @Query('limit') limit: string = '20',
+    @Query('offset') offset: string = '0',
+    @Query('category') category: string = 'all',
+    @Query('stock') stock: string = 'all',
+  ): Promise<{ items: ProductEntity[]; total: number }> {
+    return this.productService.searchProducts(
+      q.trim(),
+      field,
+      Number(limit) || 20,
+      Math.max(Number(offset) || 0, 0),
+      category,
+      stock as 'all' | 'stock' | 'low',
+    );
   }
 
   @Get('/export/low-stock')
@@ -123,6 +143,19 @@ export class ProductController {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="stock-bajo-${date}.xlsx"`);
     res.send(Buffer.from(buffer as ArrayBuffer));
+  }
+
+  @Get('/count')
+  @ApiOperation({ summary: 'Total of active products (catalog header)' })
+  async countActive(): Promise<number> {
+    return this.productService.countActive();
+  }
+
+  @Get('/active')
+  @ApiOperation({ summary: 'Get all active products' })
+  @ApiResponse({ status: 200, description: 'Return all active products' })
+  async getActiveProducts(): Promise<ProductEntity[]> {
+    return this.productService.getActiveProducts();
   }
 
   // Endpoint para obtener todos los productos, sin importar el estado de active
@@ -182,10 +215,19 @@ async checkProductNameExists(@Query('name') name: string): Promise<boolean> {
 }
 
 // Endpoint for atomic batch refill operations
+  @Get('/refills/history')
+  @ApiOperation({ summary: 'Paginated refill/discount history' })
+  async refillHistory(
+    @Query('limit') limit: string = '20',
+    @Query('offset') offset: string = '0',
+  ) {
+    return this.refillService.getRefillHistory(Number(limit) || 20, Math.max(Number(offset) || 0, 0));
+  }
+
 @Post('/refills/batch')
 @ApiOperation({ summary: 'Create atomic batch refill with RefillGroup' })
 @ApiResponse({ status: 201, description: 'RefillGroup created with transactions' })
-async createRefillBatch(@Body() body: {
+async createRefillBatch(@Req() req: any, @Body() body: {
   products: Array<{
     productId: number;
     quantity: number;
@@ -197,17 +239,18 @@ async createRefillBatch(@Body() body: {
   technicianId?: number;
   orderId?: number;
   totalValue?: number;
-  snapshotData?: Record<string, any>;
 }): Promise<RefillGroupEntity> {
-  return this.refillService.createRefillBatch(body);
-}
-
-// Endpoint to list refill groups (history) — newest first
-@Get('/refills/history')
-@ApiOperation({ summary: 'List refill groups with transactions (newest first)' })
-@ApiResponse({ status: 200, description: 'Refill groups with product details', type: [RefillGroupEntity] })
-async getRefillsHistory(): Promise<RefillGroupEntity[]> {
-  return this.refillService.getAllRefills();
+  const group = await this.refillService.createRefillBatch(body);
+  // Fire-and-forget: a log failure must not fail the refill itself.
+  this.logService
+    .createLog({
+      userName: req.user?.name ?? 'Sistema',
+      clientId: 0,
+      clientName: `${body.products.length} producto(s)`,
+      action: 'Reposición',
+    } as LogEntity)
+    .catch((err) => console.error('Failed to write refill log', err));
+  return group;
 }
 
 }

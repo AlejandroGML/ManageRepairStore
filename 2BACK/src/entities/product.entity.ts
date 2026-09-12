@@ -23,6 +23,24 @@ export class ProductEntity {
   @Column({ type: 'int', default: 5 })
   minimum: number = 5;
 
+  /** Atributos vigentes del producto: se sincronizan con cada transacción
+   *  (antes vivían solo en la última transaction, y el modal de edición
+   *  mostraba valores de la última VENTA en vez del producto). */
+  @Column({ type: 'int', default: 0 })
+  costPrice: number = 0;
+
+  @Column({ type: 'int', default: 0 })
+  sellingPrice: number = 0;
+
+  @Column({ type: 'int', default: 0 })
+  maxDiscount: number = 0;
+
+  @Column({ default: '' })
+  location: string = '';
+
+  @Column({ default: '' })
+  description: string = '';
+
   @OneToMany(() => TransactionEntity, (transaction) => transaction.product, { cascade: true })
   transactions?: TransactionEntity[];
 

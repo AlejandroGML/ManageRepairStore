@@ -19,7 +19,12 @@ describe('ProductService', () => {
     name: 'test product',
     active: true,
     stock: 10,
-    minimum: 5,
+    minimum: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    maxDiscount: 0,
+    location: '',
+    description: '',
     image: null,
     transactions: [],
     ...overrides,
@@ -54,7 +59,7 @@ describe('ProductService', () => {
         {
           provide: getRepositoryToken(ProductEntity),
           useValue: {
-            find: jest.fn(),
+            find: jest.fn().mockResolvedValue([]),
             findOne: jest.fn(),
             save: jest.fn(),
             createQueryBuilder: jest.fn(),
@@ -121,6 +126,33 @@ describe('ProductService', () => {
       expect(queryRunner.startTransaction).toHaveBeenCalled();
       expect(queryRunner.commitTransaction).toHaveBeenCalled();
       expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should persist minimum and categoryId on product update', async () => {
+      const product = mockProduct({ id: 1, stock: 10, minimum: 0 });
+      const productAfterUpdate = mockProduct({ id: 1, stock: 12, minimum: 3 });
+
+      (productRepository.findOne as jest.Mock)
+        .mockResolvedValueOnce(product)
+        .mockResolvedValueOnce(productAfterUpdate);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(product);
+      (queryRunner.manager.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (queryRunner.manager.save as jest.Mock).mockResolvedValue({});
+      (transactionRepository.create as jest.Mock).mockReturnValue({} as Partial<TransactionEntity>);
+
+      await service.addTransactionToProduct(1, {
+        operation: 'Actualización Producto',
+        quantity: 2,
+        sellingPrice: 100,
+        minimum: 3,
+        categoryId: 7,
+      });
+
+      const updateArgs = (queryRunner.manager.update as jest.Mock).mock.calls.find(
+        (c) => c[0] === ProductEntity && c[2] && 'minimum' in c[2]
+      );
+      expect(updateArgs).toBeDefined();
+      expect(updateArgs[2]).toMatchObject({ name: expect.any(String), minimum: 3, category: { id: 7 } });
     });
 
     it('should subtract stock (negative delta) and return 200', async () => {
@@ -249,7 +281,12 @@ describe('ProductService', () => {
         name: 'nuevo producto',
         active: true,
         stock: 0,
-        minimum: 5,
+        minimum: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    maxDiscount: 0,
+    location: '',
+    description: '',
         transactions: [
           {
             operation: 'Nuevo Producto',
@@ -278,6 +315,7 @@ describe('ProductService', () => {
       const result = await service.registerProduct(newProduct);
 
       expect(result.stock).toBe(5);
+      expect(result.minimum).toBe(0); // new products default the reorder threshold to 0
       expect(result.transactions?.[0]?.finalStock).toBe(5);
     });
 
@@ -286,7 +324,12 @@ describe('ProductService', () => {
         name: 'producto sin stock',
         active: true,
         stock: 0,
-        minimum: 5,
+        minimum: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    maxDiscount: 0,
+    location: '',
+    description: '',
         transactions: [
           {
             operation: 'Nuevo Producto',
@@ -332,7 +375,12 @@ describe('ProductService', () => {
         name: 'producto existente',
         active: true,
         stock: 0,
-        minimum: 5,
+        minimum: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    maxDiscount: 0,
+    location: '',
+    description: '',
         transactions: [
           {
             operation: 'Nuevo Producto',
@@ -380,7 +428,12 @@ describe('ProductService', () => {
           name: 'p1',
           active: true,
           stock: 10,
-          minimum: 5,
+          minimum: 0,
+    costPrice: 0,
+    sellingPrice: 0,
+    maxDiscount: 0,
+    location: '',
+    description: '',
           image: null,
           transactions: [
             {
@@ -410,6 +463,58 @@ describe('ProductService', () => {
       expect(result).toHaveLength(1);
       // stock should be directly available from the entity
       expect(result[0].stock).toBe(10);
+    });
+
+    it('should join the category relation (catalog filter needs it)', async () => {
+      const queryBuilderMock = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([mockProduct({ id: 1 })]),
+      };
+
+      jest
+        .spyOn(productRepository, 'createQueryBuilder')
+        .mockReturnValue(queryBuilderMock as any);
+
+      await service.getProductsWithLastTransaction();
+
+      expect(queryBuilderMock.leftJoinAndSelect).toHaveBeenCalledWith(
+        'product.category',
+        'category',
+      );
+    });
+  });
+
+  describe('catalog list methods — category relation', () => {
+    it('should load category in getActiveProducts', async () => {
+      (productRepository.find as jest.Mock).mockResolvedValue([
+        mockProduct({ id: 1, category: { id: 1, name: 'Lubricantes' } as any }),
+      ]);
+
+      const result = await service.getActiveProducts();
+
+      expect(result[0].category?.name).toBe('Lubricantes');
+      expect(productRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          relations: expect.objectContaining({ category: true }),
+        }),
+      );
+    });
+
+    it('should load category in getAllProducts', async () => {
+      (productRepository.find as jest.Mock).mockResolvedValue([
+        mockProduct({ id: 2, category: { id: 2, name: 'Filtros' } as any }),
+      ]);
+
+      const result = await service.getAllProducts();
+
+      expect(result[0].category?.name).toBe('Filtros');
+      expect(productRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          relations: expect.objectContaining({ category: true }),
+        }),
+      );
     });
   });
 });

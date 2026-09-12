@@ -34,6 +34,39 @@ export class RefillService {
   ) {}
 
   /**
+   * Historial de movimientos de reposición (entradas y descuentos),
+   * paginado server-side: evita derivar el historial en el cliente desde
+   * el catálogo completo.
+   */
+  async getRefillHistory(
+    limit = 20,
+    offset = 0,
+  ): Promise<{ items: Array<{ id: number; date: Date; product: string; qty: number; postStock: number | null; description: string }>; total: number }> {
+    const capped = Math.min(Math.max(limit, 1), 100);
+    const qb = this.transactionRepository
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.product', 'p')
+      .where('(t.operation ILIKE :entrada OR t.operation ILIKE :descuento)', {
+        entrada: 'entrada%',
+        descuento: 'descuento%',
+      })
+      .orderBy('t.id', 'DESC');
+    const total = await qb.getCount();
+    const rows = await qb.skip(offset).take(capped).getMany();
+    return {
+      items: rows.map((t) => ({
+        id: t.id,
+        date: t.createdAt,
+        product: t.product?.name ?? '',
+        qty: t.quantity ?? 0,
+        postStock: t.finalStock ?? null,
+        description: t.description ?? '',
+      })),
+      total,
+    };
+  }
+
+  /**
    * Create a RefillGroup with multiple product transactions in a single
    * atomic operation. If any product fails (insufficient stock, not found),
    * the entire batch is rolled back — zero partial commits.
@@ -50,7 +83,6 @@ export class RefillService {
     technicianId?: number;
     orderId?: number;
     totalValue?: number;
-    snapshotData?: Record<string, any>;
   }): Promise<RefillGroupEntity> {
     // FIX 1 + FIX 3: Validate input before any DB work
     if (!Array.isArray(body.products) || body.products.length === 0) {
@@ -127,7 +159,6 @@ export class RefillService {
           maxDiscount: 0,
           purchaseDiscount: 0,
           description: productData.description || '',
-          snapshotData: body.snapshotData ?? {},
           createdAt: new Date(),
           product: { id: productData.productId } as ProductEntity,
           refillGroup: savedGroup,
