@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { CompanyInfo } from 'src/app/services/clients.api.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 export interface CompanySimilarResult {
   action: 'use' | 'create';
@@ -19,7 +20,7 @@ export interface CompanySimilarResult {
   templateUrl: './modal-company-similar.component.html',
   styleUrls: ['./modal-company-similar.component.css'],
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, MatIconModule, TPipe],
 })
 export class ModalCompanySimilarComponent {
   private readonly dialogRef = inject<MatDialogRef<ModalCompanySimilarComponent>>(MatDialogRef);

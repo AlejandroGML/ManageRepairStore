@@ -7,40 +7,40 @@
     </div>
 
     <div class="login-hero">
-      <h1>Gestiona tu taller de reparaciones en un solo lugar</h1>
-      <p>Stock en tiempo real, ventas, órdenes de servicio y tickets PDF/QR con RUT y precios en CLP. Hecho para el mercado chileno.</p>
+      <h1>{{ 'login.heroTitle' | t }}</h1>
+      <p>{{ 'login.heroText' | t }}</p>
       <div class="hero-feature">
         <mat-icon fontIcon="inventory_2"></mat-icon>
-        <div><b>Stock de un vistazo</b><span>Alertas de stock bajo y reposiciones con un clic.</span></div>
+        <div><b>{{ 'login.featureStockTitle' | t }}</b><span>{{ 'login.featureStockText' | t }}</span></div>
       </div>
       <div class="hero-feature">
         <mat-icon fontIcon="receipt_long"></mat-icon>
-        <div><b>Tickets PDF + QR</b><span>Órdenes imprimibles con código verificable.</span></div>
+        <div><b>{{ 'login.featureTicketsTitle' | t }}</b><span>{{ 'login.featureTicketsText' | t }}</span></div>
       </div>
       <div class="hero-feature">
         <mat-icon fontIcon="group"></mat-icon>
-        <div><b>Clientes con RUT</b><span>RUT válido (módulo 11), historial y órdenes.</span></div>
+        <div><b>{{ 'login.featureClientsTitle' | t }}</b><span>{{ 'login.featureClientsText' | t }}</span></div>
       </div>
     </div>
 
-    <div class="section-note">Manage Repair Store · Sistema de gestión</div>
+    <div class="section-note">{{ 'login.sectionNote' | t }}</div>
   </div>
 
   <div class="login-form-pane">
     <div class="login-card">
-      <h2>Iniciar sesión</h2>
-      <div class="sub">Ingresa tus credenciales para entrar al panel.</div>
+      <h2>{{ 'login.cardTitle' | t }}</h2>
+      <div class="sub">{{ 'login.cardSubtitle' | t }}</div>
 
       <form (ngSubmit)="login()">
         <div class="field">
-          <label for="login-email">Email</label>
+          <label for="login-email">{{ 'login.email' | t }}</label>
           <div class="input-group">
             <mat-icon fontIcon="mail" class="input-icon"></mat-icon>
             <input
               id="input-email"
               class="input"
               type="email"
-              placeholder="usuario@ejemplo.cl"
+              [placeholder]="'login.emailPlaceholder' | t"
               [(ngModel)]="email"
               name="email"
               autocomplete="email"
@@ -49,20 +49,20 @@
           </div>
         </div>
         <div class="field">
-          <label for="login-pass">Contraseña</label>
+          <label for="login-pass">{{ 'login.password' | t }}</label>
           <div class="input-group">
             <mat-icon fontIcon="lock" class="input-icon"></mat-icon>
             <input
               id="input-pass"
               class="input"
               [type]="showPassword ? 'text' : 'password'"
-              placeholder="Contraseña"
+              [placeholder]="('login.passwordPlaceholder' | t)"
               [(ngModel)]="password"
               name="password"
               autocomplete="current-password"
               required
             >
-            <button type="button" class="eye-toggle" (click)="togglePassword()" aria-label="Mostrar contraseña" matTooltip="Mostrar contraseña">
+            <button type="button" class="eye-toggle" (click)="togglePassword()" [attr.aria-label]="'login.showPassword' | t" [matTooltip]="'login.showPassword' | t">
               <mat-icon [fontIcon]="showPassword ? 'visibility_off' : 'visibility'"></mat-icon>
             </button>
           </div>
@@ -70,7 +70,7 @@
 
         <div class="login-actions">
           @if (!loading) {
-            <button type="submit" class="btn btn-primary login-btn">Iniciar sesión</button>
+            <button type="submit" class="btn btn-primary login-btn">{{ 'login.submit' | t }}</button>
           } @else {
             <mat-spinner diameter="30" class="login-spinner"></mat-spinner>
           }
@@ -78,22 +78,22 @@
       </form>
 
       <div class="demo-box">
-        <div class="demo-title">ENTRAR COMO</div>
+        <div class="demo-title">{{ 'login.demoTitle' | t }}</div>
         <div class="demo-roles">
           <button type="button" class="demo-role" (click)="demoLogin('admin')">
             <mat-icon fontIcon="admin_panel_settings"></mat-icon>
-            <div><b>Administrador</b><span>admin@demo.example</span></div>
+            <div><b>{{ 'login.demoAdmin' | t }}</b><span>admin@demo.example</span></div>
           </button>
           <button type="button" class="demo-role" (click)="demoLogin('seller')">
             <mat-icon fontIcon="point_of_sale"></mat-icon>
-            <div><b>Vendedor</b><span>clerk@demo.example</span></div>
+            <div><b>{{ 'login.demoSeller' | t }}</b><span>clerk@demo.example</span></div>
           </button>
           <button type="button" class="demo-role" (click)="demoLogin('warehouse')">
             <mat-icon fontIcon="inventory_2"></mat-icon>
-            <div><b>Bodega</b><span>bodega@demo.example</span></div>
+            <div><b>{{ 'login.demoWarehouse' | t }}</b><span>bodega@demo.example</span></div>
           </button>
         </div>
-        <div class="demo-note">Clave: <code>Demo1234!</code></div>
+        <div class="demo-note">{{ 'login.demoNote' | t }} <code>Demo1234!</code></div>
       </div>
     </div>
   </div>

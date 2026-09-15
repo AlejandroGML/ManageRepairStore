@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>Cambiar estado</span>
-  <button class="dlg-close" mat-dialog-close aria-label="Cerrar">
+  <span>{{ 'sharedModal.status.title' | t }}</span>
+  <button class="dlg-close" mat-dialog-close [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -8,18 +8,18 @@
 <mat-dialog-content>
   <form [formGroup]="form">
     <div class="form-field-block">
-      <label class="field-label" for="status-select">Estado</label>
+      <label class="field-label" for="status-select">{{ 'sharedModal.status.field' | t }}</label>
       <select id="status-select" class="select" formControlName="status">
-        <option value="Pendiente">Pendiente</option>
-        <option value="En Revisión">En Revisión</option>
-        <option value="Espera Resolución">Espera Resolución</option>
-        <option value="Finalizado">Finalizado</option>
+        <option value="Pendiente">{{ 'sharedModal.status.pending' | t }}</option>
+        <option value="En Revisión">{{ 'sharedModal.status.inReview' | t }}</option>
+        <option value="Espera Resolución">{{ 'sharedModal.status.waitingResolution' | t }}</option>
+        <option value="Finalizado">{{ 'sharedModal.status.finished' | t }}</option>
       </select>
-      <span class="field-error" *ngIf="form.get('status')?.invalid">Debes seleccionar un estado</span>
+      <span class="field-error" *ngIf="form.get('status')?.invalid">{{ 'sharedModal.status.selectRequired' | t }}</span>
     </div>
 
     <div class="form-field-block">
-      <label class="field-label" for="input-comment">Comentario</label>
+      <label class="field-label" for="input-comment">{{ 'sharedModal.status.comment' | t }}</label>
       <textarea id="input-comment" class="input textarea" formControlName="comment" rows="3"></textarea>
       <span class="field-error" *ngIf="form.get('comment')?.invalid">{{ obtenerMensajeError(form.get('comment')!) }}</span>
     </div>
@@ -27,8 +27,8 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button class="btn btn-ghost" type="button" mat-dialog-close>Cerrar</button>
+  <button class="btn btn-ghost" type="button" mat-dialog-close>{{ 'common.close' | t }}</button>
   <button class="btn btn-primary" type="button" (click)="changeStatus()">
-    <mat-icon fontIcon="edit"></mat-icon> Aplicar
+    <mat-icon fontIcon="edit"></mat-icon> {{ 'sharedModal.status.apply' | t }}
   </button>
 </mat-dialog-actions>

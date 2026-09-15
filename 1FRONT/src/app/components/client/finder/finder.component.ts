@@ -13,6 +13,7 @@ import {
 } from '../modal-order-detail/modal-order-detail.component';
 import { Client, Order } from 'src/app/interface/client';
 import { SnackbarService } from 'src/app/services/snackbar.service';
+import { I18nService } from '../../../i18n/i18n.service';
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
@@ -56,6 +57,7 @@ export class FinderComponent implements OnInit, OnDestroy {
   private readonly loadingService = inject(LoadingService);
   private readonly modal = inject(ModalService);
   private readonly snackbarService = inject(SnackbarService);
+  private readonly i18n = inject(I18nService);
 
   /** Clientes del resultado de búsqueda actual (server-side, sin dump completo). */
   clients: ClientRow[] = [];
@@ -69,13 +71,14 @@ export class FinderComponent implements OnInit, OnDestroy {
   clientSearch = '';
   /** Campo activo del filtro de clientes (solo se busca con ese campo). */
   searchField: SearchField = 'name';
+  /** i18n keys — resolved with the `t` pipe so they follow the live language. */
   readonly searchFields: { value: SearchField; label: string }[] = [
-    { value: 'id', label: 'N° Cliente' },
-    { value: 'rut', label: 'RUT' },
-    { value: 'name', label: 'Nombre' },
-    { value: 'email', label: 'Correo' },
-    { value: 'company', label: 'Empresa' },
-    { value: 'city', label: 'Comuna' },
+    { value: 'id', label: 'finder.searchFieldId' },
+    { value: 'rut', label: 'finder.searchFieldRut' },
+    { value: 'name', label: 'finder.searchFieldName' },
+    { value: 'email', label: 'finder.searchFieldEmail' },
+    { value: 'company', label: 'finder.searchFieldCompany' },
+    { value: 'city', label: 'finder.searchFieldCity' },
   ];
   /** Cliente seleccionado: sus órdenes recientes se muestran en el panel derecho. */
   selectedClient: ClientRow | null = null;
@@ -199,12 +202,12 @@ export class FinderComponent implements OnInit, OnDestroy {
   /** Placeholder del buscador según el campo activo. */
   get searchPlaceholder(): string {
     const map: Record<SearchField, string> = {
-      id: 'Buscar por N° Cliente',
-      rut: 'Buscar por RUT',
-      name: 'Buscar por nombre',
-      email: 'Buscar por correo',
-      company: 'Buscar por empresa',
-      city: 'Buscar por comuna',
+      id: this.i18n.t('finder.searchId'),
+      rut: this.i18n.t('finder.searchRut'),
+      name: this.i18n.t('finder.searchName'),
+      email: this.i18n.t('finder.searchEmail'),
+      company: this.i18n.t('finder.searchCompany'),
+      city: this.i18n.t('finder.searchCity'),
     };
     return map[this.searchField];
   }
@@ -298,7 +301,7 @@ export class FinderComponent implements OnInit, OnDestroy {
 
   /** Estado con tilde (prototipo: "En reparación"). */
   statusLabel(status: string): string {
-    return status === 'En reparacion' ? 'En reparación' : status;
+    return status === 'En reparacion' ? this.i18n.t('finder.statusInRepair') : status;
   }
 
   showOrderDetails(client: Client): void {
@@ -308,7 +311,7 @@ export class FinderComponent implements OnInit, OnDestroy {
       this.loadingService.setLoading(false);
     }, () => {
       this.loadingService.setLoading(false);
-      this.snackbarService.openSnackBar('Error al buscar. Intente nuevamente.');
+      this.snackbarService.openSnackBar(this.i18n.t('finder.searchError'));
     });
   }
 
@@ -337,7 +340,7 @@ export class FinderComponent implements OnInit, OnDestroy {
       this.selectedClient ??
       this.clientFromRecentRow(row);
     if (!client) {
-      this.snackbarService.openSnackBar('No se encontró el cliente de esta orden.');
+      this.snackbarService.openSnackBar(this.i18n.t('finder.clientNotFound'));
       return;
     }
     const order: Order = {
@@ -379,7 +382,7 @@ export class FinderComponent implements OnInit, OnDestroy {
       disableClose: true,
     }).afterClosed().subscribe((id: number) => {
       if (id) {
-        this.snackbarService.success('Cliente eliminado exitosamente');
+        this.snackbarService.success(this.i18n.t('finder.clientDeleted'));
         this.refresh();
       }
     });
@@ -403,11 +406,11 @@ export class FinderComponent implements OnInit, OnDestroy {
       next: (blob) => {
         this.loadingService.setLoading(false);
         this.downloadBlob(blob, `clientes-${new Date().toISOString().slice(0, 10)}.xlsx`);
-        this.snackbarService.openSnackBar('Clientes exportados.');
+        this.snackbarService.openSnackBar(this.i18n.t('finder.exportSuccess'));
       },
       error: () => {
         this.loadingService.setLoading(false);
-        this.snackbarService.openSnackBar('Error al exportar clientes. Intente nuevamente.');
+        this.snackbarService.openSnackBar(this.i18n.t('finder.exportError'));
       },
     });
   }

@@ -1,8 +1,8 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Punto de venta</h1>
-      <p class="page-lead">Busca productos y agrégalos al carrito</p>
+      <h1 class="page-title">{{ 'sales.title' | t }}</h1>
+      <p class="page-lead">{{ 'sales.subtitle' | t }}</p>
     </div>
   </div>
 
@@ -15,17 +15,17 @@
             <mat-icon fontIcon="search" class="cs-icon"></mat-icon>
             <input
               class="input cs-input"
-              placeholder="Buscar por nombre o código…"
+              [placeholder]="'sales.searchPlaceholder' | t"
               [(ngModel)]="catalogQuery"
               (ngModelChange)="filterCatalog()"
             />
           </div>
           <select class="select" [(ngModel)]="categoryFilter" (ngModelChange)="onCategoryChange()">
-            <option value="all">Todas las categorías</option>
+            <option value="all">{{ 'sales.allCategories' | t }}</option>
             <option *ngFor="let c of categoryNames" [value]="c">{{ c }}</option>
           </select>
           <button class="btn btn-ghost btn-sm" (click)="openProductSearch()">
-            <mat-icon fontIcon="search"></mat-icon> Buscar
+            <mat-icon fontIcon="search"></mat-icon> {{ 'common.search' | t }}
           </button>
         </div>
         <div class="card-pad catalog-grid" *ngIf="!catalogLoading && catalogFiltered.length; else catalogState">
@@ -48,18 +48,18 @@
             <div class="pt-price mono">{{ product.sellingPrice | currency:'CLP':'symbol-narrow':'1.0-0' }}</div>
             <div class="pt-stock">
               @if (isInCart(product)) {
-                <span class="badge badge-in-cart"><span class="dot"></span> En el carrito</span>
+                <span class="badge badge-in-cart"><span class="dot"></span> {{ 'sales.inCart' | t }}</span>
               } @else {
                 <span class="badge" [class]="tileStockClass(productStock(product))">
-                  <span class="dot"></span> {{ productStock(product) }} en stock
+                  <span class="dot"></span> {{ 'sales.stockCount' | t:{ count: productStock(product) } }}
                 </span>
               }
             </div>
           </button>
         </div>
         <ng-template #catalogState>
-          <p class="empty-state" *ngIf="!catalogLoading">Sin resultados para "{{ catalogQuery }}".</p>
-          <p class="empty-state" *ngIf="catalogLoading">Cargando catálogo…</p>
+          <p class="empty-state" *ngIf="!catalogLoading">{{ 'sales.noResults' | t:{ query: catalogQuery } }}</p>
+          <p class="empty-state" *ngIf="catalogLoading">{{ 'sales.catalogLoading' | t }}</p>
         </ng-template>
       </div>
     </div>
@@ -68,55 +68,55 @@
     <div class="pos-side">
     <div class="card pos-cart">
       <div class="card-head">
-        <h2 class="card-title">Carrito</h2>
-        <span class="cart-count">{{ cartItems.length }} ítems</span>
+        <h2 class="card-title">{{ 'sales.cartTitle' | t }}</h2>
+        <span class="cart-count">{{ 'sales.itemsCount' | t:{ count: cartItems.length } }}</span>
       </div>
 
       @if (cartItems.length === 0) {
         <div class="cart-empty">
           <mat-icon fontIcon="shopping_cart" class="cart-empty-icon"></mat-icon>
-          <p>Agrega productos para comenzar</p>
+          <p>{{ 'sales.cartEmpty' | t }}</p>
         </div>
       } @else {
         <div class="cart-items">
           <div class="cart-item" *ngFor="let item of cartItems; let i = index">
             <div class="ci-head">
               <span class="ci-name">{{ item.name }}</span>
-              <button mat-icon-button class="icon-btn ci-remove" (click)="removeProductFromSale(i)" matTooltip="Quitar" aria-label="Quitar">
+              <button mat-icon-button class="icon-btn ci-remove" (click)="removeProductFromSale(i)" [matTooltip]="'sales.remove' | t" [attr.aria-label]="'sales.remove' | t">
                 <mat-icon>close</mat-icon>
               </button>
             </div>
             <div class="ci-row">
-              <label>Precio</label>
+              <label>{{ 'sales.price' | t }}</label>
               <span class="mono">{{ item.sellingPrice | currency:'CLP':'symbol-narrow' }}</span>
             </div>
             <div class="ci-row">
-              <label>Cantidad</label>
-              <input class="input qty-input mono" type="number" min="1" [max]="item.stock ?? 1" [title]="'Máximo disponible: ' + (item.stock ?? 0)" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
+              <label>{{ 'common.quantity' | t }}</label>
+              <input class="input qty-input mono" type="number" min="1" [max]="item.stock ?? 1" [title]="'sales.maxAvailable' | t:{ count: item.stock ?? 0 }" [(ngModel)]="item.quantity" (ngModelChange)="adjustQuantity(i, item.quantity)" />
             </div>
             <div class="ci-row">
-              <label>Descuento</label>
+              <label>{{ 'sales.discount' | t }}</label>
               <input class="input qty-input mono" type="number" min="0" [max]="item.maxDiscount ?? 0" [(ngModel)]="item.purchaseDiscount" (ngModelChange)="applyDiscount(i, item.purchaseDiscount)" />
             </div>
             <div class="ci-row ci-total">
-              <label>Total</label>
+              <label>{{ 'common.total' | t }}</label>
               <span class="mono ci-total-value">{{ item.finalValue | currency:'CLP':'symbol-narrow' }}</span>
             </div>
           </div>
         </div>
 
         <div class="cart-totals">
-          <div class="ct-row"><span>Subtotal</span><span class="mono">{{ subtotalValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
-          <div class="ct-row"><span>Descuento</span><span class="mono">-{{ totalDiscount | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
-          <div class="ct-row ct-grand"><span>Total</span><span class="mono">{{ totalSaleValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
+          <div class="ct-row"><span>{{ 'sales.subtotal' | t }}</span><span class="mono">{{ subtotalValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
+          <div class="ct-row"><span>{{ 'sales.discount' | t }}</span><span class="mono">-{{ totalDiscount | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
+          <div class="ct-row ct-grand"><span>{{ 'common.total' | t }}</span><span class="mono">{{ totalSaleValue | currency:'CLP':'symbol-narrow':'1.0-0' }}</span></div>
         </div>
 
         <div class="cart-actions">
           <button class="btn btn-accent purchase-button" [disabled]="submitting" (click)="completeSale()">
             <mat-icon fontIcon="check_circle"></mat-icon>
-            {{ submitting ? 'Procesando...' : 'Completar venta' }}
+            {{ (submitting ? 'sales.processing' : 'sales.completeSale') | t }}
           </button>
-          <button class="btn btn-ghost clear-button" (click)="clearCart()">Vaciar carrito</button>
+          <button class="btn btn-ghost clear-button" (click)="clearCart()">{{ 'sales.clearCart' | t }}</button>
         </div>
       }
     </div>
@@ -124,9 +124,9 @@
     <!-- Resumen de compra / última venta -->
     <div class="card card-pad pos-summary" *ngIf="hasSummary">
       <div class="card-head">
-        <h2 class="card-title">{{ cartItems.length ? 'Resumen de la compra' : 'Última venta completada' }}</h2>
-        <button class="btn btn-ghost btn-sm" *ngIf="!cartItems.length" (click)="lastSale = null" matTooltip="Empezar una venta nueva">
-          <mat-icon fontIcon="add_shopping_cart"></mat-icon> Nueva venta
+        <h2 class="card-title">{{ (cartItems.length ? 'sales.summaryTitle' : 'sales.lastSaleTitle') | t }}</h2>
+        <button class="btn btn-ghost btn-sm" *ngIf="!cartItems.length" (click)="lastSale = null" [matTooltip]="'sales.startNewSale' | t">
+          <mat-icon fontIcon="add_shopping_cart"></mat-icon> {{ 'sales.newSale' | t }}
         </button>
       </div>
       <div class="summary-meta">
@@ -140,11 +140,11 @@
         </li>
       </ul>
       <div class="summary-grand">
-        <span>Total</span>
+        <span>{{ 'common.total' | t }}</span>
         <span class="mono">{{ summaryTotal | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
       </div>
-      <button class="btn btn-soft summary-pdf-btn" (click)="generatePurchasePdf()" matTooltip="Descargar comprobante PDF">
-        <mat-icon fontIcon="picture_as_pdf"></mat-icon> {{ cartItems.length ? 'Generar PDF' : 'Descargar PDF' }}
+      <button class="btn btn-soft summary-pdf-btn" (click)="generatePurchasePdf()" [matTooltip]="'sales.downloadReceipt' | t">
+        <mat-icon fontIcon="picture_as_pdf"></mat-icon> {{ (cartItems.length ? 'sales.generatePdf' : 'sales.downloadPdf') | t }}
       </button>
     </div>
     </div>

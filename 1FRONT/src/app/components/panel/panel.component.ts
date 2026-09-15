@@ -10,6 +10,8 @@ import { SnackbarService } from '../../services/snackbar.service';
 import { AuthService } from '../../services/auth.service';
 import { Product } from '../../interface/warehouse';
 import { Log } from '../../interface/client';
+import { I18nService } from '../../i18n/i18n.service';
+import { TPipe } from '../../i18n/t.pipe';
 
 /** KPI del prototipo: label arriba-izq, icono arriba-der, valor grande, sub abajo. */
 interface Kpi {
@@ -36,7 +38,7 @@ interface ActivityItem {
   templateUrl: './panel.component.html',
   styleUrls: ['./panel.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatIconModule, TPipe],
 })
 export class PanelComponent implements OnInit {
   private readonly productsApi = inject(ProductsApiService);
@@ -45,6 +47,7 @@ export class PanelComponent implements OnInit {
   private readonly salesApi = inject(SalesApiService);
   private readonly snackbar = inject(SnackbarService);
   private readonly authService = inject(AuthService);
+  private readonly i18n = inject(I18nService);
 
   kpis: Kpi[] = [];
   lowStock: Product[] = [];
@@ -103,39 +106,39 @@ export class PanelComponent implements OnInit {
           // Cada KPI tiene su propio sub — binding cruzado es el bug MRS #7.
           this.kpis = [
             {
-              label: 'Ventas de hoy',
+              label: this.i18n.t('panel.kpiTodaySales'),
               value: `$${ventasHoy.toLocaleString('es-CL')}`,
               icon: 'payments',
               tone: 'orange',
               deltaIcon: 'receipt_long',
-              deltaText: `${ventasCount} ventas`,
+              deltaText: this.i18n.t('panel.kpiSalesDelta', { count: ventasCount }),
               deltaTone: 'flat',
             },
             {
-              label: 'Órdenes abiertas',
+              label: this.i18n.t('panel.kpiOpenOrders'),
               value: `${openOrders}`,
               icon: 'assignment',
               tone: 'green',
               deltaIcon: 'schedule',
-              deltaText: `${orders} órdenes totales`,
+              deltaText: this.i18n.t('panel.kpiOrdersDelta', { count: orders }),
               deltaTone: 'flat',
             },
             {
-              label: 'Stock bajo',
+              label: this.i18n.t('panel.kpiLowStock'),
               value: `${lowStock.length}`,
               icon: 'warning',
               tone: 'amber',
               deltaIcon: 'trending_down',
-              deltaText: `${critical} críticos`,
+              deltaText: this.i18n.t('panel.kpiCriticalDelta', { count: critical }),
               deltaTone: 'down',
             },
             {
-              label: 'Catálogo',
+              label: this.i18n.t('panel.kpiCatalog'),
               value: `${catalogCount}`,
               icon: 'category',
               tone: 'red',
               deltaIcon: 'inventory_2',
-              deltaText: `${categories} categorías`,
+              deltaText: this.i18n.t('panel.kpiCategoriesDelta', { count: categories }),
               deltaTone: 'flat',
             },
           ];
@@ -177,7 +180,7 @@ export class PanelComponent implements OnInit {
       return d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
     }
     const startYesterday = startToday.getTime() - 86400000;
-    if (d.getTime() >= startYesterday) return 'Ayer';
+    if (d.getTime() >= startYesterday) return this.i18n.t('panel.yesterday');
     return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
   }
 
@@ -192,13 +195,13 @@ export class PanelComponent implements OnInit {
   }
 
   stockBadgeLabel(stock?: number): string {
-    if (stock === undefined || stock <= 2) return 'Crítico';
-    return 'Bajo';
+    if (stock === undefined || stock <= 2) return this.i18n.t('panel.badgeCritical');
+    return this.i18n.t('panel.badgeLow');
   }
 
   exportLowStock(): void {
     if (!this.lowStock.length) {
-      this.snackbar.openSnackBar('Sin alertas de stock bajo para exportar');
+      this.snackbar.openSnackBar(this.i18n.t('panel.exportEmpty'));
       return;
     }
     this.productsApi.exportLowStockXlsx().subscribe({
@@ -210,7 +213,7 @@ export class PanelComponent implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
       },
-      error: () => this.snackbar.openSnackBar('Error al exportar. Intente nuevamente.'),
+      error: () => this.snackbar.openSnackBar(this.i18n.t('panel.exportError')),
     });
   }
 }

@@ -1,8 +1,9 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Product } from 'src/app/interface/warehouse';
 import { getApiUrl } from 'src/app/services/api-url';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-modal-view-transactions',
@@ -12,18 +13,20 @@ import { getApiUrl } from 'src/app/services/api-url';
   styleUrls: ['./modal-view-transactions.component.css']
 })
 export class ModalViewTransactionsComponent implements OnInit {
+  private readonly i18n = inject(I18nService);
+
   // Columnas obligatorias
   mandatoryColumns = ['id', 'createdAt', 'operation', 'quantity', 'finalStock'];
 
   // Columnas opcionales que pueden ser seleccionadas
   optionalColumns = [
-    { value: 'location', label: 'Localización' },
-    { value: 'description', label: 'Descripción' },
-    { value: 'costPrice', label: 'Precio de Costo' },
-    { value: 'sellingPrice', label: 'Precio de Venta' },
-    { value: 'maxDiscount', label: 'Descuento Máximo' },
-    { value: 'purchaseDiscount', label: 'Descuento de Compra' },
-    { value: 'assignedWorker', label: 'Trabajador Asignado' }
+    { value: 'location', labelKey: 'tx.colLocation' },
+    { value: 'description', labelKey: 'common.description' },
+    { value: 'costPrice', labelKey: 'tx.colCostPrice' },
+    { value: 'sellingPrice', labelKey: 'tx.colSellingPrice' },
+    { value: 'maxDiscount', labelKey: 'tx.colMaxDiscount' },
+    { value: 'purchaseDiscount', labelKey: 'tx.colPurchaseDiscount' },
+    { value: 'assignedWorker', labelKey: 'tx.colAssignedWorker' }
   ];
 
   // Columnas seleccionadas por el usuario
@@ -32,13 +35,13 @@ export class ModalViewTransactionsComponent implements OnInit {
   // Columnas visibles en la tabla
   displayedColumns: string[] = [];
 
-  // Etiquetas legibles de las columnas obligatorias
-  private readonly columnLabels: Record<string, string> = {
-    id: 'ID',
-    createdAt: 'Fecha',
-    operation: 'Operación',
-    quantity: 'Cantidad',
-    finalStock: 'Stock Final',
+  // Claves i18n de las etiquetas de las columnas obligatorias
+  private readonly columnLabelKeys: Record<string, string> = {
+    id: 'tx.colId',
+    createdAt: 'common.date',
+    operation: 'tx.colOperation',
+    quantity: 'common.quantity',
+    finalStock: 'tx.colFinalStock',
   };
 
   constructor(
@@ -74,13 +77,14 @@ export class ModalViewTransactionsComponent implements OnInit {
 
   // Obtiene el nombre legible de cada columna (obligatorias + opcionales)
   headerLabel(column: string): string {
-    return this.columnLabels[column] ?? this.getColumnLabel(column);
+    const key = this.columnLabelKeys[column];
+    return key ? this.i18n.t(key) : this.getColumnLabel(column);
   }
 
   // Obtiene el nombre legible de una columna opcional
   getColumnLabel(column: string): string {
     const col = this.optionalColumns.find(opt => opt.value === column);
-    return col ? col.label : column;
+    return col ? this.i18n.t(col.labelKey) : column;
   }
 
   /** Valor de celda para columnas no-imagen: raíz o snapshot según la columna. */
@@ -90,7 +94,7 @@ export class ModalViewTransactionsComponent implements OnInit {
    * filas históricas hasta que la columna muera en la normalización.
    */
   cellValue(t: any, col: string): string {
-    return t[col] ?? t.snapshotData?.[col] ?? 'Sin Dato';
+    return t[col] ?? t.snapshotData?.[col] ?? this.i18n.t('tx.noData');
   }
 
   // Método para obtener la URL completa de la imagen

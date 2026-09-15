@@ -1,4 +1,4 @@
-import { Component, Inject, NgZone } from '@angular/core';
+import { Component, Inject, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -27,6 +27,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Client, Order } from 'src/app/interface/client';
 import { OrdersApiService } from 'src/app/services/orders.api.service';
 import { LoadingService } from 'src/app/services/loading.service';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 @Component({
   selector: 'app-modal-status',
@@ -36,12 +38,14 @@ import { LoadingService } from 'src/app/services/loading.service';
     MatSlideToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule,
     MatTabsModule, MatAutocompleteModule, MatSelectModule, MatProgressSpinnerModule, MatIconModule,
     MatTableModule, MatPaginatorModule, MatSnackBarModule, MatDialogModule, MatDividerModule,
-    MatListModule, MatTooltipModule, MatButtonToggleModule],
+    MatListModule, MatTooltipModule, MatButtonToggleModule, TPipe],
   styleUrls: ['./modal-status.component.css']
 })
 export class ModalStatusComponent {
   order!:Order;
   form!:FormGroup;
+
+  private readonly i18n = inject(I18nService);
   
   constructor(private ordersApi: OrdersApiService, private loadingService:LoadingService,
     private dialogRef: MatDialogRef<ModalStatusComponent>,@Inject(MAT_DIALOG_DATA) public data: Order,
@@ -88,13 +92,13 @@ export class ModalStatusComponent {
 
   obtenerMensajeError(control: AbstractControl) {
     if (control?.hasError('required')) {
-      return 'Este campo es requerido';
+      return this.i18n.t('sharedModal.status.required');
    // } else if (control?.hasError('rutInvalido')) {
      // return 'El RUT ingresado no es válido';
     } else if (control?.hasError('email')) {
-      return 'El correo electrónico ingresado no es válido';
+      return this.i18n.t('sharedModal.status.emailInvalid');
     } else if (control?.hasError('pattern')) {
-      return 'Este campo solo puede contener números';
+      return this.i18n.t('sharedModal.status.numbersOnly');
     }
     return '';
   }

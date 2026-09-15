@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { SystemUser } from '../../../interface/system-user';
 import { UsersService } from '../../../services/users.service';
 import { AuthService } from '../../../services/auth.service';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 /** Data del diálogo: usuario + modo (desactivar o borrado definitivo). */
 export interface UserDeleteDialogData {
@@ -16,7 +18,7 @@ export interface UserDeleteDialogData {
 @Component({
   selector: 'app-modal-user-delete',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule, TPipe],
   templateUrl: './modal-user-delete.component.html',
   styleUrls: ['./modal-user-delete.component.css'],
 })
@@ -24,6 +26,7 @@ export class ModalUserDeleteComponent implements AfterViewInit {
   errorMessage: string | null = null;
   private readonly usersService = inject(UsersService);
   private readonly authService = inject(AuthService);
+  private readonly i18n = inject(I18nService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
@@ -47,7 +50,7 @@ export class ModalUserDeleteComponent implements AfterViewInit {
     const currentUser = this.authService.getCurrentUser();
 
     if (currentUser && currentUser.id === this.user.id) {
-      this.errorMessage = 'No puedes desactivar tu propia cuenta';
+      this.errorMessage = this.i18n.t('admin.deleteDialog.selfDeactivateError');
       return;
     }
 
@@ -61,7 +64,7 @@ export class ModalUserDeleteComponent implements AfterViewInit {
     const currentUser = this.authService.getCurrentUser();
 
     if (currentUser && currentUser.id === this.user.id) {
-      this.errorMessage = 'No puedes eliminar tu propia cuenta';
+      this.errorMessage = this.i18n.t('admin.deleteDialog.selfDeleteError');
       return;
     }
 

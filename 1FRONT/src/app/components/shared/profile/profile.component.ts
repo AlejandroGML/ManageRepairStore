@@ -12,6 +12,8 @@ import { AuthApiService } from '../../../services/auth.api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { UserProfile } from '../../../interface/user-profile';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 /**
  * Small self-service view: shows the authenticated user's identity and
@@ -20,7 +22,7 @@ import { UserProfile } from '../../../interface/user-profile';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, TPipe],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css'],
 })
@@ -29,6 +31,7 @@ export class ProfileComponent {
   private readonly authApi = inject(AuthApiService);
   private readonly authService = inject(AuthService);
   private readonly snackbar = inject(SnackbarService);
+  private readonly i18n = inject(I18nService);
 
   user: UserProfile | undefined = this.authService.getCurrentUser() ?? undefined;
 
@@ -48,11 +51,11 @@ export class ProfileComponent {
   get roleLabel(): string {
     switch (this.user?.role) {
       case 'admin':
-        return 'Administrador';
+        return this.i18n.t('profile.roleAdmin');
       case 'warehouse':
-        return 'Bodega';
+        return this.i18n.t('profile.roleWarehouse');
       case 'seller':
-        return 'Vendedor';
+        return this.i18n.t('profile.roleSeller');
       default:
         return '';
     }
@@ -84,12 +87,12 @@ export class ProfileComponent {
       next: () => {
         this.saving = false;
         this.form.reset();
-        this.snackbar.success('Contraseña actualizada correctamente');
+        this.snackbar.success(this.i18n.t('profile.passwordUpdated'));
       },
       error: (err: any) => {
         this.saving = false;
         this.snackbar.error(
-          err.error?.message || 'No se pudo actualizar la contraseña',
+          err.error?.message || this.i18n.t('profile.updateError'),
         );
       },
     });

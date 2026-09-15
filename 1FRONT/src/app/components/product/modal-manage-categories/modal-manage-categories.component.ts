@@ -5,6 +5,7 @@ import { CategoriesApiService, CategoryRow } from 'src/app/services/categories.a
 import { ModalConfirmComponent } from '../../shared/modal-confirm/modal-confirm.component';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-modal-manage-categories',
@@ -32,6 +33,7 @@ export class ModalManageCategoriesComponent implements OnInit {
   private readonly categoriesApi = inject(CategoriesApiService);
   private readonly modal = inject(ModalService);
   private readonly snackbar = inject(SnackbarService);
+  private readonly i18n = inject(I18nService);
 
   constructor(public dialogRef: MatDialogRef<ModalManageCategoriesComponent>) {}
 
@@ -47,7 +49,7 @@ export class ModalManageCategoriesComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.snackbar.error('No se pudieron cargar las categorías');
+        this.snackbar.error(this.i18n.t('categories.loadError'));
         this.loading = false;
       },
     });
@@ -78,12 +80,12 @@ export class ModalManageCategoriesComponent implements OnInit {
         this.saving = false;
         this.adding = false;
         this.dirty = true;
-        this.snackbar.success('Categoría creada');
+        this.snackbar.success(this.i18n.t('categories.created'));
         this.load();
       },
       error: (err) => {
         this.saving = false;
-        this.snackbar.error(err.error?.message || 'No se pudo crear la categoría');
+        this.snackbar.error(err.error?.message || this.i18n.t('categories.createError'));
       },
     });
   }
@@ -109,12 +111,12 @@ export class ModalManageCategoriesComponent implements OnInit {
         this.saving = false;
         this.editingId = null;
         this.dirty = true;
-        this.snackbar.success('Categoría actualizada');
+        this.snackbar.success(this.i18n.t('categories.updated'));
         this.load();
       },
       error: (err) => {
         this.saving = false;
-        this.snackbar.error(err.error?.message || 'No se pudo actualizar la categoría');
+        this.snackbar.error(err.error?.message || this.i18n.t('categories.updateError'));
       },
     });
   }
@@ -126,14 +128,17 @@ export class ModalManageCategoriesComponent implements OnInit {
     // una confirmación que siempre fallaría.
     if ((category.productCount ?? 0) > 0) {
       this.snackbar.error(
-        `"${category.name}" tiene ${category.productCount} producto(s) asociado(s). Reasígnalos primero.`,
+        this.i18n.t('categories.deleteBlocked', {
+          name: category.name,
+          count: category.productCount ?? 0,
+        }),
       );
       return;
     }
 
     const dialogRef = this.modal.open(ModalConfirmComponent, {
       size: 'sm',
-      data: { message: `¿Eliminar la categoría "${category.name}"?` },
+      data: { message: this.i18n.t('categories.deleteMessage', { name: category.name }) },
       disableClose: true,
     });
 
@@ -142,11 +147,11 @@ export class ModalManageCategoriesComponent implements OnInit {
       this.categoriesApi.deleteCategory(category.id).subscribe({
         next: () => {
           this.dirty = true;
-          this.snackbar.success('Categoría eliminada');
+          this.snackbar.success(this.i18n.t('categories.deleted'));
           this.load();
         },
         error: (err) => {
-          this.snackbar.error(err.error?.message || 'No se pudo eliminar la categoría');
+          this.snackbar.error(err.error?.message || this.i18n.t('categories.deleteError'));
         },
       });
     });

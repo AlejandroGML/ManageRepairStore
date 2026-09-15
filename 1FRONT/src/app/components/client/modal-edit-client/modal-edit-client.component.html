@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>Editar cliente</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ 'client.edit.title' | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -10,29 +10,29 @@
         <div class="edit-grid">
             <div class="edit-col">
                 <div class="field-group">
-                    <label class="field-label" for="input-client">Nombre</label>
-                    <input id="input-client" class="input" placeholder="Ej: Manage Repair Store" autocomplete="off" formControlName="name" />
+                    <label class="field-label" for="input-client">{{ 'client.edit.name' | t }}</label>
+                    <input id="input-client" class="input" [placeholder]="'client.edit.namePlaceholder' | t" autocomplete="off" formControlName="name" />
                     <span class="field-error" *ngIf="form.get('name')?.invalid">{{ obtenerMensajeError(form.get('name')!) }}</span>
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label" for="input-rut">RUT</label>
-                    <app-rut-input formControlName="rut" variant="plain" placeholder="Ej: 12.345.678-5"></app-rut-input>
+                    <label class="field-label" for="input-rut">{{ 'client.edit.rutLabel' | t }}</label>
+                    <app-rut-input formControlName="rut" variant="plain"></app-rut-input>
                     <span class="field-error" *ngIf="form.get('rut')?.invalid">{{ obtenerMensajeError(form.get('rut')!) }}</span>
                 </div>
 
                 <div class="company-field-row">
                     <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
-                        Empresa
+                        {{ 'client.edit.company' | t }}
                     </mat-slide-toggle>
                     <div class="field-group company-input">
-                        <label class="field-label" for="input-company">Nombre Empresa</label>
-                        <input id="input-company" class="input" placeholder="Ej: Manage Repair Store" formControlName="company_name" />
+                        <label class="field-label" for="input-company">{{ 'client.edit.companyName' | t }}</label>
+                        <input id="input-company" class="input" [placeholder]="'client.edit.companyNamePlaceholder' | t" formControlName="company_name" />
                     </div>
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label" for="input-email">Correo Electrónico</label>
+                    <label class="field-label" for="input-email">{{ 'client.edit.email' | t }}</label>
                     <input id="input-email" class="input" placeholder="info@demo.example" formControlName="email" />
                     <span class="field-error" *ngIf="form.get('email')?.invalid">{{ obtenerMensajeError(form.get('email')!) }}</span>
                 </div>
@@ -40,19 +40,19 @@
 
             <div class="edit-col">
                 <div class="field-group">
-                    <label class="field-label" for="input-address">Dirección</label>
-                    <input id="input-address" class="input" placeholder="Ej: 6 Oriente #1256" formControlName="address" />
+                    <label class="field-label" for="input-address">{{ 'client.edit.address' | t }}</label>
+                    <input id="input-address" class="input" [placeholder]="'client.edit.addressPlaceholder' | t" formControlName="address" />
                     <span class="field-error" *ngIf="form.get('address')?.invalid">{{ obtenerMensajeError(form.get('address')!) }}</span>
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label" for="input-city">Comuna</label>
-                    <input id="input-city" class="input" placeholder="Ej: Viña del Mar" formControlName="city" />
+                    <label class="field-label" for="input-city">{{ 'client.edit.city' | t }}</label>
+                    <input id="input-city" class="input" [placeholder]="'client.edit.cityPlaceholder' | t" formControlName="city" />
                     <span class="field-error" *ngIf="form.get('city')?.invalid">{{ obtenerMensajeError(form.get('city')!) }}</span>
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label" for="input-phone">Teléfono</label>
+                    <label class="field-label" for="input-phone">{{ 'client.edit.phone' | t }}</label>
                     <input id="input-phone" class="input" placeholder="93565666" formControlName="phone" />
                     <span class="field-error" *ngIf="form.get('phone')?.invalid">{{ obtenerMensajeError(form.get('phone')!) }}</span>
                 </div>
@@ -62,8 +62,8 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-    <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+    <button class="btn btn-ghost" type="button" (click)="close()">{{ 'common.cancel' | t }}</button>
     <button class="btn btn-primary" type="button" (click)="saveClient()">
-        <mat-icon fontIcon="edit"></mat-icon> Guardar
+        <mat-icon fontIcon="edit"></mat-icon> {{ 'common.save' | t }}
     </button>
 </mat-dialog-actions>

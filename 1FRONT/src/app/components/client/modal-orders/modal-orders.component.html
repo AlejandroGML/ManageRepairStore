@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>Órdenes de {{ client.name | name }}</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ 'client.orders.title' | t:{ name: (client.name | name) } }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -9,15 +9,15 @@
   <!-- Resumen del cliente -->
   <div class="card card-pad client-summary">
     <div class="cs-row">
-      <span class="cs-label">N° Cliente</span>
+      <span class="cs-label">{{ 'client.orders.clientNumber' | t }}</span>
       <b class="mono">{{ client.id }}</b>
     </div>
     <div class="cs-row">
-      <span class="cs-label">Cliente</span>
+      <span class="cs-label">{{ 'common.client' | t }}</span>
       <b>{{ client.name | name }}</b>
     </div>
     <div class="cs-row">
-      <span class="cs-label">Dirección</span>
+      <span class="cs-label">{{ 'client.orders.address' | t }}</span>
       <b>{{ (client.address | name) + ', ' + (client.city | name) }}</b>
     </div>
   </div>
@@ -27,13 +27,13 @@
     <table mat-table [dataSource]="dataSource">
       <!-- id Column -->
       <ng-container matColumnDef="id">
-        <th mat-header-cell *matHeaderCellDef>N° Aviso</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'client.orders.colNotice' | t }}</th>
         <td mat-cell *matCellDef="let element" class="mono">{{ element.id }}</td>
       </ng-container>
 
       <!-- date Column -->
       <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'common.date' | t }}</th>
         <td mat-cell *matCellDef="let element">
           {{ element.date | date:'dd-MM-yyyy HH:mm' }}
         </td>
@@ -41,7 +41,7 @@
 
       <!-- status Column -->
       <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'client.orders.colStatus' | t }}</th>
         <td mat-cell *matCellDef="let element">
           <span class="badge" [class]="statusBadgeClass(element.status)">
             <span class="dot"></span> {{ statusLabel(element.status) }}
@@ -51,32 +51,32 @@
 
       <!-- comment Column -->
       <ng-container matColumnDef="comment">
-        <th mat-header-cell *matHeaderCellDef>Comentario</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'client.orders.colComment' | t }}</th>
         <td mat-cell *matCellDef="let element">{{ element.comment | name }}</td>
       </ng-container>
 
       <!-- description Column -->
       <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>Descripción</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'common.description' | t }}</th>
         <td mat-cell *matCellDef="let element">{{ element.description | name }}</td>
       </ng-container>
 
       <!-- obs Column -->
       <ng-container matColumnDef="obs">
-        <th mat-header-cell *matHeaderCellDef>Observaciones</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'client.orders.colObservations' | t }}</th>
         <td mat-cell *matCellDef="let element">{{ element.observation | name }}</td>
       </ng-container>
 
       <!-- change status Column -->
       <ng-container matColumnDef="changeStatus">
-        <th mat-header-cell *matHeaderCellDef>Editar</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'common.edit' | t }}</th>
         <td mat-cell *matCellDef="let element">
           <button
             class="icon-btn"
-            matTooltip="Editar estado"
+            [matTooltip]="'client.orders.editStatusTooltip' | t"
             matTooltipPosition="above"
             (click)="openStatusModal(element)"
-            aria-label="Editar estado"
+            [attr.aria-label]="'client.orders.editStatusTooltip' | t"
           >
             <mat-icon>edit</mat-icon>
           </button>
@@ -85,14 +85,14 @@
 
       <!-- actions Column -->
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>PDF</th>
+        <th mat-header-cell *matHeaderCellDef>{{ 'client.orders.colPdf' | t }}</th>
         <td mat-cell *matCellDef="let element">
           <button
             class="icon-btn"
-            matTooltip="Descargar PDF"
+            [matTooltip]="'client.orders.downloadPdf' | t"
             matTooltipPosition="above"
             (click)="descargarPDF(element)"
-            aria-label="Descargar PDF"
+            [attr.aria-label]="'client.orders.downloadPdf' | t"
           >
             <mat-icon>picture_as_pdf</mat-icon>
           </button>
@@ -105,11 +105,11 @@
   </div>
 
   <ng-template #noOrders>
-    <p class="empty-state">Sin órdenes registradas para este cliente.</p>
+    <p class="empty-state">{{ 'client.orders.empty' | t }}</p>
   </ng-template>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button class="btn btn-ghost" mat-dialog-close>Cerrar</button>
+  <button class="btn btn-ghost" mat-dialog-close>{{ 'common.close' | t }}</button>
 </mat-dialog-actions>
 <app-pdf class="hidden-pdf" [ordenIngreso]="ordenIngreso"></app-pdf>

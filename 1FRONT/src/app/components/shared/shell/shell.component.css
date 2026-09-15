@@ -401,3 +401,24 @@
     padding: var(--space-base);
   }
 }
+
+/* Language switcher (EN/ES) */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.lang-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.lang-toggle .mat-icon { font-size: 18px; width: 18px; height: 18px; }
+.lang-label { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }

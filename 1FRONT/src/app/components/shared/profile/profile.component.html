@@ -1,8 +1,8 @@
 <div class="page profile-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Mi perfil</h1>
-      <p class="page-lead">Tu información y seguridad</p>
+      <h1 class="page-title">{{ 'profile.title' | t }}</h1>
+      <p class="page-lead">{{ 'profile.subtitle' | t }}</p>
     </div>
   </div>
 
@@ -18,12 +18,12 @@
 
     <div class="card card-pad password-card">
       <div class="card-head">
-        <h2 class="card-title">Cambiar contraseña</h2>
+        <h2 class="card-title">{{ 'profile.changePassword' | t }}</h2>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="password-form">
         <div class="field-group">
-          <label class="field-label" for="input-current">Contraseña actual</label>
+          <label class="field-label" for="input-current">{{ 'profile.currentPassword' | t }}</label>
           <div class="password-field">
             <input
               id="input-current"
@@ -36,18 +36,18 @@
               type="button"
               class="toggle-visibility"
               (click)="hideCurrent = !hideCurrent"
-              [attr.aria-label]="hideCurrent ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+              [attr.aria-label]="(hideCurrent ? 'profile.showPassword' : 'profile.hidePassword') | t"
             >
               <mat-icon [fontIcon]="hideCurrent ? 'visibility' : 'visibility_off'"></mat-icon>
             </button>
           </div>
           <span class="field-error" *ngIf="form.get('currentPassword')?.touched && form.get('currentPassword')?.invalid">
-            Ingresa tu contraseña actual
+            {{ 'profile.currentPasswordRequired' | t }}
           </span>
         </div>
 
         <div class="field-group">
-          <label class="field-label" for="input-new">Nueva contraseña</label>
+          <label class="field-label" for="input-new">{{ 'profile.newPassword' | t }}</label>
           <div class="password-field">
             <input
               id="input-new"
@@ -60,18 +60,18 @@
               type="button"
               class="toggle-visibility"
               (click)="hideNew = !hideNew"
-              [attr.aria-label]="hideNew ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+              [attr.aria-label]="(hideNew ? 'profile.showPassword' : 'profile.hidePassword') | t"
             >
               <mat-icon [fontIcon]="hideNew ? 'visibility' : 'visibility_off'"></mat-icon>
             </button>
           </div>
           <span class="field-error" *ngIf="form.get('newPassword')?.touched && form.get('newPassword')?.hasError('minlength')">
-            Debe tener al menos 8 caracteres
+            {{ 'profile.passwordMin' | t }}
           </span>
         </div>
 
         <div class="field-group">
-          <label class="field-label" for="input-confirm">Confirmar nueva contraseña</label>
+          <label class="field-label" for="input-confirm">{{ 'profile.confirmPassword' | t }}</label>
           <input
             id="input-confirm"
             class="input"
@@ -80,13 +80,13 @@
             autocomplete="new-password"
           />
           <span class="field-error" *ngIf="passwordsMismatch">
-            Las contraseñas no coinciden
+            {{ 'profile.passwordMismatch' | t }}
           </span>
         </div>
 
         <button class="btn btn-accent profile-submit" type="submit" [disabled]="saving || form.invalid">
           <mat-icon fontIcon="lock_reset"></mat-icon>
-          {{ saving ? 'Guardando…' : 'Actualizar contraseña' }}
+          {{ (saving ? 'profile.saving' : 'profile.updatePassword') | t }}
         </button>
       </form>
     </div>

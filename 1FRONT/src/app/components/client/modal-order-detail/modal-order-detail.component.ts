@@ -8,6 +8,8 @@ import { ModalStatusComponent } from '../../shared/modal-status/modal-status.com
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 export interface OrderDetailData {
   client: Client;
@@ -24,10 +26,11 @@ export interface OrderDetailData {
   templateUrl: './modal-order-detail.component.html',
   styleUrls: ['./modal-order-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatIconModule, MatTooltipModule, NamePipe, RutPipe],
+  imports: [CommonModule, MatDialogModule, MatIconModule, MatTooltipModule, NamePipe, RutPipe, TPipe],
 })
 export class ModalOrderDetailComponent {
   private readonly modal = inject(ModalService);
+  private readonly i18n = inject(I18nService);
   private readonly dialogRef = inject<MatDialogRef<ModalOrderDetailComponent>>(MatDialogRef);
 
   client: Client;
@@ -59,7 +62,7 @@ export class ModalOrderDetailComponent {
 
   statusLabel(status?: string): string {
     if (!status) return '—';
-    return status === 'En reparacion' ? 'En reparación' : status;
+    return status === 'En reparacion' ? this.i18n.t('client.orders.statusInRepair') : status;
   }
 
   changeStatus(): void {

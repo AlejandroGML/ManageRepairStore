@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>{{ hard ? 'Eliminar usuario definitivamente' : 'Desactivar usuario' }}</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ (hard ? 'admin.deleteDialog.deleteTitle' : 'admin.deleteDialog.deactivateTitle') | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -10,11 +10,10 @@
     <mat-icon class="warn-icon" [fontIcon]="hard ? 'delete_forever' : 'person_off'" aria-hidden="true"></mat-icon>
     @if (hard) {
       <p>
-        <b>{{ user.name }}</b> ya está desactivado.
-        ¿Eliminarlo <b>definitivamente</b>? Esta acción no se puede deshacer.
+        <b>{{ user.name }}</b>{{ 'admin.deleteDialog.hardAlreadyInactive' | t }}<b>{{ 'admin.deleteDialog.hardForever' | t }}</b>?{{ 'admin.deleteDialog.hardWarning' | t }}
       </p>
     } @else {
-      <p>¿Está seguro que desea desactivar al usuario <b>{{ user.name }}</b>?</p>
+      <p>{{ 'admin.deleteDialog.confirmPrefix' | t }}<b>{{ user.name }}</b>?</p>
     }
   </div>
 
@@ -22,14 +21,14 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="center">
-  <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+  <button class="btn btn-ghost" type="button" (click)="close()">{{ 'common.cancel' | t }}</button>
   @if (hard) {
     <button class="btn btn-danger" type="button" (click)="hardDelete()">
-      <mat-icon fontIcon="delete_forever"></mat-icon> Eliminar definitivamente
+      <mat-icon fontIcon="delete_forever"></mat-icon> {{ 'admin.deleteDialog.hardDelete' | t }}
     </button>
   } @else {
     <button class="btn btn-danger" type="button" (click)="deactivate()">
-      <mat-icon fontIcon="block"></mat-icon> Desactivar
+      <mat-icon fontIcon="block"></mat-icon> {{ 'admin.deleteDialog.deactivate' | t }}
     </button>
   }
 </mat-dialog-actions>

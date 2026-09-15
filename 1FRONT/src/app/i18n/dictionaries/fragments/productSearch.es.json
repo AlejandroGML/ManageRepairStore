@@ -1,0 +1,9 @@
+{
+  "productSearch.title": "Buscar producto",
+  "productSearch.name": "Nombre",
+  "productSearch.label": "Buscar Producto",
+  "productSearch.placeholderId": "Buscar por ID",
+  "productSearch.placeholderName": "Buscar por Nombre",
+  "productSearch.colSellingPrice": "Valor de Venta",
+  "productSearch.colSelect": "Seleccionar"
+}

@@ -1,12 +1,12 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Clientes y órdenes</h1>
-      <p class="page-lead">{{ totalClients }} clientes · {{ totalOrders }} órdenes registradas</p>
+      <h1 class="page-title">{{ 'finder.title' | t }}</h1>
+      <p class="page-lead">{{ 'finder.lead' | t:{ clients: totalClients, orders: totalOrders } }}</p>
     </div>
     <div class="page-actions">
       <button class="btn btn-ghost btn-sm" (click)="exportClients()">
-        <mat-icon fontIcon="download"></mat-icon> Exportar todos los Clientes
+        <mat-icon fontIcon="download"></mat-icon> {{ 'finder.exportAll' | t }}
       </button>
     </div>
   </div>
@@ -15,10 +15,10 @@
     <!-- Clientes -->
     <div class="card">
       <div class="card-head">
-        <h2 class="card-title">Clientes</h2>
+        <h2 class="card-title">{{ 'finder.clientsTitle' | t }}</h2>
         <div class="search-filter-row">
-          <select class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" aria-label="Filtrar por">
-            <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label }}</option>
+          <select class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" [attr.aria-label]="'finder.filterAriaLabel' | t">
+            <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label | t }}</option>
           </select>
           <div class="search-input-wrap client-search">
             <mat-icon fontIcon="search" class="search-input-icon"></mat-icon>
@@ -37,22 +37,22 @@
           <thead>
             <tr>
               <th class="sortable" [class.sorted]="sortField === 'rut'" (click)="sortBy('rut')" role="button" tabindex="0" (keydown.enter)="sortBy('rut')">
-                RUT
+                {{ 'finder.colRut' | t }}
                 <mat-icon [fontIcon]="sortField === 'rut' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
               </th>
               <th class="sortable" [class.sorted]="sortField === 'name'" (click)="sortBy('name')" role="button" tabindex="0" (keydown.enter)="sortBy('name')">
-                Cliente
+                {{ 'common.client' | t }}
                 <mat-icon [fontIcon]="sortField === 'name' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
               </th>
               <th class="sortable" [class.sorted]="sortField === 'phone'" (click)="sortBy('phone')" role="button" tabindex="0" (keydown.enter)="sortBy('phone')">
-                Teléfono
+                {{ 'finder.colPhone' | t }}
                 <mat-icon [fontIcon]="sortField === 'phone' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
               </th>
               <th class="col-num sortable" [class.sorted]="sortField === 'orderCount'" (click)="sortBy('orderCount')" role="button" tabindex="0" (keydown.enter)="sortBy('orderCount')">
-                Órdenes
+                {{ 'finder.colOrders' | t }}
                 <mat-icon [fontIcon]="sortField === 'orderCount' ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more'"></mat-icon>
               </th>
-              <th class="col-actions-head">Acciones</th>
+              <th class="col-actions-head">{{ 'common.actions' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -70,20 +70,20 @@
               <td>{{ client.phone }}</td>
               <td class="col-num mono">{{ client.orderCount }}</td>
               <td class="col-actions" (click)="$event.stopPropagation()">
-                <button class="icon-btn" (click)="showOrderDetails(client)" matTooltip="Ver órdenes" aria-label="Ver órdenes">
+                <button class="icon-btn" (click)="showOrderDetails(client)" [matTooltip]="'finder.viewOrders' | t" [attr.aria-label]="'finder.viewOrders' | t">
                   <mat-icon fontIcon="receipt_long"></mat-icon>
                 </button>
-                <button class="icon-btn" (click)="showModalEditUser(client)" matTooltip="Editar cliente" aria-label="Editar cliente">
+                <button class="icon-btn" (click)="showModalEditUser(client)" [matTooltip]="'finder.editClient' | t" [attr.aria-label]="'finder.editClient' | t">
                   <mat-icon fontIcon="edit"></mat-icon>
                 </button>
-                <button class="icon-btn" (click)="showModalDeleteUser(client)" matTooltip="Eliminar" aria-label="Eliminar cliente">
+                <button class="icon-btn" (click)="showModalDeleteUser(client)" [matTooltip]="'common.delete' | t" [attr.aria-label]="'finder.deleteClient' | t">
                   <mat-icon fontIcon="delete"></mat-icon>
                 </button>
               </td>
             </tr>
             <tr *ngIf="!pageClients.length">
               <td colspan="5" class="empty-state">
-                {{ clientSearch.trim() ? 'Sin clientes que coincidan.' : 'Escribe en el buscador para ver clientes.' }}
+                {{ (clientSearch.trim() ? 'finder.noMatches' : 'finder.searchPrompt') | t }}
               </td>
             </tr>
           </tbody>
@@ -91,18 +91,18 @@
       </div>
       <div class="paginator">
         <span>
-          Mostrando {{ totalMatches ? startIndex + 1 : 0 }}-{{ endIndex }} de {{ totalMatches }}
-          <em *ngIf="truncated" class="pg-ellipsis">· primeros {{ clients.length }}, afina tu búsqueda</em>
+          {{ 'finder.range' | t:{ from: totalMatches ? startIndex + 1 : 0, to: endIndex, total: totalMatches } }}
+          <em *ngIf="truncated" class="pg-ellipsis">{{ 'finder.truncated' | t:{ shown: clients.length } }}</em>
         </span>
         <div class="pages" *ngIf="pageCount > 1">
-          <button class="pg" [disabled]="pageIndex === 0" (click)="goPage(pageIndex - 1)" aria-label="Anterior">
+          <button class="pg" [disabled]="pageIndex === 0" (click)="goPage(pageIndex - 1)" [attr.aria-label]="'finder.prevPage' | t">
             <mat-icon fontIcon="chevron_left"></mat-icon>
           </button>
           <ng-container *ngFor="let p of visiblePages">
             <button *ngIf="p !== '…'" class="pg" [class.active]="p === pageIndex" (click)="goPage(p)">{{ p + 1 }}</button>
             <span *ngIf="p === '…'" class="pg-ellipsis">…</span>
           </ng-container>
-          <button class="pg" [disabled]="pageIndex >= pageCount - 1" (click)="goPage(pageIndex + 1)" aria-label="Siguiente">
+          <button class="pg" [disabled]="pageIndex >= pageCount - 1" (click)="goPage(pageIndex + 1)" [attr.aria-label]="'finder.nextPage' | t">
             <mat-icon fontIcon="chevron_right"></mat-icon>
           </button>
         </div>
@@ -112,26 +112,26 @@
     <!-- Órdenes recientes -->
     <div class="card">
       <div class="card-head">
-        <h2 class="card-title">Órdenes recientes</h2>
+        <h2 class="card-title">{{ 'finder.recentOrders' | t }}</h2>
         <span class="recent-context" *ngIf="selectedClient">{{ selectedClient.name | name }}</span>
       </div>
 
       <!-- Resumen del cliente seleccionado -->
       <div class="card card-pad client-mini" *ngIf="selectedClient">
-        <div class="cm-row"><span>N° Cliente</span><b class="mono">{{ selectedClient.id }}</b></div>
-        <div class="cm-row"><span>Nombre</span><b>{{ selectedClient.name | name }}</b></div>
-        <div class="cm-row"><span>Dirección</span><b>{{ (selectedClient.address | name) + ', ' + (selectedClient.city | name) }}</b></div>
-        <div class="cm-row"><span>Teléfono</span><b class="mono">{{ selectedClient.phone }}</b></div>
+        <div class="cm-row"><span>{{ 'finder.labelId' | t }}</span><b class="mono">{{ selectedClient.id }}</b></div>
+        <div class="cm-row"><span>{{ 'finder.labelName' | t }}</span><b>{{ selectedClient.name | name }}</b></div>
+        <div class="cm-row"><span>{{ 'finder.labelAddress' | t }}</span><b>{{ (selectedClient.address | name) + ', ' + (selectedClient.city | name) }}</b></div>
+        <div class="cm-row"><span>{{ 'finder.labelPhone' | t }}</span><b class="mono">{{ selectedClient.phone }}</b></div>
       </div>
 
       <div class="table-responsive">
         <table class="data recent-table">
           <thead>
             <tr>
-              <th>Código</th>
-              <th *ngIf="!selectedClient">Cliente</th>
-              <th *ngIf="selectedClient">Descripción</th>
-              <th>Estado</th>
+              <th>{{ 'finder.colCode' | t }}</th>
+              <th *ngIf="!selectedClient">{{ 'common.client' | t }}</th>
+              <th *ngIf="selectedClient">{{ 'common.description' | t }}</th>
+              <th>{{ 'finder.colStatus' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -142,7 +142,7 @@
               (keydown.enter)="openOrderDetail(o)"
               tabindex="0"
               role="button"
-              [title]="'Ver detalle de ' + o.code"
+              [title]="'finder.orderDetailTitle' | t:{ code: o.code }"
             >
               <td class="mono strong">{{ o.code }}</td>
               <td *ngIf="!selectedClient">{{ o.clientName | name }}</td>
@@ -155,7 +155,7 @@
             </tr>
             <tr *ngIf="!ordersTable.length">
               <td [attr.colspan]="3" class="empty-state">
-                {{ selectedClient ? 'Este cliente no tiene órdenes.' : 'Sin órdenes registradas. Selecciona un cliente para ver las suyas.' }}
+                {{ (selectedClient ? 'finder.noClientOrders' : 'finder.noOrders') | t }}
               </td>
             </tr>
           </tbody>

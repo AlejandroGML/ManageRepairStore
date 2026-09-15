@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>{{ isEditMode ? 'Editar usuario' : 'Nuevo usuario' }}</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ (isEditMode ? 'admin.form.editTitle' : 'admin.form.newTitle') | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -8,56 +8,56 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="user-form">
     <div class="field-group">
-      <label class="field-label" for="uf-name">Nombre</label>
-      <input id="uf-name" class="input" type="text" placeholder="Nombre completo" formControlName="name">
+      <label class="field-label" for="uf-name">{{ 'admin.form.name' | t }}</label>
+      <input id="uf-name" class="input" type="text" [placeholder]="'admin.form.namePlaceholder' | t" formControlName="name">
       @if (form.get('name')?.invalid && form.get('name')?.touched) {
-        <span class="field-error">El nombre es requerido</span>
+        <span class="field-error">{{ 'admin.form.nameRequired' | t }}</span>
       }
     </div>
 
     <div class="field-group">
-      <label class="field-label" for="uf-email">Email</label>
+      <label class="field-label" for="uf-email">{{ 'admin.form.email' | t }}</label>
       <input id="uf-email" class="input" type="email" placeholder="correo@ejemplo.cl" formControlName="email">
       @if (form.get('email')?.invalid && form.get('email')?.touched) {
         <span class="field-error">
-          {{ form.get('email')?.hasError('required') ? 'El email es requerido' : 'Email no válido' }}
+          {{ (form.get('email')?.hasError('required') ? 'admin.form.emailRequired' : 'admin.form.emailInvalid') | t }}
         </span>
       }
     </div>
 
     <div class="field-group">
-      <label class="field-label" for="uf-password">Contraseña</label>
+      <label class="field-label" for="uf-password">{{ 'admin.form.password' | t }}</label>
       <input
         id="uf-password"
         class="input"
         type="password"
-        [placeholder]="isEditMode ? 'Dejar en blanco para no cambiar' : 'Mínimo 8 caracteres'"
+        [placeholder]="(isEditMode ? 'admin.form.passwordKeep' : 'admin.form.passwordMin') | t"
         formControlName="password"
       >
       @if (form.get('password')?.invalid && form.get('password')?.touched) {
         <span class="field-error">
-          {{ form.get('password')?.hasError('required') ? 'La contraseña es requerida' : 'Mínimo 8 caracteres' }}
+          {{ (form.get('password')?.hasError('required') ? 'admin.form.passwordRequired' : 'admin.form.passwordMin') | t }}
         </span>
       }
     </div>
 
     <div class="field-group">
-      <label class="field-label" for="uf-role">Rol</label>
+      <label class="field-label" for="uf-role">{{ 'admin.form.role' | t }}</label>
       <select id="uf-role" class="select" formControlName="role">
-        <option value="admin">Administrador</option>
-        <option value="seller">Vendedor</option>
-        <option value="warehouse">Bodega</option>
+        <option value="admin">{{ 'admin.form.roleAdmin' | t }}</option>
+        <option value="seller">{{ 'admin.form.roleSeller' | t }}</option>
+        <option value="warehouse">{{ 'admin.form.roleWarehouse' | t }}</option>
       </select>
       @if (form.get('role')?.invalid && form.get('role')?.touched) {
-        <span class="field-error">El rol es requerido</span>
+        <span class="field-error">{{ 'admin.form.roleRequired' | t }}</span>
       }
     </div>
   </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+  <button class="btn btn-ghost" type="button" (click)="close()">{{ 'common.cancel' | t }}</button>
   <button class="btn btn-primary" type="button" (click)="save()">
-    <mat-icon fontIcon="save"></mat-icon> Guardar
+    <mat-icon fontIcon="save"></mat-icon> {{ 'common.save' | t }}
   </button>
 </mat-dialog-actions>

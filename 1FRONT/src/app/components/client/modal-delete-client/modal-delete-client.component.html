@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>Eliminar cliente</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ 'client.delete.title' | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -8,16 +8,13 @@
 <mat-dialog-content>
   <div class="delete-confirm">
     <mat-icon class="warn-icon" fontIcon="delete_forever" aria-hidden="true"></mat-icon>
-    <p>
-      ¿Está seguro que desea eliminar a <b>{{ client.name }}</b>
-      y <b>todos sus registros</b>?
-    </p>
+    <p>{{ 'client.delete.confirmPrefix' | t }}<b>{{ client.name }}</b>{{ 'client.delete.confirmMiddle' | t }}<b>{{ 'client.delete.confirmRecords' | t }}</b>?</p>
   </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="center">
-  <button class="btn btn-ghost" type="button" (click)="close()">Cancelar</button>
+  <button class="btn btn-ghost" type="button" (click)="close()">{{ 'common.cancel' | t }}</button>
   <button class="btn btn-danger" type="button" (click)="deleteClient()">
-    <mat-icon fontIcon="delete"></mat-icon> Eliminar
+    <mat-icon fontIcon="delete"></mat-icon> {{ 'common.delete' | t }}
   </button>
 </mat-dialog-actions>

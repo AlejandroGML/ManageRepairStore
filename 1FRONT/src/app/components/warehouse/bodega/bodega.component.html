@@ -1,4 +1,4 @@
-<div class="bodega-tabs" role="tablist" aria-label="Secciones de bodega">
+<div class="bodega-tabs" role="tablist" [attr.aria-label]="'bodega.sectionsLabel' | t">
   <a
     class="bodega-tab"
     routerLink="inventario"
@@ -6,7 +6,7 @@
     role="tab"
     aria-selected="true"
   >
-    <mat-icon fontIcon="inventory_2"></mat-icon> Inventario
+    <mat-icon fontIcon="inventory_2"></mat-icon> {{ 'bodega.inventory' | t }}
   </a>
   <a
     class="bodega-tab"
@@ -15,7 +15,7 @@
     role="tab"
     aria-selected="false"
   >
-    <mat-icon fontIcon="add_box"></mat-icon> Reposiciones
+    <mat-icon fontIcon="add_box"></mat-icon> {{ 'bodega.restocks' | t }}
   </a>
   <a
     class="bodega-tab"
@@ -24,7 +24,7 @@
     role="tab"
     aria-selected="false"
   >
-    <mat-icon fontIcon="engineering"></mat-icon> Repuestos
+    <mat-icon fontIcon="engineering"></mat-icon> {{ 'bodega.spareParts' | t }}
   </a>
 </div>
 

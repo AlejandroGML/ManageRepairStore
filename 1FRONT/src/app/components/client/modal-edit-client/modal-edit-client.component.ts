@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -8,6 +8,7 @@ import { LoadingService } from 'src/app/services/loading.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
 import { RutInputComponent } from '../../shared/rut-input/rut-input.component';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-modal-edit-client',
@@ -17,6 +18,7 @@ import { RutInputComponent } from '../../shared/rut-input/rut-input.component';
   styleUrls: ['./modal-edit-client.component.css']
 })
 export class ModalEditClientComponent {
+  private readonly i18n = inject(I18nService);
   form :FormGroup =  new FormGroup({
     id:new FormControl(),
     name: new FormControl('', [Validators.required]),
@@ -82,7 +84,7 @@ export class ModalEditClientComponent {
         this.dialogRef.close(updatedClient);
       },error =>{
         this.loadingService.setLoading(false);
-        this.snackbarService.openSnackBar('Error al actualizar. Intente nuevamente.');
+        this.snackbarService.openSnackBar(this.i18n.t('client.edit.updateError'));
         this.dialogRef.close(null);
       })
     })
@@ -93,11 +95,11 @@ export class ModalEditClientComponent {
 
   obtenerMensajeError(control: AbstractControl) {
     if (control?.hasError('required')) {
-      return 'Este campo es requerido';
+      return this.i18n.t('client.edit.required');
    } else if (control?.hasError('rutInvalido')) {
-     return 'El RUT ingresado no es válido';
+     return this.i18n.t('client.edit.rutInvalid');
     } else if (control?.hasError('email')) {
-      return 'El correo electrónico ingresado no es válido';
+      return this.i18n.t('client.edit.emailInvalid');
     } else if (control?.hasError('pattern')) {
     }
     return '';

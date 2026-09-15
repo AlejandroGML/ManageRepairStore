@@ -1,30 +1,27 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Reposiciones de stock</h1>
-      <p class="page-lead">Registra entradas y descuentos de inventario</p>
+      <h1 class="page-title">{{ 'refills.title' | t }}</h1>
+      <p class="page-lead">{{ 'refills.lead' | t }}</p>
     </div>
   </div>
   <div class="refill-grid">
     <!-- Nuevo movimiento -->
     <div class="card new-entry" id="new-entry">
       <div class="card-head">
-        <h2 class="card-title">Nuevo movimiento</h2>
+        <h2 class="card-title">{{ 'refills.newMovement' | t }}</h2>
       </div>
-      <p class="entry-help">
-        Las reposiciones registran <b>entradas de inventario</b>. Con una cantidad
-        negativa se <b>descuenta stock</b> del producto.
-      </p>
+      <p class="entry-help">{{ 'refills.helpIntro' | t }}<b>{{ 'refills.helpEntries' | t }}</b>{{ 'refills.helpNegative' | t }}<b>{{ 'refills.helpDeducts' | t }}</b>{{ 'refills.helpOutro' | t }}</p>
       <div class="entry-form">
-        <label class="field-label" for="refill-field">Buscar producto por</label>
+        <label class="field-label" for="refill-field">{{ 'refills.searchProductBy' | t }}</label>
         <div class="search-wrap">
           <div class="search-filter-row">
-            <select id="refill-field" class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" aria-label="Buscar por">
+            <select id="refill-field" class="select filter-select" [(ngModel)]="searchField" (ngModelChange)="onSearchChange()" [attr.aria-label]="'refills.searchAriaLabel' | t">
               <option *ngFor="let f of searchFields" [value]="f.value">{{ f.label }}</option>
             </select>
             <input
               class="input"
-              placeholder="Escribe para buscar..."
+              [placeholder]="'refills.searchPlaceholder' | t"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchChange()"
               [disabled]="!!selectedProduct"
@@ -40,44 +37,44 @@
             (click)="selectProduct(p)"
           >
             <span class="sr-name">{{ p.name }}</span>
-            <span class="sr-meta mono">stock {{ p.stock ?? 0 }}</span>
+            <span class="sr-meta mono">{{ 'refills.stockCount' | t:{ count: p.stock ?? 0 } }}</span>
           </button>
             <p class="sr-truncated muted" *ngIf="searchTotal > searchResults.length">
-              Mostrando {{ searchResults.length }} de {{ searchTotal }} — afina tu búsqueda
+              {{ 'refills.truncatedResults' | t:{ shown: searchResults.length, total: searchTotal } }}
             </p>
           </div>
         </div>
         <p class="empty-state" *ngIf="!selectedProduct && searchQuery.trim() && !searchResults.length && !searching">
-          Sin productos que coincidan.
+          {{ 'refills.noProducts' | t }}
         </p>
 
         <!-- Producto seleccionado -->
         <div class="selected-product" *ngIf="selectedProduct">
           <span class="sp-name">{{ selectedProduct.name }}</span>
-          <span class="sr-meta mono">stock {{ selectedProduct.stock ?? 0 }}</span>
-          <button type="button" class="sp-clear" (click)="clearSelection()" aria-label="Cambiar producto">
+          <span class="sr-meta mono">{{ 'refills.stockCount' | t:{ count: selectedProduct.stock ?? 0 } }}</span>
+          <button type="button" class="sp-clear" (click)="clearSelection()" [attr.aria-label]="'refills.changeProduct' | t">
             <mat-icon fontIcon="close"></mat-icon>
           </button>
         </div>
 
         <div class="entry-field">
-          <label class="field-label" for="refill-qty">Cantidad (+ entra / − descuenta)</label>
+          <label class="field-label" for="refill-qty">{{ 'refills.quantityLabel' | t }}</label>
           <input id="refill-qty" class="input mono" type="number" placeholder="10" [(ngModel)]="quantity" />
         </div>
 
         <div class="discount-warning" *ngIf="isDiscount">
           <mat-icon fontIcon="warning"></mat-icon>
-          Si se pone una cantidad negativa, se restará stock al producto seleccionado
+          {{ 'refills.discountWarning' | t }}
         </div>
 
         <div class="field-group">
-          <label class="field-label" for="refill-detail">Detalle (proveedor, factura o comentario)</label>
-          <input id="refill-detail" class="input" placeholder="Opcional" [(ngModel)]="detail" />
+          <label class="field-label" for="refill-detail">{{ 'refills.detailField' | t }}</label>
+          <input id="refill-detail" class="input" [placeholder]="'common.optional' | t" [(ngModel)]="detail" />
         </div>
 
         <button class="btn btn-accent btn-block entry-submit" [disabled]="!canSubmit" (click)="registerEntry()">
           <mat-icon fontIcon="package_2"></mat-icon>
-          <span>{{ submitting ? 'Guardando...' : (isDiscount ? 'Registrar Descuento' : 'Agregar Reposición') }}</span>
+          <span>{{ (submitting ? 'refills.saving' : (isDiscount ? 'refills.registerDiscount' : 'refills.addRestock')) | t }}</span>
         </button>
       </div>
     </div>
@@ -85,18 +82,18 @@
     <!-- Historial -->
     <div class="card history">
       <div class="card-head">
-        <h2 class="card-title">Historial</h2>
+        <h2 class="card-title">{{ 'refills.history' | t }}</h2>
         <span class="history-range muted">{{ historyRangeLabel }}</span>
       </div>
       <div class="table-wrap">
         <table class="data zebra">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th>Producto</th>
-              <th class="col-num">Cant.</th>
-              <th class="col-num">Stock</th>
-              <th>Detalle</th>
+              <th>{{ 'common.date' | t }}</th>
+              <th>{{ 'common.product' | t }}</th>
+              <th class="col-num">{{ 'refills.qty' | t }}</th>
+              <th class="col-num">{{ 'common.stock' | t }}</th>
+              <th>{{ 'refills.detailColumn' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -115,13 +112,13 @@
           </tbody>
         </table>
       </div>
-      <p class="empty-state" *ngIf="!historyRows.length">Sin movimientos registrados.</p>
+      <p class="empty-state" *ngIf="!historyRows.length">{{ 'refills.emptyHistory' | t }}</p>
       <div class="paginator" *ngIf="historyTotal > pageSize">
-        <button class="pg" [disabled]="historyPage === 0" (click)="goHistoryPage(historyPage - 1)" aria-label="Anterior">
+        <button class="pg" [disabled]="historyPage === 0" (click)="goHistoryPage(historyPage - 1)" [attr.aria-label]="'refills.prevPage' | t">
           <mat-icon fontIcon="chevron_left"></mat-icon>
         </button>
-        <span class="pg-label">Página {{ historyPage + 1 }} de {{ historyMaxPage + 1 }}</span>
-        <button class="pg" [disabled]="(historyPage + 1) * pageSize >= historyTotal" (click)="goHistoryPage(historyPage + 1)" aria-label="Siguiente">
+        <span class="pg-label">{{ 'refills.pageLabel' | t:{ page: historyPage + 1, total: historyMaxPage + 1 } }}</span>
+        <button class="pg" [disabled]="(historyPage + 1) * pageSize >= historyTotal" (click)="goHistoryPage(historyPage + 1)" [attr.aria-label]="'refills.nextPage' | t">
           <mat-icon fontIcon="chevron_right"></mat-icon>
         </button>
       </div>

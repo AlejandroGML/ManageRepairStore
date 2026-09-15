@@ -3,6 +3,7 @@ import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NG_VALIDATORS, AbstractControl, ValidationErrors, Validator } from '@angular/forms';
 import { RutService } from 'src/app/services/rut.service';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-rut-input',
@@ -24,13 +25,15 @@ import { RutPipe } from 'src/app/pipes/rut.pipe';
   ],
 })
 export class RutInputComponent implements ControlValueAccessor, Validator {
+  private readonly i18n = inject(I18nService);
+
   /**
    * 'material': mat-form-field (diálogos antiguos).
    * 'plain': input estándar del design system (formularios nuevos).
    */
   @Input() variant: 'material' | 'plain' = 'material';
 
-  @Input() placeholder: string = 'Ej: 12.345.678-5';
+  @Input() placeholder: string = this.i18n.t('sharedModal.rut.placeholder');
 
   /** Valor interno sin formato (solo dígitos) */
   value: string = '';
@@ -97,7 +100,7 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
     }
 
     if (this.value.length < 8) {
-      this.rutError = 'RUT muy corto — debe tener al menos 8 dígitos';
+      this.rutError = this.i18n.t('sharedModal.rut.tooShort');
       this.onChange(this.value);
       return;
     }
@@ -112,7 +115,7 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
       const expectedDv = this.rutService.calcularDV(base);
 
       if (expectedDv !== dv) {
-        this.rutError = `DV no válido — se esperaba ${expectedDv}`;
+        this.rutError = this.i18n.t('sharedModal.rut.invalidDv', { dv: expectedDv });
         this.onChange(this.value);
         return;
       }
@@ -142,7 +145,7 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
       const expectedDv = this.rutService.calcularDV(base);
 
       if (expectedDv !== dv) {
-        this.rutError = `DV no válido — se esperaba ${expectedDv}`;
+        this.rutError = this.i18n.t('sharedModal.rut.invalidDv', { dv: expectedDv });
         this.onChange(this.value);
         return;
       }
@@ -154,7 +157,7 @@ export class RutInputComponent implements ControlValueAccessor, Validator {
       return;
     }
 
-    this.rutError = 'RUT inválido';
+    this.rutError = this.i18n.t('sharedModal.rut.invalid');
     this.onChange(this.value);
   }
 

@@ -11,6 +11,8 @@ import {
 } from '../../../services/products.api.service';
 import { DataSyncService } from '../../../services/data-sync.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 const PAGE_SIZE = 20;
 
@@ -21,16 +23,19 @@ type SearchField = 'name' | 'id' | 'location' | 'category';
   templateUrl: './refills.component.html',
   styleUrls: ['./refills.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, TPipe],
 })
 export class RefillsComponent implements OnInit, OnDestroy {
+  // Declared before searchFields: its labels resolve i18n in the field initializer.
+  private readonly i18n = inject(I18nService);
+
   // ---- Búsqueda server-side de producto ----
   searchField: SearchField = 'name';
   readonly searchFields: { value: SearchField; label: string }[] = [
-    { value: 'name', label: 'Nombre' },
-    { value: 'id', label: 'ID' },
-    { value: 'location', label: 'Ubicación' },
-    { value: 'category', label: 'Categoría' },
+    { value: 'name', label: this.i18n.t('refills.fieldName') },
+    { value: 'id', label: this.i18n.t('refills.fieldId') },
+    { value: 'location', label: this.i18n.t('refills.fieldLocation') },
+    { value: 'category', label: this.i18n.t('refills.fieldCategory') },
   ];
   searchQuery = '';
   searchResults: Product[] = [];
@@ -123,7 +128,7 @@ export class RefillsComponent implements OnInit, OnDestroy {
     if (!this.selectedProduct || this.selectedProduct.id === undefined) return;
     const qty = this.quantity ?? 0;
     if (qty === 0) {
-      this.snackbar.error('Ingresa una cantidad distinta de cero');
+      this.snackbar.error(this.i18n.t('refills.errorZeroQuantity'));
       return;
     }
     this.submitting = true;
@@ -151,13 +156,17 @@ export class RefillsComponent implements OnInit, OnDestroy {
           this.submitting = false;
           this.clearSelection();
           this.historyPage = 0;
-          this.snackbar.success(isDiscount ? 'Descuento registrado correctamente' : 'Reposición registrada correctamente');
+          this.snackbar.success(
+            isDiscount
+              ? this.i18n.t('refills.successDiscount')
+              : this.i18n.t('refills.successRefill')
+          );
           this.loadHistory();
           this.dataSyncService.notifyTransactionUpdate();
         },
         error: (err) => {
           this.submitting = false;
-          this.snackbar.error(err.error?.message || 'Error al registrar el movimiento');
+          this.snackbar.error(err.error?.message || this.i18n.t('refills.errorRegister'));
         },
       });
   }
@@ -187,7 +196,7 @@ export class RefillsComponent implements OnInit, OnDestroy {
     if (!this.historyTotal) return '0';
     const from = this.historyPage * this.pageSize + 1;
     const to = Math.min(from + this.historyRows.length - 1, this.historyTotal);
-    return `${from}–${to} de ${this.historyTotal}`;
+    return this.i18n.t('refills.rangeLabel', { from, to, total: this.historyTotal });
   }
 
   /** Detalle legible (sin el prefijo histórico "Reposición de stock ·"). */

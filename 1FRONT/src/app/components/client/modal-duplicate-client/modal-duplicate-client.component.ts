@@ -7,6 +7,8 @@ import { DuplicateMatch } from 'src/app/services/clients.api.service';
 import { Client } from 'src/app/interface/client';
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { RutPipe } from 'src/app/pipes/rut.pipe';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 export interface DuplicateClientResult {
   action: 'use' | 'edit' | 'create';
@@ -14,13 +16,13 @@ export interface DuplicateClientResult {
 }
 
 /** Etiqueta legible por campo (para el listado de coincidencias). */
-const FIELD_LABELS: Record<string, string> = {
-  rut: 'RUT',
-  name: 'Nombre',
-  address: 'Dirección',
-  phone: 'Teléfono',
-  email: 'Correo',
-  company: 'Empresa',
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  rut: 'client.duplicate.fieldRut',
+  name: 'client.duplicate.fieldName',
+  address: 'client.duplicate.fieldAddress',
+  phone: 'client.duplicate.fieldPhone',
+  email: 'client.duplicate.fieldEmail',
+  company: 'client.duplicate.fieldCompany',
 };
 
 /**
@@ -33,10 +35,11 @@ const FIELD_LABELS: Record<string, string> = {
   templateUrl: './modal-duplicate-client.component.html',
   styleUrls: ['./modal-duplicate-client.component.css'],
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatIconModule, MatTooltipModule, NamePipe, RutPipe],
+  imports: [CommonModule, MatDialogModule, MatIconModule, MatTooltipModule, NamePipe, RutPipe, TPipe],
 })
 export class ModalDuplicateClientComponent {
   private readonly dialogRef = inject<MatDialogRef<ModalDuplicateClientComponent>>(MatDialogRef);
+  private readonly i18n = inject(I18nService);
 
   matches: DuplicateMatch[];
 
@@ -45,7 +48,8 @@ export class ModalDuplicateClientComponent {
   }
 
   fieldLabel(field: string): string {
-    return FIELD_LABELS[field] ?? field;
+    const key = FIELD_LABEL_KEYS[field];
+    return key ? this.i18n.t(key) : field;
   }
 
   /** Similitud legible (85%). */

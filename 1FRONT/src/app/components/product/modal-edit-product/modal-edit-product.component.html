@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>{{ isNew ? 'Agregar producto' : 'Editar producto' }}</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ (isNew ? 'product.edit.titleNew' : 'product.edit.titleEdit') | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -9,32 +9,32 @@
     <!-- Stock actual (solo lectura en edición) -->
     <div class="stock-banner" *ngIf="!isNew">
       <mat-icon fontIcon="inventory_2"></mat-icon>
-      <span class="stock-label">Stock actual</span>
+      <span class="stock-label">{{ 'product.edit.currentStock' | t }}</span>
       <b class="stock-value mono">{{ data.product.stock ?? 0 }}</b>
     </div>
 
     <div class="form-grid">
       <div class="field-group">
-        <label class="field-label" for="pf-name">Nombre de producto</label>
-        <input id="pf-name" class="input" placeholder="Ej: Cocina a Gas" formControlName="name" />
+        <label class="field-label" for="pf-name">{{ 'product.edit.name' | t }}</label>
+        <input id="pf-name" class="input" [placeholder]="'product.edit.namePlaceholder' | t" formControlName="name" />
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="pf-category">Categoría</label>
+        <label class="field-label" for="pf-category">{{ 'product.edit.category' | t }}</label>
         <select id="pf-category" class="select" formControlName="categoryId" *ngIf="categories.length">
-          <option [ngValue]="''">Sin categoría</option>
+          <option [ngValue]="''">{{ 'product.edit.noCategory' | t }}</option>
           <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
         </select>
-        <input id="pf-category" class="input" value="Sin categorías" disabled *ngIf="!categories.length" />
+        <input id="pf-category" class="input" [value]="'product.edit.noCategories' | t" disabled *ngIf="!categories.length" />
       </div>
 
       <div class="field-group" *ngIf="isNew">
-        <label class="field-label" for="pf-quantity">Stock inicial</label>
-        <input id="pf-quantity" class="input mono" type="number" placeholder="Cantidad" formControlName="quantity" />
+        <label class="field-label" for="pf-quantity">{{ 'product.edit.initialStock' | t }}</label>
+        <input id="pf-quantity" class="input mono" type="number" [placeholder]="'common.quantity' | t" formControlName="quantity" />
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="pf-cost">Precio de costo</label>
+        <label class="field-label" for="pf-cost">{{ 'product.edit.costPrice' | t }}</label>
         <div class="currency-input">
           <span class="currency-prefix">$</span>
           <input id="pf-cost" class="input mono" type="number" placeholder="0" formControlName="costPrice" />
@@ -42,7 +42,7 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="pf-price">Precio de venta</label>
+        <label class="field-label" for="pf-price">{{ 'product.edit.sellingPrice' | t }}</label>
         <div class="currency-input">
           <span class="currency-prefix">$</span>
           <input id="pf-price" class="input mono" type="number" placeholder="0" formControlName="sellingPrice" />
@@ -50,28 +50,28 @@
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="pf-discount">Descuento máximo (%)</label>
+        <label class="field-label" for="pf-discount">{{ 'product.edit.maxDiscount' | t }}</label>
         <input id="pf-discount" class="input mono" type="number" placeholder="0" formControlName="maxDiscount" />
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="pf-location">Localización</label>
-        <input id="pf-location" class="input" placeholder="Ubicación en bodega" formControlName="location" />
+        <label class="field-label" for="pf-location">{{ 'product.edit.location' | t }}</label>
+        <input id="pf-location" class="input" [placeholder]="'product.edit.locationPlaceholder' | t" formControlName="location" />
       </div>
 
       <div class="field-group span-2">
-        <label class="field-label" for="pf-description">Descripción</label>
-        <textarea id="pf-description" class="input" rows="2" placeholder="Descripción" formControlName="description"></textarea>
+        <label class="field-label" for="pf-description">{{ 'common.description' | t }}</label>
+        <textarea id="pf-description" class="input" rows="2" [placeholder]="'common.description' | t" formControlName="description"></textarea>
       </div>
 
       <div class="field-group span-2">
-        <span class="field-label">Imagen</span>
+        <span class="field-label">{{ 'product.edit.image' | t }}</span>
         <div class="image-row">
           <label class="btn btn-soft image-btn" for="image-upload">
-            <mat-icon fontIcon="upload"></mat-icon> Subir imagen
+            <mat-icon fontIcon="upload"></mat-icon> {{ 'product.edit.uploadImage' | t }}
           </label>
           <input id="image-upload" type="file" accept="image/*" (change)="onFileSelected($event)" class="image-input" />
-          <img *ngIf="imageUrl" [src]="imageUrl" alt="Vista previa de imagen" class="product-image-preview" />
+          <img *ngIf="imageUrl" [src]="imageUrl" [alt]="'product.edit.imagePreviewAlt' | t" class="product-image-preview" />
         </div>
       </div>
     </div>
@@ -79,8 +79,8 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button class="btn btn-ghost" (click)="close()">Cancelar</button>
+  <button class="btn btn-ghost" (click)="close()">{{ 'common.cancel' | t }}</button>
   <button class="btn btn-primary" (click)="saveChanges()">
-    <mat-icon fontIcon="check"></mat-icon> {{ isNew ? 'Crear' : 'Actualizar' }}
+    <mat-icon fontIcon="check"></mat-icon> {{ (isNew ? 'product.edit.create' : 'product.edit.update') | t }}
   </button>
 </mat-dialog-actions>

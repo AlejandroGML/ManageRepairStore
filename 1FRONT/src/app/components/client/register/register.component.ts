@@ -23,6 +23,7 @@ import {
 } from '../modal-duplicate-client/modal-duplicate-client.component';
 import { ModalEditClientComponent } from '../modal-edit-client/modal-edit-client.component';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-register',
@@ -61,17 +62,18 @@ export class RegisterComponent {
   private readonly ordersApi = inject(OrdersApiService);
   private readonly snackBarService = inject(SnackbarService);
   private readonly pdfService = inject(PdfService);
+  private readonly i18n = inject(I18nService);
 
-  /** Labels legibles de los campos para el feedback de validación. */
-  private readonly fieldLabels: Record<string, string> = {
-    name: 'Cliente',
-    rut: 'RUT',
-    address: 'Dirección',
-    city: 'Ciudad',
-    phone: 'Teléfono',
-    email: 'Correo',
-    description: 'Descripción',
-    observation: 'Observación',
+  /** i18n keys de los labels de campo para el feedback de validación. */
+  private readonly fieldLabelKeys: Record<string, string> = {
+    name: 'common.client',
+    rut: 'register.rutLabel',
+    address: 'register.address',
+    city: 'register.fieldCity',
+    phone: 'register.phone',
+    email: 'register.email',
+    description: 'common.description',
+    observation: 'register.fieldObservation',
   };
 
   constructor() {
@@ -119,7 +121,7 @@ export class RegisterComponent {
 
   orderStatusLabel(status?: string): string {
     if (!status) return '—';
-    return status === 'En reparacion' ? 'En reparación' : status;
+    return status === 'En reparacion' ? this.i18n.t('register.statusInRepair') : status;
   }
 
   registerOrder(): void {
@@ -128,11 +130,14 @@ export class RegisterComponent {
       // Feedback explícito: antes esto retornaba en silencio y parecía que "no ocurría nada".
       const missing = Object.keys(this.form.controls)
         .filter((k) => this.form.get(k)?.invalid && !['has_company', 'company_name'].includes(k))
-        .map((k) => this.fieldLabels[k] ?? k);
+        .map((k) => {
+          const labelKey = this.fieldLabelKeys[k];
+          return labelKey ? this.i18n.t(labelKey) : k;
+        });
       this.snackBarService.openSnackBar(
         missing.length
-          ? `Faltan campos obligatorios: ${missing.join(', ')}`
-          : 'El formulario tiene errores de validación'
+          ? this.i18n.t('register.missingFields', { fields: missing.join(', ') })
+          : this.i18n.t('register.formErrors')
       );
       return;
     }
@@ -265,11 +270,11 @@ export class RegisterComponent {
       if (ifilterByRut === this.NOT_FOUND) {
         this.clients.unshift(clientAdded);
       }
-      this.snackBarService.success('Orden registrada correctamente');
+      this.snackBarService.success(this.i18n.t('register.success'));
       this.lastClientAdded = this.ordenIngreso.clientId || 0;
       this.loadingService.setLoading(false);
     }, () => {
-      this.snackBarService.openSnackBar('Error. No fue posible conectarse con servidor');
+      this.snackBarService.openSnackBar(this.i18n.t('register.connectionError'));
       this.loadingService.setLoading(false);
     });
   }
@@ -436,7 +441,7 @@ export class RegisterComponent {
     this.clientsApi.findUserByRut(rutFinded).subscribe({
       next: (users) => {
         if (users.length === 0) {
-          this.snackBarService.openSnackBar('Sin resultados');
+          this.snackBarService.openSnackBar(this.i18n.t('register.noResults'));
           this.clearForm(false, true);
         } else {
           const existingIds = new Set(this.clients.map((c) => c.id));
@@ -517,11 +522,11 @@ export class RegisterComponent {
 
   obtenerMensajeError(control: AbstractControl): string {
     if (control?.hasError('required')) {
-      return 'Este campo es requerido';
+      return this.i18n.t('register.required');
     } else if (control?.hasError('email')) {
-      return 'El correo electrónico ingresado no es válido';
+      return this.i18n.t('register.emailInvalid');
     } else if (control?.hasError('pattern')) {
-      return 'Este campo solo puede contener números';
+      return this.i18n.t('register.numbersOnly');
     }
     return '';
   }

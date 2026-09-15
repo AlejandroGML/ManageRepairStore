@@ -9,6 +9,7 @@ import { ModalEditProductComponent } from '../modal-edit-product/modal-edit-prod
 import { ModalViewTransactionsComponent } from '../modal-view-transactions/modal-view-transactions.component';
 import { DataSyncService } from 'src/app/services/data-sync.service'; // Importa el servicio
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-modal-search-results',
@@ -19,6 +20,7 @@ import { ModalService } from 'src/app/services/modal.service';
 })
 export class ModalSearchResultsComponent implements OnInit {
   private readonly modal = inject(ModalService);
+  private readonly i18n = inject(I18nService);
   displayedColumns: string[] = ['id', 'image', 'name', 'stock', 'location', 'sellingPrice', 'transaction', 'edit'];
   products: Product[] = [];
 
@@ -41,7 +43,7 @@ export class ModalSearchResultsComponent implements OnInit {
         ...product,
         costPrice: lastTransaction ? lastTransaction.costPrice : 0,
         sellingPrice: lastTransaction ? lastTransaction.sellingPrice : 0,
-        location: lastTransaction ? lastTransaction.location : 'N/A'
+        location: lastTransaction ? lastTransaction.location : this.i18n.t('results.notAvailable')
       };
     });
   }

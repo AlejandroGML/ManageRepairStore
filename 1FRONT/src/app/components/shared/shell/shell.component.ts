@@ -8,6 +8,8 @@ import { AuthService } from '../../../services/auth.service';
 import { ProductsApiService } from '../../../services/products.api.service';
 import { UserProfile } from '../../../interface/user-profile';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { I18nService, Lang } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 interface NavItem {
   path: string;
@@ -33,12 +35,14 @@ interface NavGroup {
     MatIconModule,
     MatTooltipModule,
     ThemeToggleComponent,
+    TPipe,
   ],
 })
 export class ShellComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly productsApi = inject(ProductsApiService);
+  readonly i18n = inject(I18nService);
 
   sidebarOpen = false;
   sidebarCollapsed = false;
@@ -48,29 +52,29 @@ export class ShellComponent implements OnInit {
 
   readonly navGroups: NavGroup[] = [
     {
-      label: 'Principal',
+      label: 'nav.group.main',
       items: [
-        { path: '/panel', label: 'Panel', icon: 'dashboard', roles: ['admin', 'warehouse', 'seller'] },
-        { path: '/ventas', label: 'Ventas', icon: 'point_of_sale', roles: ['admin', 'seller'] },
-        { path: '/registrar', label: 'Registrar orden', icon: 'assignment_add', roles: ['admin'] },
+        { path: '/panel', label: 'nav.panel', icon: 'dashboard', roles: ['admin', 'warehouse', 'seller'] },
+        { path: '/ventas', label: 'nav.sales', icon: 'point_of_sale', roles: ['admin', 'seller'] },
+        { path: '/registrar', label: 'nav.registerOrder', icon: 'assignment_add', roles: ['admin'] },
       ],
     },
     {
-      label: 'Inventario',
+      label: 'nav.group.inventory',
       items: [
-        { path: '/bodega', label: 'Bodega', icon: 'warehouse', roles: ['admin', 'warehouse'], badgeKey: 'refills' },
+        { path: '/bodega', label: 'nav.warehouse', icon: 'warehouse', roles: ['admin', 'warehouse'], badgeKey: 'refills' },
       ],
     },
     {
-      label: 'Gestión',
+      label: 'nav.group.management',
       items: [
-        { path: '/clientes', label: 'Clientes y órdenes', icon: 'groups', roles: ['admin'] },
+        { path: '/clientes', label: 'nav.clients', icon: 'groups', roles: ['admin'] },
       ],
     },
     {
-      label: 'Sistema',
+      label: 'nav.group.system',
       items: [
-        { path: '/admin', label: 'Administración', icon: 'admin_panel_settings', roles: ['admin'] },
+        { path: '/admin', label: 'nav.admin', icon: 'admin_panel_settings', roles: ['admin'] },
       ],
     },
   ];
@@ -134,17 +138,26 @@ export class ShellComponent implements OnInit {
     return this.authService.getCurrentUser() ?? undefined;
   }
 
+  /** i18n key — resolved with the `t` pipe so it follows the live language. */
   get roleLabel(): string {
     switch (this.user?.role) {
       case 'admin':
-        return 'Administrador';
+        return 'role.admin';
       case 'warehouse':
-        return 'Bodega';
+        return 'role.warehouse';
       case 'seller':
-        return 'Vendedor';
+        return 'role.seller';
       default:
         return '';
     }
+  }
+
+  toggleLang(): void {
+    this.i18n.toggle();
+  }
+
+  get langLabel(): string {
+    return this.i18n.lang() === 'en' ? 'ES' : 'EN';
   }
 
   get initials(): string {

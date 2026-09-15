@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { TPipe } from '../../../i18n/t.pipe';
 
 /**
  * Pantalla unificada de Bodega: gestiona productos (Inventario) y
@@ -12,6 +13,6 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './bodega.component.html',
   styleUrls: ['./bodega.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatIconModule, TPipe],
 })
 export class BodegaComponent {}

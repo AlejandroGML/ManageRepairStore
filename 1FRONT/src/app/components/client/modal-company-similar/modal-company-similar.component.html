@@ -1,13 +1,13 @@
 <h2 mat-dialog-title>
-  <span>Empresa con nombre similar</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ 'client.company.title' | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
 
 <mat-dialog-content>
   <p class="cs-intro">
-    "<b>{{ query }}</b>" no está inscrita, pero se parece a estas empresas ya registradas:
+    "<b>{{ query }}</b>" {{ 'client.company.introSuffix' | t }}
   </p>
 
   <div class="cs-list">
@@ -15,24 +15,24 @@
       <div class="cs-item-head">
         <strong>{{ c.name }}</strong>
         <span class="badge badge-neutral" *ngIf="c.sucursales > 1">
-          <span class="dot"></span> {{ c.sucursales }} sucursales
+          <span class="dot"></span> {{ 'client.company.branches' | t:{ count: c.sucursales } }}
         </span>
       </div>
-      <div class="cs-item-rut mono" *ngIf="c.rut">RUT: {{ c.rut }}</div>
+      <div class="cs-item-rut mono" *ngIf="c.rut">{{ 'client.company.rutLine' | t:{ rut: c.rut } }}</div>
       <button class="btn btn-soft btn-sm" (click)="useCompany(c)">
-        <mat-icon fontIcon="check"></mat-icon> Usar esta empresa
+        <mat-icon fontIcon="check"></mat-icon> {{ 'client.company.useCompany' | t }}
       </button>
     </div>
   </div>
 
   <p class="cs-note">
-    Si ninguna corresponde, puedes crear la empresa nueva. El RUT quedará libre para que lo escribas.
+    {{ 'client.company.note' | t }}
   </p>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button class="btn btn-ghost" (click)="close()">Cancelar</button>
+  <button class="btn btn-ghost" (click)="close()">{{ 'common.cancel' | t }}</button>
   <button class="btn btn-primary" (click)="createNew()">
-    <mat-icon fontIcon="add_business"></mat-icon> Crear nueva empresa
+    <mat-icon fontIcon="add_business"></mat-icon> {{ 'client.company.createNew' | t }}
   </button>
 </mat-dialog-actions>

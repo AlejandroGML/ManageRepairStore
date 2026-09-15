@@ -23,8 +23,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { TPipe } from './i18n/t.pipe';
 
 export const SHARED_IMPORTS = [
+  TPipe,
   CommonModule,
   FormsModule,
   ReactiveFormsModule,
@@ -50,3 +52,6 @@ export const SHARED_IMPORTS = [
   MatNativeDateModule,
   MatCheckboxModule,
 ];
+
+// Re-exported so components consuming SHARED_IMPORTS can resolve the pipe (NG3004).
+export { TPipe };

@@ -1,20 +1,20 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Panel de control</h1>
-      <p class="page-lead">{{ todayLabel }} · Resumen del negocio</p>
+      <h1 class="page-title">{{ 'panel.title' | t }}</h1>
+      <p class="page-lead">{{ todayLabel }} · {{ 'panel.lead' | t }}</p>
     </div>
     <div class="page-actions">
       <button class="btn btn-ghost btn-sm" (click)="exportLowStock()">
-        <mat-icon fontIcon="download"></mat-icon> Exportar
+        <mat-icon fontIcon="download"></mat-icon> {{ 'common.export' | t }}
       </button>
       @if (isAdmin) {
         <button class="btn btn-soft" routerLink="/registrar">
-          <mat-icon fontIcon="assignment_add"></mat-icon> Nueva orden
+          <mat-icon fontIcon="assignment_add"></mat-icon> {{ 'panel.newOrder' | t }}
         </button>
       }
       <button class="btn btn-accent" routerLink="/ventas">
-        <mat-icon fontIcon="add_shopping_cart"></mat-icon> Nueva venta
+        <mat-icon fontIcon="add_shopping_cart"></mat-icon> {{ 'panel.newSale' | t }}
       </button>
     </div>
   </div>
@@ -44,17 +44,17 @@
     <div class="panel-grid">
       <div class="card">
         <div class="card-head">
-          <h2 class="card-title">Alertas de stock bajo</h2>
-          <button class="btn btn-soft btn-sm" routerLink="/bodega/reposiciones">Reponer</button>
+          <h2 class="card-title">{{ 'panel.lowStockTitle' | t }}</h2>
+          <button class="btn btn-soft btn-sm" routerLink="/bodega/reposiciones">{{ 'panel.restock' | t }}</button>
         </div>
         <div class="table-wrap" *ngIf="lowStock.length; else emptyState">
           <table class="data">
             <thead>
               <tr>
-                <th>Producto</th>
-                <th class="col-num">Stock</th>
-                <th class="col-num">Mínimo</th>
-                <th>Estado</th>
+                <th>{{ 'common.product' | t }}</th>
+                <th class="col-num">{{ 'common.stock' | t }}</th>
+                <th class="col-num">{{ 'panel.min' | t }}</th>
+                <th>{{ 'panel.status' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -72,13 +72,13 @@
           </table>
         </div>
         <ng-template #emptyState>
-          <p class="empty-state">Sin alertas — el stock está en niveles saludables.</p>
+          <p class="empty-state">{{ 'panel.emptyLowStock' | t }}</p>
         </ng-template>
       </div>
 
       <div class="card">
         <div class="card-head">
-          <h2 class="card-title">Actividad reciente</h2>
+          <h2 class="card-title">{{ 'panel.activityTitle' | t }}</h2>
         </div>
         <div class="activity-list" *ngIf="activity.length; else noActivity">
           <div class="activity-item" *ngFor="let a of activity">
@@ -88,14 +88,14 @@
             <div class="activity-meta">
               <strong>{{ a.title }}</strong>
               <span>
-                {{ a.desc }}@if (a.user) {<em class="activity-user"> · por {{ a.user }}</em>}
+                {{ a.desc }}@if (a.user) {<em class="activity-user"> {{ 'panel.byUser' | t:{ user: a.user } }}</em>}
               </span>
             </div>
             <span class="activity-time">{{ a.time }}</span>
           </div>
         </div>
         <ng-template #noActivity>
-          <p class="empty-state">Sin actividad registrada.</p>
+          <p class="empty-state">{{ 'panel.emptyActivity' | t }}</p>
         </ng-template>
       </div>
     </div>

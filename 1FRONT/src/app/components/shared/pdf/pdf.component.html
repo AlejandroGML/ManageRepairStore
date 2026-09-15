@@ -3,10 +3,10 @@
     <div class="pdf-title">
         <img class="logo-img" src="/assets/img/logo-300x80.png" alt=""><br><br>
         <span class="pdf-address">
-            6 Oriente #1256 - Viña del Mar
+            Av. Demo #1234 · Santiago
         </span><br>
         <span class="pdf-address">
-            Fono: 32-2330348 +56977481418
+            {{ 'sharedModal.pdf.phoneLine' | t }}
         </span><br>
         <span class="pdf-address">
             Administracion@demo.example - demo.example
@@ -16,14 +16,14 @@
     <div class="row pdf-section">
         <div class="contenedor">
             <div class="left">
-                <span>N°</span><br>
-                <span>CLIENTE</span><br>
+                <span>{{ 'sharedModal.pdf.no' | t }}</span><br>
+                <span>{{ 'sharedModal.pdf.clientLabel' | t }}</span><br>
                 <span>RUT</span><br>
-                <span>DIRECCIÓN</span><br>
-                <span>COMUNA</span><br>
-                <span>TELÉFONO</span><br>
-                <span>N° AVISO</span><br>
-                <span>FECHA</span><br>
+                <span>{{ 'sharedModal.pdf.addressLabel' | t }}</span><br>
+                <span>{{ 'sharedModal.pdf.cityLabel' | t }}</span><br>
+                <span>{{ 'sharedModal.pdf.phoneLabel' | t }}</span><br>
+                <span>{{ 'sharedModal.pdf.noticeLabel' | t }}</span><br>
+                <span>{{ 'sharedModal.pdf.dateLabel' | t }}</span><br>
             </div>
             <div class="right">
                 <span class="text">{{ordenIngreso.clientId}}</span><br>
@@ -36,20 +36,20 @@
                 <span class="text">{{ordenIngreso.date | date : 'dd-MM-yyyy   hh:mm'}}</span><br>
             </div>
             <div class="end">
-                <img class="mt-10" [src]="ordenIngreso.qr" alt="Código QR">
+                <img class="mt-10" [src]="ordenIngreso.qr" [alt]="'sharedModal.pdf.qrAlt' | t">
             </div>
         </div><br><br><br>
         <div class="contenedor-0 pdf-section-title">
-            <span>Problema a solucionar</span>
+            <span>{{ 'sharedModal.pdf.problem' | t }}</span>
         </div>
         <div class="contenedor text-left">
-            <span class="font-bold"> DESCRIPCIÓN</span>
+            <span class="font-bold"> {{ 'sharedModal.pdf.description' | t }}</span>
         </div>
         <div class="contenedor-2 text-left pb-42">
             <span>{{ordenIngreso.description | name}}</span>
         </div>
         <div class="contenedor text-left">
-            <span class="font-bold">OBSERVACIONES</span>
+            <span class="font-bold">{{ 'sharedModal.pdf.observations' | t }}</span>
         </div>
         <div class="contenedor-4 text-left pb-42">
             <span>{{ordenIngreso.observation | name}}</span>
@@ -58,24 +58,23 @@
 
     <div class="row">
         <div class="col-10 offset-1 terms-text">
-            <span class="font-bold">Condiciones</span><br>
-            <span>1. Costo visita y presupuesto $20.000.</span><br>
-            <span>2. Garantía entrega da por Manage Repair Store en reparación corresponde a 60 días.</span><br>
-            <span>3. Los artefactos con garantía del fabricante quedan exentos del pago por costo de reparación.</span><br>
-            <span>4. Artefactos de taller tienen como plazo máximo 30 días desde el día de aviso, de no venir a</span><br>
-            <span class="pl-16" >retirarlo el artefacto se envía a otra bodega con costo 
-                que deberá ser cancelado por el cliente.</span><br>
-            <span>5. Queda convenido que Manage Repair Store no responde por mercadería en los casos de daños</span><br>
-            <span class="pl-16">o pérdidas causadas por casos fortuitos o de fueza mayor.</span><br><br>
-            <span>6. Datos de transferencia:</span><br>
-            <span class="pl-16">Titular: Manage Repair Store SpA</span><br>
-            <span class="pl-16">Rut: 7829543-0</span><br>
-            <span class="pl-16">Cuenta Corriente Falabella: 1-455-000-124-2</span><br>
-            <span class="pl-16">Copia correo: secretaria@demo.example</span><br>
+            <span class="font-bold">{{ 'sharedModal.pdf.conditions' | t }}</span><br>
+            <span>{{ 'sharedModal.pdf.term1' | t }}</span><br>
+            <span>{{ 'sharedModal.pdf.term2' | t }}</span><br>
+            <span>{{ 'sharedModal.pdf.term3' | t }}</span><br>
+            <span>{{ 'sharedModal.pdf.term4a' | t }}</span><br>
+            <span class="pl-16">{{ 'sharedModal.pdf.term4b' | t }}</span><br>
+            <span>{{ 'sharedModal.pdf.term5a' | t }}</span><br>
+            <span class="pl-16">{{ 'sharedModal.pdf.term5b' | t }}</span><br><br>
+            <span>{{ 'sharedModal.pdf.term6' | t }}</span><br>
+            <span class="pl-16">{{ 'sharedModal.pdf.accountHolder' | t }}</span><br>
+            <span class="pl-16">Rut: 76.512.345-3</span><br>
+            <span class="pl-16">{{ 'sharedModal.pdf.bankAccount' | t }}</span><br>
+            <span class="pl-16">{{ 'sharedModal.pdf.emailCopy' | t }}</span><br>
         </div>
         <div class="col-6 offset-3 signature-box">
             <div class="signature-line">
-                <span class="signature-text">Conforme Cliente:</span>
+                <span class="signature-text">{{ 'sharedModal.pdf.clientApproval' | t }}</span>
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatIconModule } from '@angular/material/icon';
 import { SystemUser } from '../../../interface/system-user';
 import { UsersService, CreateUserDto, UpdateUserDto } from '../../../services/users.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 export interface UserFormData {
   user?: SystemUser;
@@ -13,7 +14,7 @@ export interface UserFormData {
 @Component({
   selector: 'app-modal-user-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatIconModule, TPipe],
   templateUrl: './modal-user-form.component.html',
   styleUrls: ['./modal-user-form.component.css'],
 })

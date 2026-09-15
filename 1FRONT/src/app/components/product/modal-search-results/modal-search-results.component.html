@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>
-  <span>Resultados de la búsqueda</span>
-  <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+  <span>{{ 'results.title' | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
     <mat-icon>close</mat-icon>
   </button>
 </h2>
@@ -10,18 +10,18 @@
 
         <!-- Columna de ID -->
         <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef> ID </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colId' | t }} </th>
           <td mat-cell *matCellDef="let product"> {{ product.id }} </td>
         </ng-container>
 
         <!-- Columna de Imagen -->
         <ng-container matColumnDef="image">
-          <th mat-header-cell *matHeaderCellDef> Imagen </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colImage' | t }} </th>
           <td mat-cell *matCellDef="let product">
             <ng-container *ngIf="product.image; else noImage">
                 <img 
                   [src]="getImageUrl(product.image)" 
-                  alt="Imagen del producto" 
+                  [alt]="'results.productImageAlt' | t" 
                   class="product-image"
                   role="button" tabindex="0"
                   (click)="openImageModal(product.image)"
@@ -30,7 +30,7 @@
                 />
             </ng-container>
             <ng-template #noImage>
-              <span class="material-symbols-outlined no-image-btn" role="button" tabindex="0" (click)="openImageModal()" (keydown.enter)="openImageModal()" (keydown.space)="openImageModal()" aria-label="Ver imagen predeterminada">
+              <span class="material-symbols-outlined no-image-btn" role="button" tabindex="0" (click)="openImageModal()" (keydown.enter)="openImageModal()" (keydown.space)="openImageModal()" [attr.aria-label]="'results.defaultImageAria' | t">
                 X
               </span>
             </ng-template>
@@ -39,31 +39,31 @@
 
         <!-- Columna de Nombre -->
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef> Nombre </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colName' | t }} </th>
           <td mat-cell *matCellDef="let product"> {{ product.name }} </td>
         </ng-container>
 
         <!-- Columna de Stock -->
         <ng-container matColumnDef="stock">
-          <th mat-header-cell *matHeaderCellDef> Stock </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'common.stock' | t }} </th>
           <td mat-cell *matCellDef="let product"> {{ product.stock ?? 0 }} </td>
         </ng-container>
 
         <!-- Columna de Localización -->
         <ng-container matColumnDef="location">
-          <th mat-header-cell *matHeaderCellDef> Localización </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colLocation' | t }} </th>
           <td mat-cell *matCellDef="let product"> {{ product.location }} </td>
         </ng-container>
 
         <!-- Columna de Valor de Venta -->
         <ng-container matColumnDef="sellingPrice">
-          <th mat-header-cell *matHeaderCellDef> Valor de Venta </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colSellingPrice' | t }} </th>
           <td mat-cell *matCellDef="let product"> {{ product.sellingPrice | currency:'CLP':'symbol' }} </td>
         </ng-container>
 
         <!-- Columna de Transacciones -->
         <ng-container matColumnDef="transaction">
-          <th mat-header-cell *matHeaderCellDef> Transacciones </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colTransactions' | t }} </th>
           <td mat-cell *matCellDef="let product">
             <button class="icon-btn" (click)="openTransactionModal(product)">
               <mat-icon>history</mat-icon>
@@ -73,7 +73,7 @@
 
         <!-- Columna de Editar Producto -->
         <ng-container matColumnDef="edit">
-          <th mat-header-cell *matHeaderCellDef> Editar Producto </th>
+          <th mat-header-cell *matHeaderCellDef> {{ 'results.colEditProduct' | t }} </th>
           <td mat-cell *matCellDef="let product">
             <button class="icon-btn" (click)="openEditProductModal(product)">
               <mat-icon>edit</mat-icon>
@@ -87,5 +87,5 @@
   </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button class="btn btn-ghost" (click)="close()">Cerrar</button>
+  <button class="btn btn-ghost" (click)="close()">{{ 'common.close' | t }}</button>
 </mat-dialog-actions>

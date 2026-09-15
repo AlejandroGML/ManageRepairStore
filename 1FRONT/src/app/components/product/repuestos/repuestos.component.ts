@@ -12,6 +12,8 @@ import {
 } from '../../../services/workers.api.service';
 import { ProductsApiService } from '../../../services/products.api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 const PAGE_SIZE = 20;
 
@@ -27,9 +29,12 @@ interface MovementLine {
   templateUrl: './repuestos.component.html',
   styleUrls: ['./repuestos.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, TPipe],
 })
 export class RepuestosComponent implements OnInit, OnDestroy {
+  // Declared before searchFields: its labels resolve i18n in the field initializer.
+  private readonly i18n = inject(I18nService);
+
   // ---- Trabajadores ----
   workers: Worker[] = [];
   newWorkerName = '';
@@ -39,10 +44,10 @@ export class RepuestosComponent implements OnInit, OnDestroy {
   // ---- Buscador de productos (server-side) ----
   searchField: 'name' | 'id' | 'location' | 'category' = 'name';
   readonly searchFields: { value: string; label: string }[] = [
-    { value: 'name', label: 'Nombre' },
-    { value: 'id', label: 'ID' },
-    { value: 'location', label: 'Ubicación' },
-    { value: 'category', label: 'Categoría' },
+    { value: 'name', label: this.i18n.t('parts.fieldName') },
+    { value: 'id', label: this.i18n.t('parts.fieldId') },
+    { value: 'location', label: this.i18n.t('parts.fieldLocation') },
+    { value: 'category', label: this.i18n.t('parts.fieldCategory') },
   ];
   searchQuery = '';
   searchResults: Product[] = [];
@@ -91,10 +96,10 @@ export class RepuestosComponent implements OnInit, OnDestroy {
     this.workersApi.create(name).subscribe({
       next: () => {
         this.newWorkerName = '';
-        this.snackbar.success('Trabajador creado');
+        this.snackbar.success(this.i18n.t('parts.successWorkerCreated'));
         this.loadWorkers();
       },
-      error: (err) => this.snackbar.error(err.error?.message || 'No se pudo crear el trabajador'),
+      error: (err) => this.snackbar.error(err.error?.message || this.i18n.t('parts.errorCreateWorker')),
     });
   }
 
@@ -173,7 +178,7 @@ export class RepuestosComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.submitting = false;
-          this.snackbar.success('Movimiento registrado correctamente');
+          this.snackbar.success(this.i18n.t('parts.successMovement'));
           this.lines = [];
           this.detail = '';
           this.movementPage = 0;
@@ -184,7 +189,7 @@ export class RepuestosComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.submitting = false;
-          this.snackbar.error(err.error?.message || 'Error al registrar el movimiento');
+          this.snackbar.error(err.error?.message || this.i18n.t('parts.errorRegister'));
         },
       });
   }

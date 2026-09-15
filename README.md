@@ -69,6 +69,15 @@ The seed also creates 6 categories, 24 repair products with CLP prices, and 8
 fictional clients with valid (módulo-11) synthetic RUTs. The login screen offers
 one-click demo access per role.
 
+### Bilingual UI (EN/ES)
+
+The interface ships **English and Spanish** dictionaries (~620 keys) with a
+language switcher in the topbar. English is the default; the choice persists in
+`localStorage`. The i18n layer is a small in-house service + pipe
+(`src/app/i18n/`) with bundled dictionaries — no async loader, no flash of
+untranslated text. `src/app/i18n/build-dicts.mjs` merges per-feature fragments
+and validates duplicate/missing keys (run it after editing fragments).
+
 ### Demo ephemerality
 
 The demo is self-cleaning: every full page load fires `POST /demo/reset`, which

@@ -1,6 +1,7 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { I18nService } from '../../../i18n/i18n.service';
 
 /**
  * Data del diálogo de confirmación/notificación.
@@ -29,14 +30,24 @@ export class ModalConfirmComponent {
   readonly cancelLabel: string;
   readonly title: string;
 
+  private readonly i18n = inject(I18nService);
+
   constructor(
     public dialogRef: MatDialogRef<ModalConfirmComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ModalConfirmData
   ) {
     this.mode = data.mode ?? 'confirm';
-    this.okLabel = data.okLabel ?? (this.mode === 'notify' ? 'Aceptar' : 'Confirmar');
-    this.cancelLabel = data.cancelLabel ?? 'Cancelar';
-    this.title = data.title ?? (this.mode === 'notify' ? 'Aviso' : 'Confirmar');
+    this.okLabel =
+      data.okLabel ??
+      (this.mode === 'notify'
+        ? this.i18n.t('sharedModal.confirm.acceptLabel')
+        : this.i18n.t('common.confirm'));
+    this.cancelLabel = data.cancelLabel ?? this.i18n.t('common.cancel');
+    this.title =
+      data.title ??
+      (this.mode === 'notify'
+        ? this.i18n.t('sharedModal.confirm.notifyTitle')
+        : this.i18n.t('common.confirm'));
   }
 
   /** Confirmación: cierra con `true` para que el caller ejecute la acción. */

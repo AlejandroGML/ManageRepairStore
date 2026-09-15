@@ -7,6 +7,7 @@ import { LogApiService } from 'src/app/services/log.api.service';
 import { LoadingService } from 'src/app/services/loading.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-modal-delete-client',
@@ -17,6 +18,7 @@ import { SnackbarService } from 'src/app/services/snackbar.service';
 })
 export class ModalDeleteClientComponent {
   private readonly authService = inject(AuthService);
+  private readonly i18n = inject(I18nService);
 
   constructor(private dialogRef: MatDialogRef<ModalDeleteClientComponent>,@Inject(MAT_DIALOG_DATA) public client: Client,
   private clientsApi:ClientsApiService, private logApi:LogApiService, private loadingService:LoadingService, private snackbarService:SnackbarService ) {
@@ -40,7 +42,7 @@ export class ModalDeleteClientComponent {
         this.dialogRef.close(this.client.id);
       },error=>{
         this.loadingService.setLoading(false);
-        this.snackbarService.openSnackBar('Error al eliminar. Intente nuevamente.');
+        this.snackbarService.openSnackBar(this.i18n.t('client.delete.error'));
         this.dialogRef.close(null);
       });
     },200);

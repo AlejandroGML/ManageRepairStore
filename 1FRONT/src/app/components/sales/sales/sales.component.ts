@@ -10,6 +10,7 @@ import { ModalProductSearchComponent } from '../../product/modal-product-search/
 import { DataSyncService } from 'src/app/services/data-sync.service';
 import { Subscription } from 'rxjs';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
 
 interface SaleProduct extends Product {
   quantity: number;
@@ -49,6 +50,7 @@ export class SalesComponent implements OnInit, OnDestroy {
   private readonly dataSyncService = inject(DataSyncService);
   private readonly snackbar = inject(SnackbarService);
   private readonly authService = inject(AuthService);
+  private readonly i18n = inject(I18nService);
   private readonly saleSubscriptions = new Subscription();
 
   ngOnInit(): void {
@@ -195,7 +197,7 @@ export class SalesComponent implements OnInit, OnDestroy {
     // Un producto se elige una sola vez: después se ajusta cantidad en el carrito.
     if (this.isInCart(product)) {
       this.snackbar.openSnackBar(
-        `${product.name} ya está en el carrito — ajusta la cantidad ahí`
+        this.i18n.t('sales.alreadyInCart', { name: product.name })
       );
       return;
     }
@@ -350,7 +352,7 @@ export class SalesComponent implements OnInit, OnDestroy {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.snackbar.error('No se pudo generar el PDF de la venta'),
+      error: () => this.snackbar.error(this.i18n.t('sales.pdfError')),
     });
   }
 
@@ -395,7 +397,7 @@ export class SalesComponent implements OnInit, OnDestroy {
           this.cartItems = [];
           this.totalSaleValue = 0;
           this.submitting = false;
-          this.snackbar.success('Venta realizada correctamente — PDF descargado');
+          this.snackbar.success(this.i18n.t('sales.success'));
           this.dataSyncService.notifyTransactionUpdate();
           this.loadCatalog();
           // Auto-descarga del comprobante para no perder la venta.
@@ -404,7 +406,7 @@ export class SalesComponent implements OnInit, OnDestroy {
         error: (err: any) => {
           this.submitting = false;
           // 409 (stock insuficiente) u otros errores: el mensaje del backend se muestra al usuario.
-          this.snackbar.error(err.error?.message || 'Error al realizar la venta');
+          this.snackbar.error(err.error?.message || this.i18n.t('sales.error'));
         },
       })
     );

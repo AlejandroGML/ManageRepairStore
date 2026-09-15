@@ -10,6 +10,7 @@ import { ModalStatusComponent } from '../../shared/modal-status/modal-status.com
 import { PdfComponent } from '../../shared/pdf/pdf.component';
 import { NamePipe } from 'src/app/pipes/name.pipe';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-modal-orders',
@@ -20,6 +21,7 @@ import { ModalService } from 'src/app/services/modal.service';
 })
 export class ModalOrdersComponent {
   private readonly modal = inject(ModalService);
+  private readonly i18n = inject(I18nService);
   client!:Client;
   ordenIngreso!: OrdenIngreso;
   displayedColumns: string[] = ['id','date','status','comment', 'description', 'obs', 'changeStatus','actions'];
@@ -100,6 +102,6 @@ export class ModalOrdersComponent {
 
   statusLabel(status?: string): string {
     if (!status) return '—';
-    return status === 'En reparacion' ? 'En reparación' : status;
+    return status === 'En reparacion' ? this.i18n.t('client.orders.statusInRepair') : status;
   }
 }

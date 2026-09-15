@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>
   <span>{{ title }}</span>
   @if (mode === 'confirm') {
-    <button class="dlg-close" (click)="close()" aria-label="Cerrar">
+    <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
       <mat-icon>close</mat-icon>
     </button>
   }

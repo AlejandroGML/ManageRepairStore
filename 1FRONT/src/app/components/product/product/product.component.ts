@@ -14,6 +14,7 @@ import { DataSyncService } from 'src/app/services/data-sync.service';
 import { SnackbarService } from 'src/app/services/snackbar.service';
 import { CategoriesApiService } from 'src/app/services/categories.api.service';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
 import { Subject, Subscription, debounceTime } from 'rxjs';
 
 @Component({
@@ -33,11 +34,12 @@ export class ProductComponent implements OnInit {
   stockFilter: 'all' | 'stock' | 'low' = 'all';
   categoryFilter: string = 'all';
   searchField: 'name' | 'id' | 'location' | 'category' = 'name';
+  /** i18n keys — resolved with the `t` pipe so they follow the live language. */
   readonly searchFields: { value: string; label: string }[] = [
-    { value: 'name', label: 'Nombre' },
-    { value: 'id', label: 'ID' },
-    { value: 'location', label: 'Ubicación' },
-    { value: 'category', label: 'Categoría' },
+    { value: 'name', label: 'product.searchFieldName' },
+    { value: 'id', label: 'product.searchFieldId' },
+    { value: 'location', label: 'product.searchFieldLocation' },
+    { value: 'category', label: 'product.searchFieldCategory' },
   ];
   searchQuery = '';
   /** Catálogo completo desde la API (incluye categorías sin productos). */
@@ -55,6 +57,7 @@ export class ProductComponent implements OnInit {
   private readonly modal = inject(ModalService);
   private readonly dataSyncService = inject(DataSyncService);
   private readonly snackbarService = inject(SnackbarService);
+  private readonly i18n = inject(I18nService);
 
   get totalProducts(): number { return this.catalogTotal; }
   get totalCategories(): number { return this.categoryNames.length; }
@@ -192,9 +195,9 @@ export class ProductComponent implements OnInit {
   }
 
   stockBadgeLabel(stock?: number): string {
-    if (stock === undefined || stock <= 2) return 'Crítico';
-    if (stock <= 6) return 'Bajo';
-    return 'En stock';
+    if (stock === undefined || stock <= 2) return this.i18n.t('product.badgeCritical');
+    if (stock <= 6) return this.i18n.t('product.badgeLow');
+    return this.i18n.t('product.badgeInStock');
   }
 
   /** Categoría visible en la fila (join del backend; — si no tiene). */
@@ -281,14 +284,14 @@ export class ProductComponent implements OnInit {
   openDeleteProductModal(product: Product): void {
     const dialogRef = this.modal.open(ModalConfirmComponent, {
       size: 'sm',
-      data: { message: `¿Eliminar "${product.name}"? Se marcará como inactivo.` },
+      data: { message: this.i18n.t('product.deleteMessage', { name: product.name }) },
       disableClose: true,
     });
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed && product.id) {
         this.productsApi.softDeleteProduct(product.id).subscribe(() => {
-          this.snackbarService.success('Producto eliminado');
+          this.snackbarService.success(this.i18n.t('product.deleted'));
           this.loadProducts();
         });
       }

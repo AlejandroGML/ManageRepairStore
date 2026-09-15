@@ -6,9 +6,9 @@
       </span>
     </div>
 
-    <nav class="nav" aria-label="Navegación principal">
+    <nav class="nav" [attr.aria-label]="'shell.mainNav' | t">
       <ng-container *ngFor="let group of navGroups">
-        <p class="nav-label" *ngIf="hasVisibleItems(group)">{{ group.label }}</p>
+        <p class="nav-label" *ngIf="hasVisibleItems(group)">{{ group.label | t }}</p>
         <a
           *ngFor="let item of visibleItems(group)"
           class="nav-link"
@@ -17,7 +17,7 @@
           [matTooltip]="sidebarCollapsed ? item.label : ''"
         >
           <mat-icon class="nav-icon" [fontIcon]="item.icon"></mat-icon>
-          <span class="nav-text">{{ item.label }}</span>
+          <span class="nav-text">{{ item.label | t }}</span>
           @if (badgeFor(item); as badge) {
             <span class="nav-badge">{{ badge }}</span>
           }
@@ -32,7 +32,7 @@
           <strong>{{ displayName }}</strong>
           <span>{{ roleLabel }}</span>
         </div>
-        <button class="logout-btn" (click)="logout()" matTooltip="Cerrar sesión" aria-label="Cerrar sesión">
+        <button class="logout-btn" (click)="logout()" [matTooltip]="'shell.logout' | t" [attr.aria-label]="'shell.logout' | t">
           <mat-icon fontIcon="logout"></mat-icon>
         </button>
       </div>
@@ -43,28 +43,32 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="menu-btn" (click)="sidebarOpen = !sidebarOpen; sidebarCollapsed = false" aria-label="Abrir menú" matTooltip="Menú">
+      <button class="menu-btn" (click)="sidebarOpen = !sidebarOpen; sidebarCollapsed = false" [attr.aria-label]="'shell.menuOpen' | t" [matTooltip]="'shell.menu' | t">
         <mat-icon fontIcon="menu"></mat-icon>
       </button>
-      <button class="collapse-btn" (click)="sidebarCollapsed = !sidebarCollapsed" aria-label="Colapsar menú" matTooltip="Colapsar menú">
+      <button class="collapse-btn" (click)="sidebarCollapsed = !sidebarCollapsed" [attr.aria-label]="'shell.menuCollapse' | t" [matTooltip]="'shell.menuCollapse' | t">
         <mat-icon [fontIcon]="sidebarCollapsed ? 'menu_open' : 'menu'"></mat-icon>
       </button>
       <div class="topbar-titles">
-        <h1 class="topbar-title">{{ pageTitle }}</h1>
-        <span class="topbar-sub">{{ pageSub }}</span>
+        <h1 class="topbar-title">{{ pageTitle | t }}</h1>
+        <span class="topbar-sub">{{ pageSub | t }}</span>
       </div>
       <div class="topbar-actions">
         <button
           class="topbar-user"
           (click)="goProfile()"
-          matTooltip="Mi perfil"
-          aria-label="Ver mi perfil"
+          [matTooltip]="'shell.profile' | t"
+          [attr.aria-label]="'shell.profile' | t"
         >
           <span class="topbar-user-avatar">{{ initials }}</span>
           <span class="topbar-user-meta">
             <strong>{{ displayName }}</strong>
             <span>{{ roleLabel }}</span>
           </span>
+        </button>
+        <button class="lang-toggle" (click)="toggleLang()" [matTooltip]="('login.language' | t) + ': ' + (i18n.lang() === 'en' ? 'English' : 'Español')" [attr.aria-label]="'login.language' | t">
+          <mat-icon fontIcon="translate"></mat-icon>
+          <span class="lang-label">{{ langLabel }}</span>
         </button>
         <app-theme-toggle></app-theme-toggle>
       </div>

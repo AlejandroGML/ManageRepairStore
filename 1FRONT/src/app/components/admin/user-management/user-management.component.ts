@@ -9,11 +9,13 @@ import { ModalUserFormComponent, UserFormData } from './modal-user-form.componen
 import { ModalUserDeleteComponent, UserDeleteDialogData } from './modal-user-delete.component';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { ModalService } from 'src/app/services/modal.service';
+import { I18nService } from '../../../i18n/i18n.service';
+import { TPipe } from '../../../i18n/t.pipe';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatTooltipModule],
+  imports: [CommonModule, MatIconModule, MatTooltipModule, TPipe],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.css'],
 })
@@ -23,6 +25,7 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   private readonly usersService = inject(UsersService);
   private readonly modal = inject(ModalService);
   private readonly snackbar = inject(SnackbarService);
+  private readonly i18n = inject(I18nService);
   // Optional: la pantalla se monta como ruta (no dentro de un dialog).
   private readonly dialogRef = inject(MatDialogRef<UserManagementComponent>, { optional: true });
   private readonly cdr = inject(ChangeDetectorRef);
@@ -45,11 +48,11 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
   getRoleLabel(role: string): string {
     switch (role) {
       case 'admin':
-        return 'Administrador';
+        return this.i18n.t('admin.roleAdmin');
       case 'seller':
-        return 'Vendedor';
+        return this.i18n.t('admin.roleSeller');
       case 'warehouse':
-        return 'Bodega';
+        return this.i18n.t('admin.roleWarehouse');
       default:
         return role;
     }
@@ -65,12 +68,12 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
     const date = (user as any).updatedAt ?? (user as any).createdAt;
     if (!date) return '—';
     const diffMin = (Date.now() - new Date(date).getTime()) / 60000;
-    if (diffMin < 1) return 'hace un momento';
-    if (diffMin < 60) return `hace ${Math.round(diffMin)} min`;
+    if (diffMin < 1) return this.i18n.t('admin.lastAccessJustNow');
+    if (diffMin < 60) return this.i18n.t('admin.lastAccessMinutes', { count: Math.round(diffMin) });
     const diffH = diffMin / 60;
-    if (diffH < 24) return `hace ${Math.round(diffH)} h`;
+    if (diffH < 24) return this.i18n.t('admin.lastAccessHours', { count: Math.round(diffH) });
     const diffD = diffH / 24;
-    return `hace ${Math.round(diffD)} días`;
+    return this.i18n.t('admin.lastAccessDays', { count: Math.round(diffD) });
   }
 
   openCreateDialog(): void {
@@ -83,7 +86,7 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.loadUsers();
-        this.snackbar.openSnackBar('Usuario creado exitosamente');
+        this.snackbar.openSnackBar(this.i18n.t('admin.userCreated'));
       }
     });
   }
@@ -98,7 +101,7 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.loadUsers();
-        this.snackbar.openSnackBar('Usuario actualizado exitosamente');
+        this.snackbar.openSnackBar(this.i18n.t('admin.userUpdated'));
       }
     });
   }
@@ -108,9 +111,9 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
     this.usersService.activate(user.id).subscribe({
       next: () => {
         this.loadUsers();
-        this.snackbar.openSnackBar('Usuario activado exitosamente');
+        this.snackbar.openSnackBar(this.i18n.t('admin.userActivated'));
       },
-      error: () => this.snackbar.openSnackBar('Error al activar el usuario'),
+      error: () => this.snackbar.openSnackBar(this.i18n.t('admin.activateError')),
     });
   }
 
@@ -127,7 +130,9 @@ export class UserManagementComponent implements OnInit, AfterViewInit {
       if (result) {
         this.loadUsers();
         this.snackbar.openSnackBar(
-          hard ? 'Usuario eliminado definitivamente' : 'Usuario desactivado exitosamente'
+          hard
+            ? this.i18n.t('admin.userDeletedPermanently')
+            : this.i18n.t('admin.userDeactivated')
         );
       }
     });
