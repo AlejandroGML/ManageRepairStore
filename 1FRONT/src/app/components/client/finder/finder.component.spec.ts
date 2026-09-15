@@ -113,7 +113,7 @@ describe('FinderComponent', () => {
 
     expect(clientsApiSpy.exportClients).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
-    expect(anchor.download).toMatch(/^clientes-\d{4}-\d{2}-\d{2}\.xlsx$/);
+    expect(anchor.download).toMatch(/^clients-\d{4}-\d{2}-\d{2}\.xlsx$/);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
     expect(loadingSpy.setLoading).toHaveBeenCalledWith(false);
   });

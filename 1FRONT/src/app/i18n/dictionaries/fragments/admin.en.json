@@ -71,5 +71,6 @@
   "profile.updateError": "Could not update the password",
   "profile.roleAdmin": "Administrator",
   "profile.roleSeller": "Seller",
-  "profile.roleWarehouse": "Warehouse"
+  "profile.roleWarehouse": "Warehouse",
+  "admin.form.emailPlaceholder": "user@example.com"
 }

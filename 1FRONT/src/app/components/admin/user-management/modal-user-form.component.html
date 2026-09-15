@@ -17,7 +17,7 @@
 
     <div class="field-group">
       <label class="field-label" for="uf-email">{{ 'admin.form.email' | t }}</label>
-      <input id="uf-email" class="input" type="email" placeholder="correo@ejemplo.cl" formControlName="email">
+      <input id="uf-email" class="input" type="email" [placeholder]="'admin.form.emailPlaceholder' | t" formControlName="email">
       @if (form.get('email')?.invalid && form.get('email')?.touched) {
         <span class="field-error">
           {{ (form.get('email')?.hasError('required') ? 'admin.form.emailRequired' : 'admin.form.emailInvalid') | t }}

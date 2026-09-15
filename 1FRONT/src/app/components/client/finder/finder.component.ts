@@ -405,7 +405,7 @@ export class FinderComponent implements OnInit, OnDestroy {
     this.clientsApi.exportClients().subscribe({
       next: (blob) => {
         this.loadingService.setLoading(false);
-        this.downloadBlob(blob, `clientes-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        this.downloadBlob(blob, `clients-${new Date().toISOString().slice(0, 10)}.xlsx`);
         this.snackbarService.openSnackBar(this.i18n.t('finder.exportSuccess'));
       },
       error: () => {

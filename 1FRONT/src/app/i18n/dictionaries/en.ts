@@ -165,6 +165,7 @@ export const LANG_EN: Record<string, string> = {
   "profile.roleAdmin": "Administrator",
   "profile.roleSeller": "Seller",
   "profile.roleWarehouse": "Warehouse",
+  "admin.form.emailPlaceholder": "user@example.com",
   "bodega.sectionsLabel": "Warehouse sections",
   "bodega.inventory": "Inventory",
   "bodega.restocks": "Restocks",

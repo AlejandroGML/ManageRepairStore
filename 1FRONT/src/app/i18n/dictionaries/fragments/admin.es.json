@@ -71,5 +71,6 @@
   "profile.updateError": "No se pudo actualizar la contraseña",
   "profile.roleAdmin": "Administrador",
   "profile.roleSeller": "Vendedor",
-  "profile.roleWarehouse": "Bodega"
+  "profile.roleWarehouse": "Bodega",
+  "admin.form.emailPlaceholder": "correo@ejemplo.cl"
 }

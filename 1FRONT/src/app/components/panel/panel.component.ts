@@ -209,7 +209,7 @@ export class PanelComponent implements OnInit {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `stock-bajo-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.download = `low-stock-${new Date().toISOString().slice(0, 10)}.xlsx`;
         a.click();
         URL.revokeObjectURL(url);
       },

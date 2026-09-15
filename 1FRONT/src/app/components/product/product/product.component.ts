@@ -227,7 +227,7 @@ export class ProductComponent implements OnInit {
         });
       });
     } else {
-      console.error('El ID del producto es indefinido');
+      console.error('Product ID is undefined');
     }
   }
 

@@ -39,7 +39,7 @@ export class ModalProductQrComponent implements OnInit {
   download(): void {
     this.qrService.toDataURL(this.qrData, 480).then((url) => {
       const a = document.createElement('a');
-      a.download = `qr-producto-${this.data.product.id ?? 'nuevo'}.png`;
+      a.download = `product-qr-${this.data.product.id ?? 'new'}.png`;
       a.href = url;
       a.click();
     });

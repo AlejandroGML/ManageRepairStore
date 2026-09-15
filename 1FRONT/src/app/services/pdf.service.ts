@@ -59,7 +59,9 @@ export class PdfService {
 
     // Set QR code image directly to avoid waiting for Angular change detection
     if (qrDataUrl) {
-      const qrImg = pdfImg.querySelector('img[alt="Código QR"]') as HTMLImageElement;
+      // Stable class selector: the alt text is translated (EN/ES) and must
+      // not be used to locate the QR image.
+      const qrImg = pdfImg.querySelector('img.qr-img') as HTMLImageElement;
       if (qrImg) {
         qrImg.src = qrDataUrl;
       }
