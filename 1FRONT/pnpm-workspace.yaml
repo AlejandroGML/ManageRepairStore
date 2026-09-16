@@ -1,0 +1,9 @@
+# Build scripts deliberately denied — esbuild and @parcel/watcher ship
+# prebuilt binaries via optional dependencies, the rest are message-only
+# postinstalls.
+allowBuilds:
+  '@parcel/watcher': false
+  core-js: false
+  esbuild: false
+  lmdb: false
+  msgpackr-extract: false

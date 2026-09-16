@@ -1,0 +1,7 @@
+# Build scripts deliberately denied — Puppeteer uses the system Chromium
+# (CHROME_BIN), the rest are telemetry-only postinstalls.
+allowBuilds:
+  '@nestjs/core': false
+  '@scarf/scarf': false
+  puppeteer: false
+  unrs-resolver: false

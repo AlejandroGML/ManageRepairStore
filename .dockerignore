@@ -1,0 +1,14 @@
+# Build context hygiene — keep the context small and images reproducible
+.git
+**/.git
+.atl
+**/.atl
+graphify-out
+docs
+**/node_modules
+**/dist
+**/.angular
+**/uploads
+**/.env
+**/.env.*
+/*.png
