@@ -17,8 +17,8 @@ COPY 1FRONT/package.json 1FRONT/pnpm-lock.yaml 1FRONT/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY shared/ /src/shared/
 COPY 1FRONT/ ./
-# Source maps cost extra RAM and are useless in production
-RUN pnpm build -- --source-map=false
+# sourceMap:false lives in angular.json production config (saves RAM on small VPS)
+RUN pnpm build
 
 # ── Stage 2: backend build ───────────────────────────────────────────────
 FROM node:24-slim AS backend-build
