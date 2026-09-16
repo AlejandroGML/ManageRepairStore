@@ -9,18 +9,22 @@
 
 # ── Stage 1: frontend build ──────────────────────────────────────────────
 FROM node:24-slim AS frontend-build
-# pnpm pinned to the exact local version — pnpm 11 minors differ in how
-# strictly they verify lockfile tarball entries
 RUN npm install -g pnpm@11.1.1
+# Cap the V8 heap so the build survives a 1 GB VPS (swap absorbs the spikes)
+ENV NODE_OPTIONS=--max-old-space-size=1024
 WORKDIR /src/1FRONT
 COPY 1FRONT/package.json 1FRONT/pnpm-lock.yaml 1FRONT/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY shared/ /src/shared/
 COPY 1FRONT/ ./
-RUN pnpm build
+# Source maps cost extra RAM and are useless in production
+RUN pnpm build -- --source-map=false
 
 # ── Stage 2: backend build ───────────────────────────────────────────────
 FROM node:24-slim AS backend-build
+# Serialize stages: this edge forces the backend to wait for the frontend
+# (BuildKit would otherwise run both in parallel and OOM a 1 GB VPS)
+COPY --from=frontend-build /src/1FRONT/dist/manage-repair-store/index.html /tmp/frontend-ready.html
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 # pnpm pinned to the exact local version — pnpm 11 minors differ in how
 # strictly they verify lockfile tarball entries
