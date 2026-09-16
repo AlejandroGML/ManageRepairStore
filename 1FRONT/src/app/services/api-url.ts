@@ -4,14 +4,14 @@
  * can share the same resolution logic without circular DI.
  */
 export function getApiUrl(): string {
-  // For development: use localhost:3000
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3000';
+  const host = window.location.hostname;
+
+  // Development: backend runs directly on :3000 (API is namespaced under /api)
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'http://localhost:3000/api';
   }
-  // Tailscale preview: backend exposed on the tailnet interface
-  if (window.location.hostname === '100.125.195.41') {
-    return 'http://100.125.195.41:3000';
-  }
-  // For production: use the configured IP
-  return 'http://192.168.50.101:3000';
+
+  // Production: same origin — the backend serves the SPA and mounts the API
+  // under /api (see 2BACK/src/main.ts)
+  return '/api';
 }
