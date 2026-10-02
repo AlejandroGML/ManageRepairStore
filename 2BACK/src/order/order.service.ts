@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ClientEntity } from '../entities/client.entity';
@@ -144,6 +144,12 @@ export class OrderService {
       return dbClient!;
     } catch (error: any) {
       await queryRunner.rollbackTransaction();
+      // J1: business guards (HttpException, e.g. validation 400s) travel
+      // untouched — wrapping them would turn a deliberate 400 into a 500
+      // and the client would never see the reason.
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const wrappedError = new Error(`Error registering client order: ${error.message}`);
       (wrappedError as any).cause = error;
       throw wrappedError;
@@ -160,6 +166,11 @@ export class OrderService {
       }
       return dbOrder;
     } catch (error : any) {
+      // J1: HttpExceptions keep their status; only unexpected errors get
+      // wrapped (cause preserved).
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const wrappedError = new Error(String(error));
       (wrappedError as any).cause = error;
       throw wrappedError;
@@ -174,6 +185,11 @@ export class OrderService {
       }
       return dbOrder;
     } catch (error : any) {
+      // J1: HttpExceptions keep their status; only unexpected errors get
+      // wrapped (cause preserved).
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const wrappedError = new Error(String(error));
       (wrappedError as any).cause = error;
       throw wrappedError;

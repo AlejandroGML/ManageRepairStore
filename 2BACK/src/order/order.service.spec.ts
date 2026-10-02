@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner, EntityManager } from 'typeorm';
 import { ClientEntity } from '../entities/client.entity';
@@ -279,6 +280,39 @@ describe('OrderService', () => {
       ).rejects.toThrow();
 
       expect(queryRunner.release).toHaveBeenCalled();
+    });
+
+    it('should re-throw HttpExceptions untouched (J1: no 400→500 wrapping)', async () => {
+      const guard = new BadRequestException('RUT does not match company');
+      (queryRunner.manager.findOne as jest.Mock).mockRejectedValue(guard);
+
+      let caught: any;
+      try {
+        await service.registerClientOrder(makeClient());
+      } catch (err) {
+        caught = err;
+      }
+
+      // The SAME HttpException travels: status 400, message intact, no
+      // "Error registering client order" wrapper added.
+      expect(caught).toBe(guard);
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+
+    it('should wrap non-HTTP errors keeping the original as cause', async () => {
+      const dbError = new Error('connection reset');
+      (queryRunner.manager.findOne as jest.Mock).mockRejectedValue(dbError);
+
+      let caught: any;
+      try {
+        await service.registerClientOrder(makeClient());
+      } catch (err) {
+        caught = err;
+      }
+
+      expect(caught).not.toBe(dbError);
+      expect(caught.message).toContain('Error registering client order');
+      expect(caught.cause).toBe(dbError);
     });
   });
 
