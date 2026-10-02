@@ -49,26 +49,61 @@ openspec/changes/archive/2026-10-01-empresas-gestion/{proposal,design,tasks}.md
 - [x] B5 specs: register 31 (portadas), modal-companies, modal-edit,
       choice actualizada. KARMA FULL 368/368 ✅. Backend 280/280.
 
-### Batch C — J-patterns + parity
-- [ ] C1 J2 audit: commit-then-save shape en MRS (grep).
-- [ ] C2 J3 audit: read endpoints vs relations que consume el UI.
-- [ ] C3 J8: server error messages en toasts (err?.error?.message).
-- [ ] C4 interceptors/script.interceptor.ts — evaluar qué es y si aplica.
-- [ ] C5 API_CONTRACT.md para MRS (regenerado de sus rutas).
-- [ ] C6 inventario final por diff — lo que quede (utils/dto/shared).
+### Batch C — J-patterns + parity — ✅ COMPLETE
+- [x] C1 J2 audit: 0 hallazgos — el patrón commit-then-save no existe
+      (T2/T6 lo cerraron en las tandas anteriores).
+- [x] C2 J3: getUserById/getUsersByName/getUsersByAddress cargan la
+      relación company (getClientsByRut/searchClients ya estaban). 89e0fbb
+- [x] C3 J8: register + modal-companies muestran err?.error?.message;
+      el resto de componentes MRS ya lo hacía. (f0d2a60)
+- [x] C4 interceptors/script.interceptor.ts: ya existía en MRS (port
+      previo); ABAGAS lo conserva como marcador de retiro del
+      EncryptInterceptor inseguro.
+- [x] C5 API_CONTRACT.md de MRS verificado contra controllers (incluye
+      companies + demo + categories/workers MRS-only). 89e0fbb
+- [x] C6 scripts de mantenimiento porteados: find-duplicate-groups,
+      merge-duplicates, find-product-name-groups (convenciones MRS).
+      QUIRK ABAGAS documentado: el guard sucursal de merge-duplicates
+      lee company_name del reporte que find-duplicate-groups ya no
+      emite — paridad mantenida, pendiente upstream. 89e0fbb
+- [x] EXTRA: dev-setup.sh adaptado al loop MRS (compose+pnpm+migrations+
+      seed). 8a5ff3c
 
-### Batch D — U2 dark-mode contrast (paleta violeta MRS)
-- [ ] D1 .seg active y .btn-soft/.badge-neutral sobre dark → variante
-      violeta clara (~#C4B5FD, 8.7:1 sobre surface) + :host-context
-      pattern donde aplique.
+### Batch D — U2 dark-mode contrast (paleta violeta MRS) — ✅ COMPLETE
+- [x] D1 .seg button.active y .btn-soft/.badge-neutral: overrides
+      dark-scoped con violeta clara #C4B5FD (~7:1 en ambos surfaces,
+      AA/AAA). El patrón :host-context queda como guía para futuros
+      componentes. fe54262. Karma 368/368.
 
 ### Batch E — N/A honesto (documentado, no porteado)
-- W1 demo wipe: MRS demo es sintético efímero (POST /demo/reset) — no
-  aplica夜间 wipe.
-- A1/migration-v2: maquinaria de adopción legacy de ABAGAS — MRS no
-  tiene BD legacy; su baseline + mark-baseline bastan.
-- openspec/ archive de ABAGAS: es historia de OTRO repo; lo que importa
-  (el diseño) queda referenciado acá.
+- W1 demo wipe: MRS demo es sintético efímero (POST /demo/reset en cada
+  carga); ABAGAS lo montó para un demo PERSISTENTE con datos ingresados
+  por el cliente en la Pi. No aplica — si MRS alguna vez corre un demo
+  persistente, portar el kit (flag guard + lista dinámica + post-checks).
+- migration-v2/ (4 archivos): maquinaria de ADOPCIÓN DE BD LEGACY de
+  ABAGAS (su dump de producción: rut '0', grupos derivados). MRS no
+  tiene BD legacy: dev/demo son sintéticas y descartables, y la
+  adopción de BDs existentes la cubre baseline + mark-baseline.
+  Portearlo procesaría un esquema que no existe en MRS.
+- deploy/ (systemd, backup/demo-wipe timers, nginx, compose de la Pi):
+  infra específica del Raspberry de ABAGAS. El deploy de MRS es
+  Dockerfile + docker-compose.vps.yml + DEPLOY.md (VPS).
+- Artefactos raíz de ABAGAS (dumps SQL, guía PDF, openspec/ con su
+  historia de cambios, AGENTS.md, SETUP_STATUS, skills-lock,
+  IMPLEMENTAR-DISENO-MRS.md): documentación/datos DE ABAGAS, no
+  arquitectura portable.
+- mark-baseline-applied.ts: equivalente MRS ya existe (mark-baseline.ts).
+
+### Estado final
+
+- Backend: 280/280 Jest verde. Frontend: 368/368 Karma verde (Brave).
+- Migraciones aplicadas en dev: baseline + companies + index [X]×3.
+- Verificación en vivo (Batch A): /api/company (branchCount 2/1/1),
+  /api/company/1/clients, /api/order/recent (antes 404).
+- Frontend convergió a superset de ABAGAS (solo login difiere +18
+  líneas por i18n). Backend convergió (solo main.ts y rut.service.ts
+  son MRS-mayores).
+- Sin merge a main: la rama feat/abagas-full-port espera revisión.
 
 ## Rules
 
