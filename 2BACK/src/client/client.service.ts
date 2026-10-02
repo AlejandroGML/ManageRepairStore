@@ -59,12 +59,16 @@ export class ClientService {
   }
 
   async getUserById(id: number): Promise<ClientEntity | null> {
-    return await this.clientRepository.findOne({where: {id:id,'active':true}});
+    return await this.clientRepository.findOne({
+      where: { id: id, active: true },
+      relations: { company: true },
+    });
   }
 
   async getUsersByName(name: string): Promise<ClientEntity[]> {
     const clients: ClientEntity[] = await this.clientRepository
       .createQueryBuilder('client')
+      .leftJoinAndSelect('client.company', 'company')
       .where('client.name ILIKE :name AND client.active = true', { name: `%${name}%` })
       .getMany();
     return clients;
@@ -73,6 +77,7 @@ export class ClientService {
   async getUsersByAddress(address: string): Promise<ClientEntity[]> {
     const clients: ClientEntity[] = await this.clientRepository
       .createQueryBuilder('client')
+      .leftJoinAndSelect('client.company', 'company')
       .where('client.address ILIKE :address AND client.active = true', { address: `%${address}%` })
       .getMany();
     return clients;
