@@ -39,5 +39,18 @@
   "register.formErrors": "The form has validation errors",
   "register.success": "Order registered successfully",
   "register.connectionError": "Error. Could not connect to the server",
-  "register.noResults": "No results"
+  "register.noResults": "No results",
+  "register.searchClient": "Search client",
+  "register.searchPlaceholderName": "Type the name…",
+  "register.searchPlaceholderRut": "Type the RUT…",
+  "register.filterByName": "Name",
+  "register.filterByRut": "RUT",
+  "register.searchAria": "Filter client search by",
+  "register.orderCountOne": "1 order",
+  "register.orderCountMany": "{{count}} orders",
+  "register.searchEmpty": "No results — you can register the client as new.",
+  "register.companySelectedHint": "Company selected: the RUT is locked to its own.",
+  "register.manageCompanies": "Manage companies",
+  "register.branchPanelHint": "Branches — choose one or create a new one:",
+  "register.newBranch": "New branch"
 }

@@ -1,0 +1,18 @@
+{
+  "companies.title": "Gestionar empresas",
+  "companies.colName": "Empresa",
+  "companies.colBranches": "Sucursales",
+  "companies.colActions": "Acciones",
+  "companies.editNameAria": "Nuevo nombre de la empresa",
+  "companies.saveName": "Guardar nombre",
+  "companies.cancel": "Cancelar",
+  "companies.rename": "Renombrar empresa",
+  "companies.loading": "Cargando…",
+  "companies.empty": "Sin empresas registradas.",
+  "companies.prevPage": "Página anterior",
+  "companies.nextPage": "Página siguiente",
+  "companies.pageInfo": "Página {{page}} de {{totalPages}} · {{total}} empresas",
+  "companies.loadError": "No se pudieron cargar las empresas",
+  "companies.renamed": "Empresa renombrada",
+  "companies.renameError": "No se pudo renombrar la empresa"
+}

@@ -1,0 +1,18 @@
+{
+  "companies.title": "Manage companies",
+  "companies.colName": "Company",
+  "companies.colBranches": "Branches",
+  "companies.colActions": "Actions",
+  "companies.editNameAria": "New company name",
+  "companies.saveName": "Save name",
+  "companies.cancel": "Cancel",
+  "companies.rename": "Rename company",
+  "companies.loading": "Loading…",
+  "companies.empty": "No companies registered.",
+  "companies.prevPage": "Previous page",
+  "companies.nextPage": "Next page",
+  "companies.pageInfo": "Page {{page}} of {{totalPages}} · {{total}} companies",
+  "companies.loadError": "Could not load the companies",
+  "companies.renamed": "Company renamed",
+  "companies.renameError": "Could not rename the company"
+}

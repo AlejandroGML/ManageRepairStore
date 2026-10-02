@@ -27,7 +27,6 @@ describe('ModalEditClientComponent', () => {
     code: 32086,
     email: 'test@test.cl',
     active: true,
-    company_name: 'Empresa Centro',
   };
 
   beforeEach(async () => {
@@ -102,18 +101,15 @@ describe('ModalEditClientComponent', () => {
     expect(dialogRefSpy.close).toHaveBeenCalledWith(null);
   });
 
-  it('should pre-fill company_name from injected data', () => {
-    expect(component.form.get('company_name')?.value).toBe('Empresa Centro');
-  });
-
-  it('should include company_name in update payload on save', fakeAsync(() => {
+  it('should save the client without company_name (company is its own entity)', fakeAsync(() => {
     clientsApiSpy.updateUser.and.returnValue(of(mockClient));
 
-    component.form.get('company_name')?.setValue('Sucursal Norte');
     component.saveClient();
     tick();
 
     const updateArg = clientsApiSpy.updateUser.calls.mostRecent().args[0];
-    expect(updateArg.company_name).toBe('Sucursal Norte');
+    expect(updateArg.name).toBe('Test Client');
+    expect(updateArg.rut_raw).toBe('12345678-5');
+    expect((updateArg as any).company_name).toBeUndefined();
   }));
 });

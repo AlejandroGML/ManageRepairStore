@@ -21,16 +21,6 @@
                     <span class="field-error" *ngIf="form.get('rut')?.invalid">{{ obtenerMensajeError(form.get('rut')!) }}</span>
                 </div>
 
-                <div class="company-field-row">
-                    <mat-slide-toggle formControlName="has_company" (change)="hasCompanyChanged($event.checked)">
-                        {{ 'client.edit.company' | t }}
-                    </mat-slide-toggle>
-                    <div class="field-group company-input">
-                        <label class="field-label" for="input-company">{{ 'client.edit.companyName' | t }}</label>
-                        <input id="input-company" class="input" [placeholder]="'client.edit.companyNamePlaceholder' | t" formControlName="company_name" />
-                    </div>
-                </div>
-
                 <div class="field-group">
                     <label class="field-label" for="input-email">{{ 'client.edit.email' | t }}</label>
                     <input id="input-email" class="input" placeholder="info@demo.example" formControlName="email" />

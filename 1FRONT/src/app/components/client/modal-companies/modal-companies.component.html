@@ -1,0 +1,60 @@
+<h2 mat-dialog-title>
+  <span>{{ 'companies.title' | t }}</span>
+  <button class="dlg-close" (click)="close()" [attr.aria-label]="'common.close' | t">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+<mat-dialog-content>
+  <table class="data">
+    <thead>
+      <tr>
+        <th>{{ 'companies.colName' | t }}</th>
+        <th class="col-num">{{ 'companies.colBranches' | t }}</th>
+        <th class="col-actions-head">{{ 'companies.colActions' | t }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of rows">
+        <td [attr.data-label]="'companies.colName' | t">
+          <ng-container *ngIf="editingId !== row.id; else editTpl">{{ row.name | name }}</ng-container>
+          <ng-template #editTpl>
+            <input
+              class="input edit-name-input"
+              [formControl]="editName"
+              [attr.aria-label]="'companies.editNameAria' | t"
+              (keydown.enter)="saveEdit(row)"
+              (keydown.escape)="cancelEdit()"
+            />
+          </ng-template>
+        </td>
+        <td class="col-num mono" [attr.data-label]="'companies.colBranches' | t">{{ row.branchCount }}</td>
+        <td class="col-actions col-num" [attr.data-label]="'companies.colActions' | t">
+          <ng-container *ngIf="editingId === row.id; else viewActions">
+            <button class="icon-btn" (click)="saveEdit(row)" [title]="'companies.saveName' | t" [attr.aria-label]="'companies.saveName' | t">
+              <mat-icon fontIcon="check"></mat-icon>
+            </button>
+            <button class="icon-btn" (click)="cancelEdit()" [title]="'companies.cancel' | t" [attr.aria-label]="'companies.cancel' | t">
+              <mat-icon fontIcon="close"></mat-icon>
+            </button>
+          </ng-container>
+          <ng-template #viewActions>
+            <button class="icon-btn" (click)="startEdit(row)" [title]="'companies.rename' | t" [attr.aria-label]="'companies.rename' | t">
+              <mat-icon fontIcon="edit"></mat-icon>
+            </button>
+          </ng-template>
+        </td>
+      </tr>
+      <tr *ngIf="!rows.length">
+        <td colspan="3" class="empty-state">
+          {{ loading ? ('companies.loading' | t) : ('companies.empty' | t) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="paginator">
+    <button class="pg" type="button" (click)="prevPage()" [disabled]="page <= 1" [attr.aria-label]="'companies.prevPage' | t">«</button>
+    <span>{{ 'companies.pageInfo' | t:{ page: page, totalPages: totalPages, total: total } }}</span>
+    <button class="pg" type="button" (click)="nextPage()" [disabled]="page >= totalPages" [attr.aria-label]="'companies.nextPage' | t">»</button>
+  </div>
+</mat-dialog-content>

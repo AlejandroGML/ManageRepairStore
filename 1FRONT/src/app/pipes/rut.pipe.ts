@@ -20,6 +20,6 @@ export class RutPipe implements PipeTransform {
       formattedRut = `.${cleanRut.slice(-3)}${formattedRut}`;
       cleanRut = cleanRut.slice(0, -3);
     }
-    return `${cleanRut}${formattedRut}-${verifierDigit}`;
+    return `${cleanRut}${formattedRut}-${verifierDigit.toUpperCase()}`;
   }
 }

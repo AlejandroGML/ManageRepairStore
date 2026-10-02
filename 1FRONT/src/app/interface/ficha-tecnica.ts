@@ -11,6 +11,11 @@ export interface OrdenIngreso {
     description: string
     observation: string
     qr?:string
-    status?: string
+    status?:string
+    /** Nombre de la empresa (display; el backend lo usa para crearla). */
     company_name?: string
+    /** Empresa elegida explícitamente (spec companies). */
+    companyId?: number | null
+    /** Marca "Es empresa" (creación explícita). */
+    is_company?: boolean
 }

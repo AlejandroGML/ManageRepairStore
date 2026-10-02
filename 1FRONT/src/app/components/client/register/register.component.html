@@ -6,6 +6,58 @@
     </div>
   </div>
 
+  <!-- Buscar cliente: un campo + filtro (Nombre | RUT) → autocompleta el form.
+       En modo empresa se oculta: ahí manda el flujo empresa → sucursal. -->
+  <div class="card client-search-card" *ngIf="!form.get('has_company')?.value">
+    <div class="client-search-row">
+      <div class="field-group client-search-input">
+        <label class="field-label" for="search-client">{{ 'register.searchClient' | t }}</label>
+        <input
+          id="search-client"
+          class="input"
+          [placeholder]="searchField === 'name' ? ('register.searchPlaceholderName' | t) : ('register.searchPlaceholderRut' | t)"
+          autocomplete="off"
+          [formControl]="searchQuery"
+          (input)="onSearchInput()"
+        />
+      </div>
+      <mat-button-toggle-group
+        class="client-search-filter"
+        [value]="searchField"
+        (change)="onSearchFieldChange($event.value)"
+        [attr.aria-label]="'register.searchAria' | t"
+      >
+        <mat-button-toggle value="name">{{ 'register.filterByName' | t }}</mat-button-toggle>
+        <mat-button-toggle value="rut">{{ 'register.filterByRut' | t }}</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    <div class="client-search-results" *ngIf="searchResults.length">
+      <button
+        type="button"
+        class="client-search-item"
+        *ngFor="let c of searchResults"
+        (click)="selectSearchResult(c)"
+      >
+        <span class="cs-head">
+          <span class="cs-name">{{ c.name }}</span>
+          <span class="cs-orders">{{ c.orderCount === 1 ? ('register.orderCountOne' | t) : ('register.orderCountMany' | t:{ count: c.orderCount }) }}</span>
+        </span>
+        <span class="cs-meta">
+          <span class="cs-rut mono" *ngIf="hasMeaningfulRut(c.rut_raw)">{{ c.rut_raw | rut }}</span>
+          <ng-container *ngIf="c.city">
+            <span class="cs-sep" *ngIf="hasMeaningfulRut(c.rut_raw)">·</span><span>{{ c.city }}</span>
+          </ng-container>
+          <ng-container *ngIf="c.company?.name">
+            <span class="cs-sep" *ngIf="hasMeaningfulRut(c.rut_raw) || c.city">·</span><span>{{ c.company?.name }}</span>
+          </ng-container>
+        </span>
+      </button>
+    </div>
+    <p class="field-hint search-empty" *ngIf="searchAttempted && !searchResults.length">
+      {{ 'register.searchEmpty' | t }}
+    </p>
+  </div>
+
   <form [formGroup]="form" class="form-register">
     <div class="register-grid">
       <!-- Datos del cliente -->
@@ -56,20 +108,49 @@
               autocomplete="off"
               formControlName="company_name"
               [matAutocomplete]="companiesAutocomplete"
-              (blur)="onCompanyBlur()"
+              (input)="onCompanyInput()"
             />
             <mat-autocomplete
               #companiesAutocomplete="matAutocomplete"
               (optionSelected)="onCompanySelected($event)"
               [displayWith]="companyDisplay"
             >
-              <mat-option *ngFor="let c of filteredCompanies" [value]="c">
+              <mat-option *ngFor="let c of companyResults" [value]="c">
                 <div class="ac-company">
                   <span>{{ c.name }}</span>
-                  <span class="ac-meta mono" *ngIf="c.rut">{{ 'register.companyMeta' | t:{ rut: c.rut, count: c.sucursales } }}</span>
+                  <span class="ac-meta mono" *ngIf="c.rutNormalizado">{{ 'register.companyMeta' | t:{ rut: c.rutNormalizado, count: c.branchCount } }}</span>
                 </div>
               </mat-option>
             </mat-autocomplete>
+            <span class="field-hint" *ngIf="form.get('companyId')?.value">{{ 'register.companySelectedHint' | t }}</span>
+            <!-- Decisión D (Xoko 2026-10-01): gestión siempre accesible —
+                 el botón NO depende del toggle "Es empresa". -->
+            <button
+              type="button"
+              class="btn btn-soft btn-sm manage-companies-btn"
+              (click)="openManageCompanies()"
+            >
+              <mat-icon fontIcon="business"></mat-icon> {{ 'register.manageCompanies' | t }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Sucursales de la empresa elegida (spec companies: flujo explícito).
+             Visible desde que hay empresa seleccionada — aunque tenga 0
+             sucursales activas, "+ Nueva sucursal" debe ofrecerse. -->
+        <div class="branch-panel" *ngIf="form.get('has_company')?.value && form.get('companyId')?.value">
+          <span class="field-hint">{{ 'register.branchPanelHint' | t }}</span>
+          <div class="branch-list">
+            <button type="button" class="branch-item" *ngFor="let b of branches" (click)="selectBranch(b)">
+              <span class="branch-name">{{ b.name }}</span>
+              <span class="branch-meta mono">
+                {{ b.address }}<ng-container *ngIf="b.city"> · {{ b.city }}</ng-container>
+              </span>
+            </button>
+            <button type="button" class="branch-item branch-new" (click)="nuevaSucursal()">
+              <mat-icon fontIcon="add"></mat-icon>
+              <span class="branch-name">{{ 'register.newBranch' | t }}</span>
+            </button>
           </div>
         </div>
 

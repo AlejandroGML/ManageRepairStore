@@ -57,8 +57,8 @@ describe('ModalChoiceClientComponent', () => {
     expect(dialogRefSpy.close).toHaveBeenCalledWith(null);
   });
 
-  it('should include company_name in displayedColumns', () => {
-    expect(component.displayedColumns).toContain('company_name');
+  it('should include company in displayedColumns', () => {
+    expect(component.displayedColumns).toContain('company');
   });
 
   it('should paginate clients 10 per page', () => {

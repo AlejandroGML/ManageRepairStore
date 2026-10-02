@@ -18,7 +18,7 @@
         <span *ngIf="m.client.rut_raw" class="mono">{{ m.client.rut_raw | rut }}</span>
         <span *ngIf="m.client.phone">{{ m.client.phone }}</span>
         <span *ngIf="m.client.address">{{ (m.client.address | name) + (m.client.city ? ', ' + (m.client.city | name) : '') }}</span>
-        <span *ngIf="m.client.company_name">{{ 'client.duplicate.companyLabel' | t:{ name: m.client.company_name } }}</span>
+        <span *ngIf="m.client.phone">{{ m.client.phone }}</span>
       </div>
       <div class="dc-fields">
         <span class="badge badge-warning" *ngFor="let f of m.fields" [matTooltip]="'client.duplicate.similarityTooltip' | t:{ pct: pct(f.similarity) }">

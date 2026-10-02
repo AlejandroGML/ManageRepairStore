@@ -1,9 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { SHARED_IMPORTS } from 'src/app/shared.imports';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { OrdenIngreso } from 'src/app/interface/ficha-tecnica';
-import { ClientsApiService, CompanyInfo, DuplicateMatch } from 'src/app/services/clients.api.service';
+import { ClientsApiService, DuplicateMatch } from 'src/app/services/clients.api.service';
+import { CompaniesApiService, CompanyRow } from 'src/app/services/companies.api.service';
 import { OrdersApiService } from 'src/app/services/orders.api.service';
 import { Client } from 'src/app/interface/client';
 import { LoadingService } from 'src/app/services/loading.service';
@@ -12,16 +14,14 @@ import { SnackbarService } from 'src/app/services/snackbar.service';
 import { PdfService } from 'src/app/services/pdf.service';
 import { PdfComponent } from '../../shared/pdf/pdf.component';
 import { NamePipe } from 'src/app/pipes/name.pipe';
+import { RutPipe } from 'src/app/pipes/rut.pipe';
 import { RutInputComponent } from '../../shared/rut-input/rut-input.component';
-import {
-  ModalCompanySimilarComponent,
-  CompanySimilarResult,
-} from '../modal-company-similar/modal-company-similar.component';
 import {
   ModalDuplicateClientComponent,
   DuplicateClientResult,
 } from '../modal-duplicate-client/modal-duplicate-client.component';
 import { ModalEditClientComponent } from '../modal-edit-client/modal-edit-client.component';
+import { ModalCompaniesComponent } from '../modal-companies/modal-companies.component';
 import { ModalService } from 'src/app/services/modal.service';
 import { I18nService } from '../../../i18n/i18n.service';
 
@@ -30,11 +30,24 @@ import { I18nService } from '../../../i18n/i18n.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css'],
   standalone: true,
-  imports: [SHARED_IMPORTS, PdfComponent, NamePipe, RutInputComponent],
+  imports: [SHARED_IMPORTS, PdfComponent, NamePipe, RutPipe, RutInputComponent],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnDestroy {
   clients: Client[] = [];
   readonly NOT_FOUND = -1;
+  /** Búsqueda de cliente particular (panel superior): campo + filtro. */
+  searchQuery = new FormControl('');
+  searchField: 'name' | 'rut' = 'name';
+  searchResults: Array<Client & { orderCount: number }> = [];
+  searchAttempted = false;
+  private readonly searchTrigger = new Subject<void>();
+  /** Búsqueda de empresas (autocomplete real, spec companies). */
+  companyResults: CompanyRow[] = [];
+  private readonly companyTrigger = new Subject<void>();
+  /** Sucursales de la empresa elegida (selector del flujo empresa). */
+  branches: Client[] = [];
+  selectedCompany?: CompanyRow;
+  private readonly destroy$ = new Subject<void>();
   ordenIngreso!: OrdenIngreso;
   lastClientAdded: number = 0;
   form: FormGroup = new FormGroup({
@@ -47,18 +60,18 @@ export class RegisterComponent {
     email: new FormControl(''),
     has_company: new FormControl(false),
     company_name: new FormControl({ value: '', disabled: true }),
+    companyId: new FormControl<number | null>(null),
     description: new FormControl('', [Validators.required]),
     observation: new FormControl('', [Validators.required]),
   });
   enablePDF: boolean = false;
-  /** Empresas inscritas para el autocomplete (Gatillante A). */
-  companies: CompanyInfo[] = [];
   /** true cuando el RUT queda bloqueado con el de la empresa elegida. */
   rutLocked = false;
 
   private readonly loadingService = inject(LoadingService);
   private readonly modal = inject(ModalService);
   private readonly clientsApi = inject(ClientsApiService);
+  private readonly companiesApi = inject(CompaniesApiService);
   private readonly ordersApi = inject(OrdersApiService);
   private readonly snackBarService = inject(SnackbarService);
   private readonly pdfService = inject(PdfService);
@@ -78,14 +91,17 @@ export class RegisterComponent {
 
   constructor() {
     this.initData();
-    this.loadCompanies();
+    this.searchTrigger
+      .pipe(debounceTime(250), takeUntil(this.destroy$))
+      .subscribe(() => this.runClientSearch());
+    this.companyTrigger
+      .pipe(debounceTime(250), takeUntil(this.destroy$))
+      .subscribe(() => this.runCompanySearch());
   }
 
-  private loadCompanies(): void {
-    this.clientsApi.getCompanies().subscribe({
-      next: (companies) => this.companies = companies ?? [],
-      error: () => this.companies = [],
-    });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   initData(): void {
@@ -124,12 +140,185 @@ export class RegisterComponent {
     return status === 'En reparacion' ? this.i18n.t('register.statusInRepair') : status;
   }
 
+  // ─── Búsqueda de clientes particulares ──────────────────────────────────
+
+  /** Dispara la búsqueda (debounce de 250 ms en el Subject). */
+  onSearchInput(): void {
+    this.searchAttempted = false;
+    this.searchTrigger.next();
+  }
+
+  /** Cambió el filtro (Nombre | RUT): re-busca si ya hay texto. */
+  onSearchFieldChange(field: 'name' | 'rut'): void {
+    if (field === this.searchField) return;
+    this.searchField = field;
+    if (String(this.searchQuery.value ?? '').trim().length >= 2) {
+      this.searchTrigger.next();
+    }
+  }
+
+  /** Búsqueda server-side (GET /client/search) con debounce de 250 ms. */
+  private runClientSearch(): void {
+    const q = String(this.searchQuery.value ?? '').trim();
+    if (q.length < 2) {
+      this.searchResults = [];
+      this.searchAttempted = false;
+      return;
+    }
+    this.clientsApi.searchClients(q, this.searchField, 8).subscribe({
+      next: (res) => {
+        this.searchResults = res.items ?? [];
+        this.searchAttempted = true;
+      },
+      error: () => {
+        this.searchResults = [];
+        this.searchAttempted = true;
+      },
+    });
+  }
+
+  /** Selecciona un cliente del resultado y autocompleta el formulario. */
+  selectSearchResult(client: Client & { orderCount: number }): void {
+    this.fillFormFromClient(client);
+    this.clearSearch();
+    const el = document.getElementById('id-description');
+    if (el) el.focus();
+  }
+
+  /** RUT con contenido real (misma regla del matcher): ≥7 chars, no solo ceros. */
+  hasMeaningfulRut(rut?: string | null): boolean {
+    const clean = String(rut ?? '').replace(/[^0-9kK]/g, '');
+    return clean.length >= 7 && !/^0+$/.test(clean);
+  }
+
+  private clearSearch(): void {
+    this.searchQuery.setValue('', { emitEvent: false });
+    this.searchResults = [];
+    this.searchAttempted = false;
+  }
+
+  // ─── Flujo de empresa (Opción A: autocomplete real + sucursales) ────────
+
+  /** Input del autocomplete de empresas (debounce de 250 ms). */
+  onCompanyInput(): void {
+    this.companyTrigger.next();
+  }
+
+  /** Muestra el nombre tanto para un objeto CompanyRow como para texto libre. */
+  companyDisplay(company?: CompanyRow | string | null): string {
+    if (!company) return '';
+    return typeof company === 'string' ? company : company.name;
+  }
+
+  private runCompanySearch(): void {
+    const q = String(this.form.get('company_name')?.value ?? '').trim();
+    if (q.length < 2) {
+      this.companyResults = [];
+      return;
+    }
+    this.companiesApi.search(q, 8).subscribe({
+      next: (res) => (this.companyResults = res.items ?? []),
+      error: () => (this.companyResults = []),
+    });
+  }
+
+  /** Eligió una empresa existente: RUT bloqueado + panel de sucursales. */
+  onCompanySelected(event: MatAutocompleteSelectedEvent): void {
+    this.applyCompany(event.option.value as CompanyRow);
+  }
+
+  private applyCompany(company: CompanyRow): void {
+    this.selectedCompany = company;
+    this.form.get('companyId')?.setValue(company.id ?? null);
+    // Se guarda el OBJETO: el displayWith del autocomplete lo muestra y el
+    // payload extrae company.name (con string queda el input en blanco).
+    this.form.get('company_name')?.setValue(company as unknown as string);
+    if (company.rutNormalizado) {
+      this.form.get('rut')?.setValue(company.rutNormalizado);
+      this.form.get('rut')?.disable();
+      this.rutLocked = true;
+    }
+    this.loadBranches(company.id);
+  }
+
+  /** Carga las sucursales de la empresa (selector) — vacío si no hay id. */
+  private loadBranches(companyId?: number): void {
+    this.branches = [];
+    if (!companyId) return;
+    this.companiesApi.clients(companyId).subscribe({
+      next: (branches) => (this.branches = branches ?? []),
+      error: () => (this.branches = []),
+    });
+  }
+
+  /** Reusar una sucursal: ancla clientId y completa el formulario. */
+  selectBranch(client: Client): void {
+    this.form.patchValue({
+      clientId: client.id,
+      name: client.name,
+      rut: client.rut_raw,
+      address: client.address,
+      city: client.city,
+      phone: client.phone,
+      email: client.email,
+      description: '',
+      observation: '',
+    });
+    const company = this.selectedCompany;
+    if (company) {
+      this.form.get('companyId')?.setValue(company.id ?? null);
+      this.form.get('company_name')?.setValue(company as unknown as string);
+      this.form.get('rut')?.setValue(company.rutNormalizado);
+      this.form.get('rut')?.disable();
+      this.rutLocked = true;
+    }
+    const el = document.getElementById('id-description');
+    if (el) el.focus();
+  }
+
+  /** Nueva sucursal de la empresa elegida: campos del cliente en blanco. */
+  nuevaSucursal(): void {
+    this.form.patchValue({
+      clientId: '',
+      name: '',
+      address: '',
+      city: '',
+      phone: '',
+      email: '',
+      description: '',
+      observation: '',
+    });
+    const el = document.getElementById('input-client');
+    if (el) el.focus();
+  }
+
+  /** Desbloquea el RUT (particular o sin empresa). */
+  private unlockRut(): void {
+    this.form.get('rut')?.enable();
+    this.rutLocked = false;
+  }
+
+  /** Modal "Gestionar empresas": renombrar; refresca la empresa elegida. */
+  openManageCompanies(): void {
+    this.modal
+      .open(ModalCompaniesComponent, { size: 'lg' })
+      .afterClosed()
+      .subscribe((renamed?: Array<{ id: number; name: string }>) => {
+        if (!renamed?.length || !this.selectedCompany) return;
+        const mine = renamed.find((r) => r.id === this.selectedCompany!.id);
+        if (mine) {
+          this.selectedCompany = { ...this.selectedCompany, name: mine.name };
+          this.form.get('company_name')?.setValue(this.selectedCompany as unknown as string);
+        }
+      });
+  }
+
   registerOrder(): void {
     this.form.markAllAsTouched();
     if (!this.form.valid) {
       // Feedback explícito: antes esto retornaba en silencio y parecía que "no ocurría nada".
       const missing = Object.keys(this.form.controls)
-        .filter((k) => this.form.get(k)?.invalid && !['has_company', 'company_name'].includes(k))
+        .filter((k) => this.form.get(k)?.invalid && !['has_company', 'company_name', 'companyId'].includes(k))
         .map((k) => {
           const labelKey = this.fieldLabelKeys[k];
           return labelKey ? this.i18n.t(labelKey) : k;
@@ -144,37 +333,48 @@ export class RegisterComponent {
 
     const { has_company, ...payload } = this.form.getRawValue();
     payload.status = 'Pendiente';
-    // Si has_company es false, company_name debe ir vacío.
+    payload.is_company = has_company === true;
+    // company_name puede ser el objeto de la empresa elegida o el texto libre
+    // de una empresa nueva; el backend recibe SIEMPRE el nombre plano.
+    const rawCompanyName = payload.company_name;
+    payload.company_name = !rawCompanyName
+      ? ''
+      : typeof rawCompanyName === 'string'
+        ? rawCompanyName
+        : (rawCompanyName as unknown as CompanyRow).name ?? '';
+    // Sin empresa: la orden va como particular limpio.
     if (!has_company) {
       payload.company_name = '';
+      payload.companyId = null;
     }
     const value = payload as OrdenIngreso;
     if (!value.clientId) value.clientId = 0;
 
     this.loadingService.setLoading(true);
 
-    // Gatillante C: chequeo anti-duplicados antes de registrar. Si el RUT está
-    // bloqueado (empresa existente elegida) se omiten RUT y empresa de la
-    // comparación — son compartidos por diseño entre sucursales — pero los
-    // demás valores (nombre, dirección, teléfono, correo) igual se chequean.
+    // Anti-duplicados con exclusión por identidad (spec order-registration):
+    // el cliente seleccionado y TODA su empresa quedan fuera del chequeo.
     const dupInput: {
       name?: string;
       rut?: string;
       address?: string;
       phone?: string;
       email?: string;
-      company_name?: string;
-      has_company?: boolean;
+      clientId?: number;
+      companyId?: number;
     } = {
       name: value.name,
       address: value.address,
       phone: value.phone,
       email: value.email,
+      rut: value.rut,
     };
-    if (!this.rutLocked) {
-      dupInput.rut = value.rut;
-      dupInput.company_name = value.company_name;
-      dupInput.has_company = has_company;
+    if (value.clientId) {
+      dupInput.clientId = Number(value.clientId);
+    }
+    const companyId = Number(this.form.get('companyId')?.value ?? 0);
+    if (companyId) {
+      dupInput.companyId = companyId;
     }
     this.clientsApi.checkDuplicates(dupInput).subscribe({
       next: (res) => {
@@ -239,7 +439,8 @@ export class RegisterComponent {
       city: client.city,
       phone: client.phone,
       email: client.email,
-      company_name: client.company_name ?? '',
+      companyId: client.company_id ?? null,
+      company_name: client.company?.name ?? '',
     };
   }
 
@@ -261,7 +462,7 @@ export class RegisterComponent {
       this.ordenIngreso.observation = lastOrder.observation;
       this.ordenIngreso.date = lastOrder.date;
       this.ordenIngreso.status = lastOrder.status;
-      this.ordenIngreso.company_name = clientAdded.company_name;
+      this.ordenIngreso.company_name = clientAdded.company?.name ?? '';
       this.enablePDF = true;
       this.clearForm(true, true);
       const ifilterByRut = this.clients.findIndex(
@@ -273,14 +474,19 @@ export class RegisterComponent {
       this.snackBarService.success(this.i18n.t('register.success'));
       this.lastClientAdded = this.ordenIngreso.clientId || 0;
       this.loadingService.setLoading(false);
-    }, () => {
-      this.snackBarService.openSnackBar(this.i18n.t('register.connectionError'));
+    }, (err) => {
+      // S1 (post-JD): mostrar el mensaje real del servidor (p. ej. el 400 del
+      // RUT que no calza con la empresa) en vez del genérico de conexión.
+      const msg =
+        err?.error?.message ?? err?.message ?? this.i18n.t('register.connectionError');
+      this.snackBarService.openSnackBar(Array.isArray(msg) ? msg.join(', ') : String(msg));
       this.loadingService.setLoading(false);
     });
   }
 
   clearAllDataForm(): void {
     this.clearForm(true, true);
+    this.clearSearch();
     const inputClientEl = document.getElementById('input-client');
     if (inputClientEl) inputClientEl.focus();
     this.ordenIngreso.code = undefined;
@@ -301,11 +507,15 @@ export class RegisterComponent {
       email: '',
       has_company: false,
       company_name: '',
+      companyId: null,
       description: '',
       observation: '',
       clientId: clearID ? '' : this.form.get('clientId')?.value,
     });
     this.form.get('company_name')?.disable();
+    this.companyResults = [];
+    this.branches = [];
+    this.selectedCompany = undefined;
     this.unlockRut();
     this.lastClientAdded = 0;
     this.form.markAsUntouched();
@@ -318,117 +528,15 @@ export class RegisterComponent {
     } else {
       branchControl?.setValue('');
       branchControl?.disable();
+      this.form.get('companyId')?.setValue(null);
+      // Limpia también el RUT de la empresa: si quedaba pegado, un particular
+      // se guardaba linkeado silenciosamente (Judgment Day A3/B1).
+      this.form.get('rut')?.setValue('');
+      this.companyResults = [];
+      this.branches = [];
+      this.selectedCompany = undefined;
       this.unlockRut();
     }
-  }
-
-  // ─── Flujo de empresa (Gatillante A y B) ────────────────────────────────
-
-  /** Empresas que matchean el texto escrito (autocomplete). */
-  get filteredCompanies(): CompanyInfo[] {
-    const q = this.normalize(String(this.form.get('company_name')?.value ?? ''));
-    if (!q) return this.companies;
-    return this.companies.filter((c) => this.normalize(c.name).includes(q));
-  }
-
-  /** Muestra solo el nombre en el input al elegir una opción. */
-  companyDisplay(company?: CompanyInfo): string {
-    return company ? company.name : '';
-  }
-
-  /** Gatillante A: eligió una empresa inscrita → RUT se bloquea con el suyo. */
-  onCompanySelected(event: MatAutocompleteSelectedEvent): void {
-    const company = event.option.value as CompanyInfo;
-    this.applyCompany(company);
-  }
-
-  private applyCompany(company: CompanyInfo): void {
-    this.form.get('company_name')?.setValue(company.name);
-    if (company.rut) {
-      this.form.get('rut')?.setValue(company.rut);
-      this.form.get('rut')?.disable();
-      this.rutLocked = true;
-    }
-  }
-
-  /** Desbloquea el RUT (empresa nueva o sin empresa). */
-  private unlockRut(): void {
-    this.form.get('rut')?.enable();
-    this.rutLocked = false;
-  }
-
-  /**
-   * Gatillante B: al salir del campo empresa con un nombre no inscrito,
-   * busca parecidos; si hay, abre el modal para rectificar o crear nueva.
-   */
-  onCompanyBlur(): void {
-    if (this.rutLocked) return;
-    const typed = String(this.form.get('company_name')?.value ?? '').trim();
-    const normTyped = this.normalize(typed);
-    if (normTyped.length < 3) return;
-
-    const exact = this.companies.some((c) => this.normalize(c.name) === normTyped);
-    if (exact) return;
-
-    const similar = this.companies
-      .map((c) => ({ company: c, sim: this.similarity(typed, c.name) }))
-      .filter((x) => x.sim >= 0.82)
-      .sort((a, b) => b.sim - a.sim)
-      .slice(0, 4)
-      .map((x) => x.company);
-    if (similar.length === 0) return;
-
-    this.modal
-      .open(ModalCompanySimilarComponent, {
-        size: 'md',
-        disableClose: true,
-        data: { query: typed, companies: similar },
-      })
-      .afterClosed()
-      .subscribe((res: CompanySimilarResult | undefined) => {
-        if (res?.action === 'use' && res.company) {
-          this.applyCompany(res.company);
-        } else if (res?.action === 'create') {
-          // Empresa nueva: el RUT queda libre para escribirlo.
-          this.unlockRut();
-        }
-      });
-  }
-
-  /** Normaliza texto (minúsculas, sin acentos ni puntuación). */
-  private normalize(value: string): string {
-    return (value ?? '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[.-]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  private similarity(a: string, b: string): number {
-    const na = this.normalize(a);
-    const nb = this.normalize(b);
-    const maxLen = Math.max(na.length, nb.length);
-    if (maxLen === 0) return 1;
-    return 1 - this.levenshtein(na, nb) / maxLen;
-  }
-
-  private levenshtein(a: string, b: string): number {
-    if (!a.length) return b.length;
-    if (!b.length) return a.length;
-    const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
-    for (let i = 1; i <= a.length; i++) {
-      let prevDiag = prev[0];
-      prev[0] = i;
-      for (let j = 1; j <= b.length; j++) {
-        const tmp = prev[j];
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, prevDiag + cost);
-        prevDiag = tmp;
-      }
-    }
-    return prev[b.length];
   }
 
   findByRut(): void {
@@ -464,7 +572,6 @@ export class RegisterComponent {
     });
   }
 
-
   findByLastClient(): void {
     const clientAdded: Client[] = this.clients.filter((user) => user.id == this.lastClientAdded);
     if (clientAdded.length === 0) return;
@@ -475,7 +582,7 @@ export class RegisterComponent {
 
   /** Rellena el formulario con los datos de un cliente (helper DRY). */
   private fillFormFromClient(client: Client): void {
-    const hasCompany = !!client.company_name;
+    const hasCompany = !!client.company_id;
     this.form.setValue({
       name: client.name,
       clientId: client.id,
@@ -485,7 +592,8 @@ export class RegisterComponent {
       city: client.city,
       phone: client.phone,
       has_company: hasCompany,
-      company_name: client.company_name || '',
+      company_name: client.company?.name ?? '',
+      companyId: client.company_id ?? null,
       description: '',
       observation: '',
     });
@@ -494,9 +602,28 @@ export class RegisterComponent {
     } else {
       this.form.get('company_name')?.disable();
     }
-    this.unlockRut();
+    // S2 (post-JD): empresa reusada — reconstruir selectedCompany desde la
+    // relación para que el renombre refresque y selectBranch funcione.
+    this.selectedCompany =
+      hasCompany && client.company
+        ? {
+            id: client.company_id ?? client.company.id,
+            name: client.company.name,
+            rutNormalizado: client.company.rut_normalizado ?? client.rut_raw,
+            branchCount: 0,
+          }
+        : undefined;
+    this.branches = [];
+    if (hasCompany && client.company_id) {
+      // Mostrar sucursales hermanas para poder elegir otra (residual B8) y
+      // bloquear el RUT: la sucursal comparte el de su empresa (S2).
+      this.loadBranches(client.company_id);
+      this.form.get('rut')?.disable();
+      this.rutLocked = true;
+    } else {
+      this.unlockRut();
+    }
   }
-
 
   openModalChoiceUser(rut: string, users: Client[]): void {
     this.modal

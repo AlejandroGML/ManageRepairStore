@@ -4,13 +4,6 @@ import { Observable } from 'rxjs';
 import { Client } from '../interface/client';
 import { getApiUrl } from './api-url';
 
-/** Empresa inscrita (autocomplete de Registrar orden). */
-export interface CompanyInfo {
-  name: string;
-  rut?: string;
-  sucursales: number;
-}
-
 /** Campo de coincidencia detectado en el chequeo anti-duplicados. */
 export interface DuplicateField {
   field: string;
@@ -67,10 +60,6 @@ export class ClientsApiService {
   getCountClients(): Observable<number> {
     return this.http.get<number>(this.url + '/client/count');
   }
-  /** Empresas inscritas para el autocomplete de "Registrar orden". */
-  getCompanies(): Observable<CompanyInfo[]> {
-    return this.http.get<CompanyInfo[]>(this.url + '/client/companies');
-  }
   /** Chequeo anti-duplicados antes de registrar una orden. */
   checkDuplicates(input: {
     name?: string;
@@ -78,8 +67,8 @@ export class ClientsApiService {
     address?: string;
     phone?: string;
     email?: string;
-    company_name?: string;
-    has_company?: boolean;
+    clientId?: number;
+    companyId?: number;
   }): Observable<DuplicateCheckResult> {
     return this.http.post<DuplicateCheckResult>(this.url + '/client/duplicates-check', input);
   }

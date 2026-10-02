@@ -39,5 +39,18 @@
   "register.formErrors": "El formulario tiene errores de validación",
   "register.success": "Orden registrada correctamente",
   "register.connectionError": "Error. No fue posible conectarse con servidor",
-  "register.noResults": "Sin resultados"
+  "register.noResults": "Sin resultados",
+  "register.searchClient": "Buscar cliente",
+  "register.searchPlaceholderName": "Escribe el nombre…",
+  "register.searchPlaceholderRut": "Escribe el RUT…",
+  "register.filterByName": "Nombre",
+  "register.filterByRut": "RUT",
+  "register.searchAria": "Filtrar búsqueda de cliente por",
+  "register.orderCountOne": "1 orden",
+  "register.orderCountMany": "{{count}} órdenes",
+  "register.searchEmpty": "Sin resultados — puedes registrar el cliente como nuevo.",
+  "register.companySelectedHint": "Empresa seleccionada: el RUT queda bloqueado con el suyo.",
+  "register.manageCompanies": "Gestionar empresas",
+  "register.branchPanelHint": "Sucursales — elige una o crea una nueva:",
+  "register.newBranch": "Nueva sucursal"
 }

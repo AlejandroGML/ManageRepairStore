@@ -27,13 +27,12 @@ export class ModalEditClientComponent {
     city: new FormControl('', [Validators.required]),
     phone: new FormControl('', [Validators.required]),
     email: new FormControl('', [Validators.email]),
-    has_company: new FormControl(false),
-    company_name: new FormControl({value: '', disabled: true}),
     active: new FormControl('', [Validators.required])
   });
   constructor(private dialogRef: MatDialogRef<ModalEditClientComponent>,@Inject(MAT_DIALOG_DATA) public data: Client,
     private clientsApi:ClientsApiService, private loadingService:LoadingService, private snackbarService:SnackbarService) {
-    const hasCompany = !!data.company_name;
+    // La empresa vive en client.company (relación): el modal ya no edita
+    // company_name — eso se gestiona en el flujo de registro/modal empresas.
     this.form.setValue({
       id: data.id,
       name: data.name,
@@ -42,25 +41,8 @@ export class ModalEditClientComponent {
       city: data.city,
       phone: data.phone,
       email: data.email,
-      has_company: hasCompany,
-      company_name: data.company_name || '',
       active: data.active !== undefined ? data.active : true
     } as any);
-    if (hasCompany) {
-      this.form.get('company_name')?.enable();
-    }
-  }
-  hasCompanyChanged(checked: boolean): void {
-    const branchControl = this.form.get('company_name');
-    if (checked) {
-      branchControl?.enable();
-      if (!branchControl?.value) {
-        branchControl?.setValue('Principal');
-      }
-    } else {
-      branchControl?.setValue('');
-      branchControl?.disable();
-    }
   }
   saveClient(){
     this.form.markAllAsTouched();
@@ -75,7 +57,6 @@ export class ModalEditClientComponent {
       city: rawValue.city,
       phone: rawValue.phone,
       email: rawValue.email,
-      company_name: rawValue.has_company ? rawValue.company_name : '',
       code: this.data.code,
     };
     setTimeout(()=>{

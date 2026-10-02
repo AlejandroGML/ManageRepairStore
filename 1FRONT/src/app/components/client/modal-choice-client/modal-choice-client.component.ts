@@ -15,7 +15,7 @@ import { RutPipe } from 'src/app/pipes/rut.pipe';
   styleUrls: ['./modal-choice-client.component.css']
 })
 export class ModalChoiceClientComponent {
-  displayedColumns: string[] = ['id','name','rut', 'address', 'phone','email','company_name'];
+  displayedColumns: string[] = ['id','name','rut', 'address', 'phone','email','company'];
   rut:string = '';
   dataSource = new MatTableDataSource<Client>([]);
 
