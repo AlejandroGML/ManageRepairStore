@@ -42,51 +42,83 @@ describe('UsersController', () => {
   });
 
   describe('GET /users', () => {
-    it('should return all users', async () => {
-      const mockUsers = [{ id: 1, name: 'Admin', email: 'admin@demo.example', role: 'admin' }];
+    it('should return all users without passwordHash', async () => {
+      const mockUsers = [
+        {
+          id: 1,
+          name: 'Admin',
+          email: 'admin@demo.example',
+          role: 'admin',
+          passwordHash: '$2a$12$secret',
+        },
+      ];
       mockUsersService.findAll.mockResolvedValue(mockUsers);
 
       const result = await controller.findAll();
-      expect(result).toEqual(mockUsers);
+      expect(result).toHaveLength(1);
+      expect(result[0]).not.toHaveProperty('passwordHash');
+      expect(result[0].name).toBe('Admin');
     });
   });
 
   describe('GET /users/:id', () => {
-    it('should return a user by id', async () => {
-      const mockUser = { id: 1, name: 'Admin', email: 'admin@demo.example', role: 'admin' };
+    it('should return a user by id without passwordHash', async () => {
+      const mockUser = {
+        id: 1,
+        name: 'Admin',
+        email: 'admin@demo.example',
+        role: 'admin',
+        passwordHash: '$2a$12$secret',
+      };
       mockUsersService.findById.mockResolvedValue(mockUser);
 
       const result = await controller.findById(1);
-      expect(result).toEqual(mockUser);
+      expect(result).not.toHaveProperty('passwordHash');
+      expect(result.name).toBe('Admin');
       expect(usersService.findById).toHaveBeenCalledWith(1);
     });
   });
 
   describe('POST /users', () => {
-    it('should create a new user', async () => {
+    it('should create a new user without leaking passwordHash', async () => {
       const createDto: CreateUserDto = {
         name: 'New User',
         email: 'new@demo.example',
         password: 'password123',
         role: 'seller',
       };
-      const createdUser = { id: 3, ...createDto, passwordHash: '$2a$12$hash', active: true };
+      const createdUser = {
+        id: 3,
+        name: createDto.name,
+        email: createDto.email,
+        role: createDto.role,
+        active: true,
+        passwordHash: '$2a$12$hash',
+      };
       mockUsersService.create.mockResolvedValue(createdUser);
 
       const result = await controller.create(createDto);
       expect(result.id).toBe(3);
+      expect(result).not.toHaveProperty('passwordHash');
       expect(usersService.create).toHaveBeenCalledWith(createDto);
     });
   });
 
   describe('PATCH /users/:id', () => {
-    it('should update a user', async () => {
+    it('should update a user without leaking passwordHash', async () => {
       const updateDto: UpdateUserDto = { name: 'Updated' };
-      const updatedUser = { id: 1, name: 'Updated', email: 'admin@demo.example', role: 'admin' };
+      const updatedUser = {
+        id: 1,
+        name: 'Updated',
+        email: 'admin@demo.example',
+        role: 'admin',
+        passwordHash: '$2a$12$secret',
+      };
       mockUsersService.update.mockResolvedValue(updatedUser);
 
       const result = await controller.update(1, updateDto, { user: { name: 'Admin' } } as any);
       expect(result.name).toBe('Updated');
+      expect(result).not.toHaveProperty('passwordHash');
       expect(usersService.update).toHaveBeenCalledWith(1, updateDto);
     });
 

@@ -8,6 +8,9 @@ import { UserEntity } from '../entities/user.entity';
 import { LogService } from '../log/log.service';
 import { LogEntity } from '../entities/log.entity';
 
+/** User shape safe to serialize: never carries the password hash. */
+export type PublicUser = Omit<UserEntity, 'passwordHash'>;
+
 @Controller('users')
 @UseGuards(RolesGuard)
 @Roles('admin')
@@ -17,6 +20,15 @@ export class UsersController {
     private readonly logService: LogService,
   ) {}
 
+  /**
+   * Strip `passwordHash` before anything leaves the API. The service layer
+   * keeps working with the full entity; only the HTTP boundary is shaped.
+   */
+  private toPublic(user: UserEntity): PublicUser {
+    const { passwordHash: _passwordHash, ...publicUser } = user;
+    return publicUser;
+  }
+
   private logActivity(userName: string, action: string, clientName: string): void {
     // Fire-and-forget: un log fallido no debe romper la operación.
     this.logService
@@ -25,18 +37,19 @@ export class UsersController {
   }
 
   @Get()
-  findAll(): Promise<UserEntity[]> {
-    return this.usersService.findAll();
+  async findAll(): Promise<PublicUser[]> {
+    const users = await this.usersService.findAll();
+    return users.map((u) => this.toPublic(u));
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number): Promise<UserEntity> {
-    return this.usersService.findById(id);
+  async findById(@Param('id', ParseIntPipe) id: number): Promise<PublicUser> {
+    return this.toPublic(await this.usersService.findById(id));
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto): Promise<PublicUser> {
+    return this.toPublic(await this.usersService.create(createUserDto));
   }
 
   @Patch(':id')
@@ -44,7 +57,7 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
     @Req() req: any,
-  ): Promise<UserEntity> {
+  ): Promise<PublicUser> {
     const updated = await this.usersService.update(id, updateUserDto);
     const action =
       updateUserDto.active === false
@@ -53,7 +66,7 @@ export class UsersController {
           ? 'Activó usuario'
           : 'Actualizó usuario';
     this.logActivity(req.user?.name ?? 'Sistema', action, updated?.name ?? `#${id}`);
-    return updated;
+    return this.toPublic(updated);
   }
 
   @Delete(':id')
