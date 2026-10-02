@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { ClientEntity } from '../entities/client.entity';
 import { ClientGroupEntity } from '../entities/client-group.entity';
 import {
@@ -22,8 +22,7 @@ export class ClientService {
   constructor(
     @InjectRepository(ClientEntity)
     private clientRepository: Repository<ClientEntity>,
-    @InjectRepository(ClientGroupEntity)
-    private groupRepository: Repository<ClientGroupEntity>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getClientsByRut(rut: string): Promise<ClientEntity[]> {
@@ -254,46 +253,74 @@ export class ClientService {
    * colapsados): evita duplicados tipo "Juán Pérez" vs "Juan Perez".
    * Sucursales del mismo retail con nombre idéntico también colisionan:
    * es la regla que pidió el dueño del sistema.
+   *
+   * Race safety (T2/TOCTOU): run INSIDE the transaction that performs the
+   * write, after pg_advisory_xact_lock(hashtext(normalized)). Concurrent
+   * registrations of the same name serialize; the loser's recheck sees the
+   * winner's committed row and gets a 409. hashtext collisions just
+   * serialize unrelated names — harmless.
    */
-  private async assertNoNormalizedNameConflict(name: string, excludeId?: number): Promise<void> {
-    const normalized = normalize(name);
-    if (!normalized) return;
-    const all = await this.clientRepository.find({
+  private async findNormalizedConflict(
+    manager: EntityManager,
+    normalized: string,
+    excludeId?: number,
+  ): Promise<ClientEntity | null> {
+    if (!normalized) return null;
+    const all = await manager.find(ClientEntity, {
       where: { active: true },
       select: { id: true, name: true },
     });
-    const conflict = all.find(
-      (c) => c.id !== excludeId && normalize(c.name) === normalized,
-    );
-    if (conflict) {
-      throw new HttpException(
-        `Ya existe un cliente similar: "${conflict.name}" (#${conflict.id})`,
-        HttpStatus.CONFLICT,
-      );
-    }
+    return all.find((c) => c.id !== excludeId && normalize(c.name) === normalized) ?? null;
   }
 
   async createUser(user: ClientEntity): Promise<ClientEntity> {
-    await this.assertNoNormalizedNameConflict(user.name);
-    if (!user.group) {
-      if (user.rut_normalizado) {
-        const existing = await this.groupRepository.findOne({
-          where: { rut_normalizado: user.rut_normalizado },
-        });
-        user.group = existing || await this.groupRepository.save({
-          rut_normalizado: user.rut_normalizado,
-          name: user.name,
-          active: true,
-        });
-      } else {
-        user.group = await this.groupRepository.save({
-          rut_normalizado: null,
-          name: user.name,
-          active: true,
-        });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const normalized = normalize(user.name);
+      // T2: advisory lock first, then the in-transaction recheck, then the
+      // writes — client AND group find-or-create commit or roll back
+      // together (a crash can no longer leave an orphan group).
+      await queryRunner.manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [normalized]);
+
+      const conflict = await this.findNormalizedConflict(queryRunner.manager, normalized);
+      if (conflict) {
+        throw new HttpException(
+          `Ya existe un cliente similar: "${conflict.name}" (#${conflict.id})`,
+          HttpStatus.CONFLICT,
+        );
       }
+
+      if (!user.group) {
+        if (user.rut_normalizado) {
+          const existing = await queryRunner.manager.findOne(ClientGroupEntity, {
+            where: { rut_normalizado: user.rut_normalizado },
+          });
+          user.group = existing || await queryRunner.manager.save(ClientGroupEntity, {
+            rut_normalizado: user.rut_normalizado,
+            name: user.name,
+            active: true,
+          });
+        } else {
+          user.group = await queryRunner.manager.save(ClientGroupEntity, {
+            rut_normalizado: null,
+            name: user.name,
+            active: true,
+          });
+        }
+      }
+
+      const saved = await queryRunner.manager.save(ClientEntity, user);
+      await queryRunner.commitTransaction();
+      return saved;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    return await this.clientRepository.save(user);
   }
 
   async updateUserById(id: number, newUser: ClientEntity): Promise<ClientEntity> {
@@ -301,11 +328,36 @@ export class ClientService {
     if (!userToUpdate) {
       throw new Error(`User with id ${id} not found.`);
     }
-    if (newUser.name && newUser.name !== userToUpdate.name) {
-      await this.assertNoNormalizedNameConflict(newUser.name, id);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Rename guard lives INSIDE the transaction it protects (T2).
+      if (newUser.name && newUser.name !== userToUpdate.name) {
+        const normalized = normalize(newUser.name);
+        await queryRunner.manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [normalized]);
+
+        const conflict = await this.findNormalizedConflict(queryRunner.manager, normalized, id);
+        if (conflict) {
+          throw new HttpException(
+            `Ya existe un cliente similar: "${conflict.name}" (#${conflict.id})`,
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
+      const updatedUser = Object.assign(userToUpdate, newUser);
+      const saved = await queryRunner.manager.save(ClientEntity, updatedUser);
+      await queryRunner.commitTransaction();
+      return saved;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    const updatedUser = Object.assign(userToUpdate, newUser);
-    return await this.clientRepository.save(updatedUser);
   }
 
   async deleteUserById(id: number): Promise<void> {

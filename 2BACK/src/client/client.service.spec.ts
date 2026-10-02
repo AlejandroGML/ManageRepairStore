@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, QueryRunner, EntityManager } from 'typeorm';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { ClientEntity } from '../entities/client.entity';
 import { ClientGroupEntity } from '../entities/client-group.entity';
 import * as ExcelJS from 'exceljs';
@@ -9,7 +10,8 @@ import { ClientService } from './client.service';
 describe('ClientService', () => {
   let service: ClientService;
   let clientRepository: Repository<ClientEntity>;
-  let groupRepository: Repository<ClientGroupEntity>;
+  let queryRunner: jest.Mocked<QueryRunner>;
+  let dataSource: jest.Mocked<DataSource>;
 
   const mockGroup: ClientGroupEntity = {
     id: 1,
@@ -53,6 +55,28 @@ describe('ClientService', () => {
     },
   ];
 
+  const mockQueryRunner = (): jest.Mocked<QueryRunner> => {
+    const manager = {
+      findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([]),
+      query: jest.fn().mockResolvedValue([]),
+      save: jest.fn(),
+      update: jest.fn(),
+    } as unknown as jest.Mocked<EntityManager>;
+
+    return {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager,
+      isTransactionActive: true,
+      dataSource: {} as DataSource,
+      hasTransaction: jest.fn().mockReturnValue(true),
+    } as unknown as jest.Mocked<QueryRunner>;
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -67,10 +91,9 @@ describe('ClientService', () => {
           },
         },
         {
-          provide: getRepositoryToken(ClientGroupEntity),
+          provide: DataSource,
           useValue: {
-            findOne: jest.fn(),
-            save: jest.fn(),
+            createQueryRunner: jest.fn(),
           },
         },
       ],
@@ -78,7 +101,10 @@ describe('ClientService', () => {
 
     service = module.get<ClientService>(ClientService);
     clientRepository = module.get<Repository<ClientEntity>>(getRepositoryToken(ClientEntity));
-    groupRepository = module.get<Repository<ClientGroupEntity>>(getRepositoryToken(ClientGroupEntity));
+    dataSource = module.get<DataSource>(DataSource) as jest.Mocked<DataSource>;
+
+    queryRunner = mockQueryRunner();
+    (dataSource.createQueryRunner as jest.Mock).mockReturnValue(queryRunner);
   });
 
   describe('getClientsByRut', () => {
@@ -368,21 +394,25 @@ describe('ClientService', () => {
         updated_at: new Date(),
       };
 
-      jest.spyOn(groupRepository, 'findOne').mockResolvedValue(existingGroup);
-      jest.spyOn(clientRepository, 'save').mockResolvedValue({
-        ...branchClient,
-        id: 3,
-        group: existingGroup,
-      } as ClientEntity);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingGroup);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (_entity: any, client: ClientEntity) => ({
+          ...client,
+          id: 3,
+          group: existingGroup,
+        }),
+      );
 
       const result = await service.createUser(branchClient);
 
       // group should be the existing one, NOT a new save
-      expect(groupRepository.findOne).toHaveBeenCalledWith({
+      expect(queryRunner.manager.findOne).toHaveBeenCalledWith(ClientGroupEntity, {
         where: { rut_normalizado: '12345678-5' },
       });
-      expect(groupRepository.save).not.toHaveBeenCalled();
+      // Only the CLIENT save happened (group find, not group create)
+      expect(queryRunner.manager.save).toHaveBeenCalledTimes(1);
       expect(result.group.name).toBe('Juan Pérez');
+      expect(queryRunner.commitTransaction).toHaveBeenCalled();
     });
 
     it('should create a new group with first client name when no group exists', async () => {
@@ -409,20 +439,23 @@ describe('ClientService', () => {
         updated_at: new Date(),
       };
 
-      jest.spyOn(groupRepository, 'findOne').mockResolvedValue(null);
-      jest.spyOn(groupRepository, 'save').mockResolvedValue(savedGroup);
-      jest.spyOn(clientRepository, 'save').mockResolvedValue({
-        ...newClient,
-        id: 10,
-        group: savedGroup,
-      } as ClientEntity);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
+      (queryRunner.manager.save as jest.Mock)
+        .mockResolvedValueOnce(savedGroup) // group create
+        .mockImplementationOnce(
+          async (_entity: any, client: ClientEntity) => ({
+            ...client,
+            id: 10,
+            group: savedGroup,
+          }),
+        );
 
       const result = await service.createUser(newClient);
 
-      expect(groupRepository.findOne).toHaveBeenCalledWith({
+      expect(queryRunner.manager.findOne).toHaveBeenCalledWith(ClientGroupEntity, {
         where: { rut_normalizado: '11111111-1' },
       });
-      expect(groupRepository.save).toHaveBeenCalledWith({
+      expect(queryRunner.manager.save).toHaveBeenCalledWith(ClientGroupEntity, {
         rut_normalizado: '11111111-1',
         name: 'Comercial ABC Ltda.',
         active: true,
@@ -454,17 +487,112 @@ describe('ClientService', () => {
         updated_at: new Date(),
       };
 
-      jest.spyOn(groupRepository, 'findOne').mockResolvedValue(existingGroup);
-      jest.spyOn(clientRepository, 'save').mockImplementation(async (client: any) => ({
-        ...client,
-        id: 20,
-        group: existingGroup,
-      } as ClientEntity));
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingGroup);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (_entity: any, client: ClientEntity) => ({
+          ...client,
+          id: 20,
+          group: existingGroup,
+        }),
+      );
 
       const result = await service.createUser(branchClient);
 
       // company_name should be part of the saved client
       expect(result.company_name).toBe('Sucursal Providencia');
+    });
+
+    it('should take the advisory lock, then recheck, then write (T2 ordering)', async () => {
+      const newClient: ClientEntity = {
+        name: 'Cliente Nuevo',
+        rut_raw: '44444444-4',
+        address: 'Calle 4',
+        city: 'Santiago',
+        active: true,
+        group_id: 0,
+        group: null as any,
+      };
+
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null); // no group
+      (queryRunner.manager.save as jest.Mock)
+        .mockResolvedValueOnce({ id: 7, rut_normalizado: null }) // group create
+        .mockImplementationOnce(async (_e: any, c: ClientEntity) => ({ ...c, id: 8 }));
+
+      await service.createUser(newClient);
+
+      expect(queryRunner.manager.query).toHaveBeenCalledWith(
+        'SELECT pg_advisory_xact_lock(hashtext($1))',
+        ['cliente nuevo'],
+      );
+      const queryOrder = (queryRunner.manager.query as jest.Mock).mock.invocationCallOrder[0];
+      const findOrder = (queryRunner.manager.find as jest.Mock).mock.invocationCallOrder[0];
+      const saveOrder = (queryRunner.manager.save as jest.Mock).mock.invocationCallOrder[0];
+      expect(queryOrder).toBeLessThan(findOrder);
+      expect(findOrder).toBeLessThan(saveOrder);
+    });
+
+    it('should reject 409 and roll back when an active client normalizes equal', async () => {
+      const newClient: ClientEntity = {
+        name: 'JUAN  pEREZ',
+        rut_raw: '55555555-5',
+        address: 'Calle 5',
+        city: 'Santiago',
+        active: true,
+        group_id: 0,
+        group: null as any,
+      };
+      const existing = { id: 3, name: 'Juan Pérez', active: true } as ClientEntity;
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([existing]);
+
+      await expect(service.createUser(newClient)).rejects.toThrow(
+        new HttpException(
+          'Ya existe un cliente similar: "Juan Pérez" (#3)',
+          HttpStatus.CONFLICT,
+        ),
+      );
+
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(queryRunner.manager.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateUserById — rename guard', () => {
+    it('should reject 409 and roll back when renaming onto an existing normalized name', async () => {
+      const userToUpdate = { ...mockClients[0] };
+      (clientRepository.findOne as jest.Mock).mockResolvedValue(userToUpdate);
+      const existing = { id: 9, name: 'Maria Gonzalez', active: true } as ClientEntity;
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([existing]);
+
+      await expect(
+        service.updateUserById(1, { ...mockClients[0], name: 'maria  GONZALEZ' }),
+      ).rejects.toThrow(
+        new HttpException(
+          'Ya existe un cliente similar: "Maria Gonzalez" (#9)',
+          HttpStatus.CONFLICT,
+        ),
+      );
+
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(queryRunner.manager.save).not.toHaveBeenCalled();
+    });
+
+    it('should save inside the transaction and commit (T2: write covered by the lock)', async () => {
+      const userToUpdate = { ...mockClients[0] };
+      (clientRepository.findOne as jest.Mock).mockResolvedValue(userToUpdate);
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (_entity: any, client: ClientEntity) => client,
+      );
+
+      const result = await service.updateUserById(1, { ...mockClients[0], city: 'Viña del Mar' });
+
+      expect(result.city).toBe('Viña del Mar');
+      expect(queryRunner.manager.save).toHaveBeenCalledWith(ClientEntity, expect.anything());
+      expect(clientRepository.save).not.toHaveBeenCalled();
+      expect(queryRunner.commitTransaction).toHaveBeenCalled();
+      expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
     });
   });
 
