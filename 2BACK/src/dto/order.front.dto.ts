@@ -53,6 +53,13 @@ export class OrderFront {
   @IsString()
   company_name?: string;
 
+  /** Flujo empresas (spec companies): marcar y/o seleccionar empresa. */
+  @IsOptional()
+  is_company?: boolean;
+
+  @IsOptional()
+  companyId?: number;
+
   @IsOptional()
   @IsString()
   rut_normalizado?: string;

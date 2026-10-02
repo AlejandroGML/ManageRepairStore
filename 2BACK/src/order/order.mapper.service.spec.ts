@@ -8,12 +8,12 @@ describe('OrderMapperService', () => {
   let service: OrderMapperService;
 
   const makeOrderFront = (overrides: Partial<OrderFront> = {}): OrderFront => ({
-    name: 'Comercial Demo SpA',
+    name: 'Abagas Toledo',
     rut: '12.345.678-5',
-    address: 'Providencia 123',
+    address: 'Toledo 123',
     city: 'Santiago',
     phone: '+56 9 1234 5678',
-    email: 'test@demo.example',
+    email: 'test@abagas.cl',
     description: 'fix leak',
     observation: 'urgent',
     status: OrderStatus.PENDIENTE,
@@ -32,28 +32,32 @@ describe('OrderMapperService', () => {
   describe('mapToClientEntity', () => {
     it('should lowercase/trim name, address and city, and strip dots/hyphens from rut', () => {
       const entity = service.mapToClientEntity(makeOrderFront({
-        name: '  Comercial Demo SpA  ',
+        name: '  Abagas Toledo  ',
         rut: '12.345.678-5',
-        address: '  Providencia 123 ',
+        address: '  Toledo 123 ',
         city: 'SANTIAGO',
       }));
 
-      expect(entity.name).toBe('comercial demo spa');
+      expect(entity.name).toBe('abagas toledo');
       expect(entity.rut_raw).toBe('123456785');
-      expect(entity.address).toBe('providencia 123');
+      expect(entity.address).toBe('toledo 123');
       expect(entity.city).toBe('santiago');
     });
 
-    it('should map clientId to id and pass through phone, email and company_name', () => {
+    it('should map clientId to id and pass through phone, email and company flow fields', () => {
       const entity = service.mapToClientEntity(makeOrderFront({
         clientId: 42,
-        company_name: 'Sucursal Norte',
-      }));
+        company_name: 'Sucursal Viña',
+        is_company: true,
+        companyId: 7,
+      })) as any;
 
       expect(entity.id).toBe(42);
       expect(entity.phone).toBe('+56 9 1234 5678');
-      expect(entity.email).toBe('test@demo.example');
-      expect(entity.company_name).toBe('Sucursal Norte');
+      expect(entity.email).toBe('test@abagas.cl');
+      expect(entity.company_name).toBe('Sucursal Viña');
+      expect(entity.is_company).toBe(true);
+      expect(entity.companyId).toBe(7);
     });
 
     it('should compute rut_normalizado via normalizeRut when not provided', () => {

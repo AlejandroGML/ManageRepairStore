@@ -26,6 +26,9 @@ export class FrontClient implements Client {
   @IsString()
   email?: string;
 
+  /** Flujo empresas: empresa elegida y marca "Es empresa". */
+  company_id?: number | null;
+
   @IsString()
   company_name?: string;
 }

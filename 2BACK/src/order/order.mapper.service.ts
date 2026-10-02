@@ -26,7 +26,9 @@ export class OrderMapperService {
       }],
       rut_normalizado: order.rut_normalizado ?? normalizeRut(order.rut) ?? undefined,
       company_name: order.company_name,
-    } as ClientEntity;
+      is_company: order.is_company,
+      companyId: order.companyId,
+    } as ClientEntity & { is_company?: boolean; companyId?: number; company_name?: string };
   }
 
   mapToOrderEntity(order:OrderFront):OrderEntity{

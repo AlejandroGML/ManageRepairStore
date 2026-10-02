@@ -3,19 +3,14 @@ import * as ExcelJS from 'exceljs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { ClientEntity } from '../entities/client.entity';
-import { ClientGroupEntity } from '../entities/client-group.entity';
+import { CompanyEntity } from '../entities/company.entity';
 import {
   DuplicateCheckInput,
   DuplicateMatch,
   findDuplicates,
+  isMeaningfulRut,
   normalize,
 } from './duplicate-matcher';
-
-export interface CompanyInfo {
-  name: string;
-  rut?: string;
-  sucursales: number;
-}
 
 @Injectable()
 export class ClientService {
@@ -28,6 +23,7 @@ export class ClientService {
   async getClientsByRut(rut: string): Promise<ClientEntity[]> {
     const clients: ClientEntity[] = await this.clientRepository
       .createQueryBuilder('client')
+      .leftJoinAndSelect('client.company', 'company')
       .where('client.rut_raw ILIKE :rut AND client.active = true', { rut: `%${rut}%` })
       .getMany();
     return clients;
@@ -44,13 +40,13 @@ export class ClientService {
   async getClientHierarchy(clientId: number): Promise<ClientEntity[]> {
     const client = await this.clientRepository.findOne({ where: { id: clientId } });
     if (!client) return [];
-    const groupId = client.group_id;
-    if (groupId == null) return [client];
-    return this.clientRepository.find({ where: { group_id: groupId } } as any);
+    const companyId = client.company_id;
+    if (companyId == null) return [client];
+    return this.clientRepository.find({ where: { company_id: companyId } });
   }
 
-  async getGroupClients(groupId: number): Promise<ClientEntity[]> {
-    return this.clientRepository.find({ where: { group_id: groupId } } as any);
+  async getGroupClients(companyId: number): Promise<ClientEntity[]> {
+    return this.clientRepository.find({ where: { company_id: companyId } });
   }
 
   async getCountUsers(): Promise<number> {
@@ -83,43 +79,34 @@ export class ClientService {
   }
 
   /**
-   * Empresas ya inscritas (autocomplete de "Registrar orden"): cada empresa
-   * distinta con un RUT representativo y su cantidad de sucursales.
+   * Empresas ya inscritas: reemplazado por el módulo company
+   * (GET /company?q= sobre la entidad real).
    */
-  async getCompanies(): Promise<CompanyInfo[]> {
-    const rows = await this.clientRepository
-      .createQueryBuilder('c')
-      .select('c.company_name', 'name')
-      .addSelect('MAX(c.rut_normalizado)', 'rut')
-      .addSelect('COUNT(c.id)', 'sucursales')
-      .where('c.active = :active', { active: true })
-      .andWhere("c.company_name IS NOT NULL AND c.company_name != ''")
-      .groupBy('c.company_name')
-      .orderBy('c.company_name', 'ASC')
-      .getRawMany();
-    return rows.map((r) => ({
-      name: String(r.name ?? ''),
-      rut: r.rut || undefined,
-      sucursales: Number(r.sucursales ?? 0),
-    }));
-  }
 
-  /**
-   * Anti-duplicados: busca clientes activos que coincidan por alguno de los
-   * campos (RUT, teléfono, correo, nombre, dirección, empresa) usando el
-   * matcher normalizado + difuso.
-   */
+    /**
+     * Anti-duplicados: busca clientes activos que coincidan por alguno de los
+     * campos (RUT, teléfono, correo, nombre, dirección) usando el matcher
+     * normalizado + difuso. Se excluyen el cliente seleccionado explícitamente
+     * y TODAS las sucursales de la empresa seleccionada (comparten rut por
+     * diseño — no son duplicados).
+     */
   async checkDuplicates(input: DuplicateCheckInput): Promise<{ count: number; matches: DuplicateMatch[] }> {
     const candidates = await this.clientRepository
       .createQueryBuilder('c')
       .select([
         'c.id', 'c.name', 'c.rut_raw', 'c.rut_normalizado',
-        'c.address', 'c.city', 'c.phone', 'c.email', 'c.company_name',
+        'c.address', 'c.city', 'c.phone', 'c.email', 'c.company_id',
       ])
       .where('c.active = :active', { active: true })
       .getMany();
 
-    const matches = findDuplicates(candidates, input);
+    const pool = candidates.filter(
+      (c) =>
+        (input.clientId == null || c.id !== input.clientId) &&
+        (input.companyId == null || c.company_id !== input.companyId),
+    );
+
+    const matches = findDuplicates(pool, input);
     return { count: matches.length, matches };
   }
 
@@ -137,6 +124,7 @@ export class ClientService {
     const term = `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
 
     const qb = this.clientRepository.createQueryBuilder('c');
+    qb.leftJoinAndSelect('c.company', 'company');
     switch (field) {
       case 'id':
         qb.where('CAST(c.id AS TEXT) ILIKE :term', { term });
@@ -154,7 +142,8 @@ export class ClientService {
         qb.where('c.email ILIKE :term', { term });
         break;
       case 'company':
-        qb.where('c.company_name ILIKE :term', { term });
+        qb.leftJoin('company_entity', 'co', 'co.id = c.company_id')
+          .where('co.name ILIKE :term', { term });
         break;
       case 'city':
         qb.where('c.city ILIKE :term', { term });
@@ -190,10 +179,12 @@ export class ClientService {
   async buildClientsXlsx(): Promise<ExcelJS.Buffer> {
     const rows = await this.clientRepository
       .createQueryBuilder('c')
+      .leftJoin('company_entity', 'co', 'co.id = c.company_id')
       .select([
         'c.id', 'c.name', 'c.rut_raw', 'c.phone',
-        'c.email', 'c.address', 'c.city', 'c.company_name',
+        'c.email', 'c.address', 'c.city',
       ])
+      .addSelect('co.name', 'c_company_name')
       .orderBy('c.id', 'ASC')
       .getRawMany();
 
@@ -281,8 +272,7 @@ export class ClientService {
     try {
       const normalized = normalize(user.name);
       // T2: advisory lock first, then the in-transaction recheck, then the
-      // writes — client AND group find-or-create commit or roll back
-      // together (a crash can no longer leave an orphan group).
+      // write — the guard covers the INSERT.
       await queryRunner.manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [normalized]);
 
       const conflict = await this.findNormalizedConflict(queryRunner.manager, normalized);
@@ -293,25 +283,22 @@ export class ClientService {
         );
       }
 
-      if (!user.group) {
-        if (user.rut_normalizado) {
-          const existing = await queryRunner.manager.findOne(ClientGroupEntity, {
-            where: { rut_normalizado: user.rut_normalizado },
-          });
-          user.group = existing || await queryRunner.manager.save(ClientGroupEntity, {
-            rut_normalizado: user.rut_normalizado,
-            name: user.name,
-            active: true,
-          });
-        } else {
-          user.group = await queryRunner.manager.save(ClientGroupEntity, {
-            rut_normalizado: null,
-            name: user.name,
-            active: true,
-          });
-        }
+      // Reglas de empresa (spec `companies`): vinculación SOLO por rut
+      // significativo a una empresa existente; los particulares (y la
+      // basura) quedan en NULL. La CREACIÓN de empresas vive en el flujo de
+      // registrar orden (`is_company` explícito) — aquí nunca se crean.
+      if (!user.company) {
+        const meaningful = isMeaningfulRut(normalize(user.rut_normalizado ?? ''));
+        user.company = meaningful
+          ? await queryRunner.manager.findOne(CompanyEntity, {
+              where: { rut_normalizado: user.rut_normalizado, active: true },
+            }) ?? null
+          : null;
+        user.company_id = user.company?.id ?? null;
       }
 
+      // El save va DENTRO de la transacción: el advisory lock y el recheck
+      // 409 deben cubrir el INSERT (Judgment Day A4/B6).
       const saved = await queryRunner.manager.save(ClientEntity, user);
       await queryRunner.commitTransaction();
       return saved;

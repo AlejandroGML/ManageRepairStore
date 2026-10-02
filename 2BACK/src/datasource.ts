@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ClientEntity } from './entities/client.entity';
-import { ClientGroupEntity } from './entities/client-group.entity';
+import { CompanyEntity } from './entities/company.entity';
 import { OrderEntity } from './entities/order.entity';
 import { UserEntity } from './entities/user.entity';
 import { TransactionEntity } from './entities/transaction.entity';
@@ -36,7 +36,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'manage_repair_store',
   entities: [
     ClientEntity,
-    ClientGroupEntity,
+    CompanyEntity,
     OrderEntity,
     UserEntity,
     TransactionEntity,

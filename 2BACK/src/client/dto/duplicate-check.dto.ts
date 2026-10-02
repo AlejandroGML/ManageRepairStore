@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsOptional, IsString } from 'class-validator';
 
 /** Entrada del chequeo anti-duplicados (datos del formulario de registrar orden). */
 export class DuplicateCheckDto {
@@ -22,11 +22,19 @@ export class DuplicateCheckDto {
   @IsString()
   email?: string;
 
+  /**
+   * Cliente ya seleccionado explícitamente (búsqueda en registrar orden):
+   * se excluye de las coincidencias — no es un duplicado, ES el cliente.
+   */
   @IsOptional()
-  @IsString()
-  company_name?: string;
+  @IsInt()
+  clientId?: number;
 
+  /**
+   * Empresa seleccionada explícitamente: sus sucursales se excluyen
+   * (comparten rut por diseño — no son duplicados).
+   */
   @IsOptional()
-  @IsBoolean()
-  has_company?: boolean;
+  @IsInt()
+  companyId?: number;
 }

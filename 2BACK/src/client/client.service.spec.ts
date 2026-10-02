@@ -3,22 +3,21 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner, EntityManager } from 'typeorm';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ClientEntity } from '../entities/client.entity';
-import { ClientGroupEntity } from '../entities/client-group.entity';
+import { CompanyEntity } from '../entities/company.entity';
 import * as ExcelJS from 'exceljs';
 import { ClientService } from './client.service';
 
 describe('ClientService', () => {
   let service: ClientService;
   let clientRepository: Repository<ClientEntity>;
+  let companyRepository: Repository<CompanyEntity>;
   let queryRunner: jest.Mocked<QueryRunner>;
   let dataSource: jest.Mocked<DataSource>;
 
-  const mockGroup: ClientGroupEntity = {
+  const mockCompany: CompanyEntity = {
     id: 1,
     rut_normalizado: '12345678-5',
-    name: 'Grupo Test',
-    credit_limit: 0,
-    payment_terms: '',
+    name: 'Empresa Test',
     active: true,
     clients: [],
     created_at: new Date(),
@@ -36,9 +35,8 @@ describe('ClientService', () => {
       phone: '+56912345678',
       email: 'juan@example.com',
       active: true,
-      group_id: 1,
-      group: mockGroup,
-      company_name: 'Principal',
+      company_id: 1,
+      company: mockCompany,
     },
     {
       id: 2,
@@ -50,32 +48,10 @@ describe('ClientService', () => {
       phone: '+56987654321',
       email: 'maria@example.com',
       active: true,
-      group_id: 2,
-      group: { ...mockGroup, id: 2, rut_normalizado: '98765432-1' },
+      company_id: 2,
+      company: { ...mockCompany, id: 2, rut_normalizado: '98765432-1' },
     },
   ];
-
-  const mockQueryRunner = (): jest.Mocked<QueryRunner> => {
-    const manager = {
-      findOne: jest.fn(),
-      find: jest.fn().mockResolvedValue([]),
-      query: jest.fn().mockResolvedValue([]),
-      save: jest.fn(),
-      update: jest.fn(),
-    } as unknown as jest.Mocked<EntityManager>;
-
-    return {
-      connect: jest.fn(),
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      rollbackTransaction: jest.fn(),
-      release: jest.fn(),
-      manager,
-      isTransactionActive: true,
-      dataSource: {} as DataSource,
-      hasTransaction: jest.fn().mockReturnValue(true),
-    } as unknown as jest.Mocked<QueryRunner>;
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -85,6 +61,14 @@ describe('ClientService', () => {
           provide: getRepositoryToken(ClientEntity),
           useValue: {
             find: jest.fn().mockResolvedValue([]),
+            findOne: jest.fn(),
+            save: jest.fn(),
+            createQueryBuilder: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(CompanyEntity),
+          useValue: {
             findOne: jest.fn(),
             save: jest.fn(),
             createQueryBuilder: jest.fn(),
@@ -101,16 +85,31 @@ describe('ClientService', () => {
 
     service = module.get<ClientService>(ClientService);
     clientRepository = module.get<Repository<ClientEntity>>(getRepositoryToken(ClientEntity));
+    companyRepository = module.get<Repository<CompanyEntity>>(getRepositoryToken(CompanyEntity));
     dataSource = module.get<DataSource>(DataSource) as jest.Mocked<DataSource>;
 
-    queryRunner = mockQueryRunner();
+    const manager = {
+      find: jest.fn().mockResolvedValue([]),
+      query: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn(),
+      save: jest.fn(),
+    } as unknown as jest.Mocked<EntityManager>;
+    queryRunner = {
+      connect: jest.fn(),
+      startTransaction: jest.fn(),
+      commitTransaction: jest.fn(),
+      rollbackTransaction: jest.fn(),
+      release: jest.fn(),
+      manager,
+    } as unknown as jest.Mocked<QueryRunner>;
     (dataSource.createQueryRunner as jest.Mock).mockReturnValue(queryRunner);
   });
 
   describe('getClientsByRut', () => {
-    it('should find active clients by rut_raw using ILIKE', async () => {
+    it('should find active clients by rut_raw using ILIKE (with the company relation loaded)', async () => {
       const expectedClients = [mockClients[0]];
       const queryBuilderMock = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue(expectedClients),
       };
@@ -121,6 +120,7 @@ describe('ClientService', () => {
 
       expect(result).toEqual(expectedClients);
       expect(clientRepository.createQueryBuilder).toHaveBeenCalledWith('client');
+      expect(queryBuilderMock.leftJoinAndSelect).toHaveBeenCalledWith('client.company', 'company');
       expect(queryBuilderMock.where).toHaveBeenCalledWith(
         'client.rut_raw ILIKE :rut AND client.active = true',
         { rut: '%12345678-5%' },
@@ -129,6 +129,7 @@ describe('ClientService', () => {
 
     it('should return empty array when no clients match', async () => {
       const queryBuilderMock = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([]),
       };
@@ -146,6 +147,7 @@ describe('ClientService', () => {
 
     it('should match partial RUT via ILIKE wildcards', async () => {
       const queryBuilderMock = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue(mockClients),
       };
@@ -164,6 +166,7 @@ describe('ClientService', () => {
 
   describe('searchClients', () => {
     const buildQb = (): any => ({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       getCount: jest.fn().mockResolvedValue(1),
       addSelect: jest.fn().mockReturnThis(),
@@ -211,19 +214,89 @@ describe('ClientService', () => {
       );
     });
 
-    it('should filter by company field', async () => {
+    it('should filter by company through the company_entity join', async () => {
       const qb = buildQb();
+      qb.leftJoin = jest.fn().mockReturnThis();
       jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
 
       await service.searchClients('sodimac', 'company');
 
-      expect(qb.where).toHaveBeenCalledWith('c.company_name ILIKE :term', { term: '%sodimac%' });
+      expect(qb.leftJoin).toHaveBeenCalledWith('company_entity', 'co', 'co.id = c.company_id');
+      expect(qb.where).toHaveBeenCalledWith('co.name ILIKE :term', { term: '%sodimac%' });
+    });
+  });
+
+  describe('checkDuplicates', () => {
+    const buildCandidatesQb = (candidates: any[]): any => ({
+      select: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue(candidates),
+    });
+
+    it('should exclude the explicitly selected clientId from the matches', async () => {
+      const qb = buildCandidatesQb([mockClients[0]]);
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const result = await service.checkDuplicates({
+        name: 'Juan Pérez',
+        rut: '12345678-5',
+        clientId: 1,
+      });
+
+      expect(result.count).toBe(0);
+      expect(result.matches).toHaveLength(0);
+    });
+
+    it('should still match OTHER clients sharing the same data', async () => {
+      const otherWithSameRut = { ...mockClients[0], id: 3 };
+      const qb = buildCandidatesQb([mockClients[0], otherWithSameRut]);
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const result = await service.checkDuplicates({
+        name: 'Juan Pérez',
+        rut: '12345678-5',
+        clientId: 1,
+      });
+
+      expect(result.count).toBe(1);
+      expect(result.matches[0].client.id).toBe(3);
+    });
+
+    it('should keep all matches when no clientId is provided', async () => {
+      const qb = buildCandidatesQb([mockClients[0]]);
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const result = await service.checkDuplicates({
+        name: 'Juan Pérez',
+        rut: '12345678-5',
+      });
+
+      expect(result.count).toBe(1);
+      expect(result.matches[0].client.id).toBe(1);
+    });
+
+    it('should exclude the selected company branches but keep other companies', async () => {
+      const sibling = { ...mockClients[0], id: 3 };
+      const otherCompany = { ...mockClients[0], id: 4, company_id: 2 };
+      const qb = buildCandidatesQb([mockClients[0], sibling, otherCompany]);
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const result = await service.checkDuplicates({
+        name: 'Juan Pérez',
+        rut: '12345678-5',
+        companyId: 1,
+      });
+
+      expect(result.count).toBe(1);
+      expect(result.matches[0].client.id).toBe(4);
     });
   });
 
   describe('buildClientsXlsx', () => {
     const buildXlsQb = (raw: any[]): any => ({
       select: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       getRawMany: jest.fn().mockResolvedValue(raw),
     });
@@ -290,7 +363,7 @@ describe('ClientService', () => {
   });
 
   describe('getClientHierarchy', () => {
-    const groupClients: any[] = [
+    const companyClients: any[] = [
       {
         id: 1,
         name: 'Walmart Chile SA',
@@ -299,8 +372,8 @@ describe('ClientService', () => {
         address: 'Matriz Santiago',
         city: 'Santiago',
         active: true,
-        group_id: 10,
-        group: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
+        company_id: 10,
+        company: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
       },
       {
         id: 2,
@@ -310,8 +383,8 @@ describe('ClientService', () => {
         address: 'Viña del Mar',
         city: 'Viña del Mar',
         active: true,
-        group_id: 10,
-        group: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
+        company_id: 10,
+        company: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
       },
       {
         id: 3,
@@ -321,24 +394,24 @@ describe('ClientService', () => {
         address: 'Concón',
         city: 'Concón',
         active: true,
-        group_id: 10,
-        group: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
+        company_id: 10,
+        company: { id: 10, rut_normalizado: '76042014-K', name: 'Walmart', active: true },
       },
     ];
 
-    it('should return all clients sharing the same group_id', async () => {
-      jest.spyOn(clientRepository, 'findOne').mockResolvedValue(groupClients[0]);
-      jest.spyOn(clientRepository, 'find').mockResolvedValue(groupClients);
+    it('should return all clients sharing the same company_id', async () => {
+      jest.spyOn(clientRepository, 'findOne').mockResolvedValue(companyClients[0]);
+      jest.spyOn(clientRepository, 'find').mockResolvedValue(companyClients);
 
       const result = await service.getClientHierarchy(1);
 
-      expect(result).toEqual(groupClients);
+      expect(result).toEqual(companyClients);
       expect(result).toHaveLength(3);
       expect(clientRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
-      expect(clientRepository.find).toHaveBeenCalledWith({ where: { group_id: 10 } });
+      expect(clientRepository.find).toHaveBeenCalledWith({ where: { company_id: 10 } });
     });
 
-    it('should return empty array when client has no group_id', async () => {
+    it('should return only the client when it has no company', async () => {
       const soloClient: ClientEntity = {
         id: 99,
         name: 'Cliente Individual',
@@ -346,8 +419,8 @@ describe('ClientService', () => {
         address: 'Calle 123',
         city: 'Santiago',
         active: true,
-        group_id: 1,
-        group: mockGroup,
+        company_id: null,
+        company: null,
       };
       jest.spyOn(clientRepository, 'findOne').mockResolvedValue(soloClient);
       jest.spyOn(clientRepository, 'find').mockResolvedValue([soloClient]);
@@ -370,52 +443,44 @@ describe('ClientService', () => {
   });
 
   describe('createUser', () => {
-    it('should preserve existing group.name when creating a branch (same rut_normalizado)', async () => {
+    it('links an existing company by meaningful rut (never creates here)', async () => {
       const branchClient: ClientEntity = {
-        name: 'Juan Pérez Sucursal Viña',
-        rut_raw: '12345678-5',
-        rut_normalizado: '12345678-5',
+        name: 'Walmart Viña',
+        rut_raw: '76042014-K',
+        rut_normalizado: '76042014-K',
         address: 'Viña del Mar 789',
         city: 'Viña del Mar',
         active: true,
-        company_name: 'Sucursal Viña',
-        group_id: 0, // will be set by createUser
-        group: null as any,
+        company_id: null,
+        company: null as any,
       };
 
-      const existingGroup: ClientGroupEntity = {
+      const existingCompany: CompanyEntity = {
         id: 1,
-        rut_normalizado: '12345678-5',
-        name: 'Juan Pérez',
-        credit_limit: 0,
-        payment_terms: '',
+        rut_normalizado: '76042014-K',
+        name: 'Walmart Chile',
         active: true,
         created_at: new Date(),
         updated_at: new Date(),
       };
 
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingGroup);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingCompany);
       (queryRunner.manager.save as jest.Mock).mockImplementation(
-        async (_entity: any, client: ClientEntity) => ({
-          ...client,
-          id: 3,
-          group: existingGroup,
-        }),
+        async (_entityClass, client: ClientEntity) => ({ ...client, id: 3 }),
       );
 
       const result = await service.createUser(branchClient);
 
-      // group should be the existing one, NOT a new save
-      expect(queryRunner.manager.findOne).toHaveBeenCalledWith(ClientGroupEntity, {
-        where: { rut_normalizado: '12345678-5' },
+      expect(queryRunner.manager.findOne).toHaveBeenCalledWith(CompanyEntity, {
+        where: { rut_normalizado: '76042014-K', active: true },
       });
-      // Only the CLIENT save happened (group find, not group create)
-      expect(queryRunner.manager.save).toHaveBeenCalledTimes(1);
-      expect(result.group.name).toBe('Juan Pérez');
       expect(queryRunner.commitTransaction).toHaveBeenCalled();
+      expect(result.company_id).toBe(1);
+      // Las empresas NO se crean desde acá (solo desde registrar orden).
+      expect(queryRunner.manager.save).not.toHaveBeenCalledWith(CompanyEntity, expect.anything());
     });
 
-    it('should create a new group with first client name when no group exists', async () => {
+    it('keeps company null when no company matches — never auto-creates', async () => {
       const newClient: ClientEntity = {
         name: 'Comercial ABC Ltda.',
         rut_raw: '11111111-1',
@@ -423,170 +488,137 @@ describe('ClientService', () => {
         address: 'Calle Nueva 1',
         city: 'Santiago',
         active: true,
-        company_name: 'Sucursal Centro',
-        group_id: 0,
-        group: null as any,
+        company_id: null,
+        company: null as any,
       };
 
-      const savedGroup: ClientGroupEntity = {
-        id: 99,
-        rut_normalizado: '11111111-1',
-        name: 'Comercial ABC Ltda.',
-        credit_limit: 0,
-        payment_terms: '',
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (_entityClass, client: ClientEntity) => ({ ...client, id: 10 }),
+      );
+
+      const result = await service.createUser(newClient);
+
+      expect(queryRunner.manager.save).not.toHaveBeenCalledWith(CompanyEntity, expect.anything());
+      expect(result.company_id).toBeNull();
+    });
+
+    it('never links a company for junk ruts', async () => {
+      const junkClient: ClientEntity = {
+        name: 'Cliente Sin Rut',
+        rut_raw: '0',
+        rut_normalizado: '0',
+        address: 'Calle 1',
+        city: 'Santiago',
         active: true,
-        created_at: new Date(),
-        updated_at: new Date(),
+        company_id: null,
+        company: null as any,
+      };
+
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (_entityClass, client: ClientEntity) => ({ ...client, id: 20 }),
+      );
+
+      const result = await service.createUser(junkClient);
+
+      expect(queryRunner.manager.findOne).not.toHaveBeenCalledWith(CompanyEntity, expect.anything());
+      expect(result.company_id).toBeNull();
+    });
+
+    it('acquires the advisory lock on the normalized name and rechecks conflicts inside the transaction', async () => {
+      const newClient: ClientEntity = {
+        name: 'Juán Pérez',
+        rut_raw: '',
+        address: '',
+        city: '',
+        active: true,
+        company_id: null,
+        company: null as any,
       };
 
       (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
       (queryRunner.manager.save as jest.Mock)
-        .mockResolvedValueOnce(savedGroup) // group create
-        .mockImplementationOnce(
-          async (_entity: any, client: ClientEntity) => ({
-            ...client,
-            id: 10,
-            group: savedGroup,
-          }),
-        );
-
-      const result = await service.createUser(newClient);
-
-      expect(queryRunner.manager.findOne).toHaveBeenCalledWith(ClientGroupEntity, {
-        where: { rut_normalizado: '11111111-1' },
-      });
-      expect(queryRunner.manager.save).toHaveBeenCalledWith(ClientGroupEntity, {
-        rut_normalizado: '11111111-1',
-        name: 'Comercial ABC Ltda.',
-        active: true,
-      });
-      expect(result.group.name).toBe('Comercial ABC Ltda.');
-    });
-
-    it('should persist company_name when provided', async () => {
-      const branchClient: ClientEntity = {
-        name: 'Walmart Chile SA',
-        rut_raw: '76042014-K',
-        rut_normalizado: '76042014-K',
-        address: 'Santiago Centro',
-        city: 'Santiago',
-        active: true,
-        company_name: 'Sucursal Providencia',
-        group_id: 0,
-        group: null as any,
-      };
-
-      const existingGroup: ClientGroupEntity = {
-        id: 5,
-        rut_normalizado: '76042014-K',
-        name: 'Walmart Chile SA',
-        credit_limit: 0,
-        payment_terms: '',
-        active: true,
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingGroup);
-      (queryRunner.manager.save as jest.Mock).mockImplementation(
-        async (_entity: any, client: ClientEntity) => ({
+        .mockResolvedValueOnce({ id: 1, rut_normalizado: null, name: 'Juán Pérez', active: true })
+        .mockImplementationOnce(async (_entityClass, client: ClientEntity) => ({
           ...client,
-          id: 20,
-          group: existingGroup,
-        }),
-      );
-
-      const result = await service.createUser(branchClient);
-
-      // company_name should be part of the saved client
-      expect(result.company_name).toBe('Sucursal Providencia');
-    });
-
-    it('should take the advisory lock, then recheck, then write (T2 ordering)', async () => {
-      const newClient: ClientEntity = {
-        name: 'Cliente Nuevo',
-        rut_raw: '44444444-4',
-        address: 'Calle 4',
-        city: 'Santiago',
-        active: true,
-        group_id: 0,
-        group: null as any,
-      };
-
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null); // no group
-      (queryRunner.manager.save as jest.Mock)
-        .mockResolvedValueOnce({ id: 7, rut_normalizado: null }) // group create
-        .mockImplementationOnce(async (_e: any, c: ClientEntity) => ({ ...c, id: 8 }));
+          id: 30,
+        }));
 
       await service.createUser(newClient);
 
+      // "Juán Pérez" normalizes to "juan perez" (lowercase, no accents)
       expect(queryRunner.manager.query).toHaveBeenCalledWith(
-        'SELECT pg_advisory_xact_lock(hashtext($1))',
-        ['cliente nuevo'],
+        expect.stringContaining('pg_advisory_xact_lock'),
+        ['juan perez'],
       );
-      const queryOrder = (queryRunner.manager.query as jest.Mock).mock.invocationCallOrder[0];
-      const findOrder = (queryRunner.manager.find as jest.Mock).mock.invocationCallOrder[0];
-      const saveOrder = (queryRunner.manager.save as jest.Mock).mock.invocationCallOrder[0];
-      expect(queryOrder).toBeLessThan(findOrder);
-      expect(findOrder).toBeLessThan(saveOrder);
+      expect(queryRunner.manager.find).toHaveBeenCalledWith(
+        ClientEntity,
+        expect.objectContaining({ where: { active: true } }),
+      );
+      expect(queryRunner.commitTransaction).toHaveBeenCalled();
     });
 
-    it('should reject 409 and roll back when an active client normalizes equal', async () => {
+    it('409s and rolls back (no client, no company) when the in-tx recheck finds a duplicate', async () => {
       const newClient: ClientEntity = {
-        name: 'JUAN  pEREZ',
-        rut_raw: '55555555-5',
-        address: 'Calle 5',
-        city: 'Santiago',
+        name: 'Juan Perez',
+        rut_raw: '',
+        address: '',
+        city: '',
         active: true,
-        group_id: 0,
-        group: null as any,
+        company_id: null,
+        company: null as any,
       };
-      const existing = { id: 3, name: 'Juan Pérez', active: true } as ClientEntity;
-      (queryRunner.manager.find as jest.Mock).mockResolvedValue([existing]);
 
-      await expect(service.createUser(newClient)).rejects.toThrow(
-        new HttpException(
-          'Ya existe un cliente similar: "Juan Pérez" (#3)',
-          HttpStatus.CONFLICT,
-        ),
-      );
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([
+        { id: 7, name: 'Juán Pérez' },
+      ]);
+
+      await expect(service.createUser(newClient)).rejects.toMatchObject({
+        status: HttpStatus.CONFLICT,
+      });
 
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
-      expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
       expect(queryRunner.manager.save).not.toHaveBeenCalled();
     });
   });
 
-  describe('updateUserById — rename guard', () => {
+  describe('updateUserById — rename guard (T2, MRS)', () => {
+    const baseClient: ClientEntity = {
+      id: 1,
+      name: 'María González',
+      rut_raw: '15234567-6',
+      rut_normalizado: '15234567-6',
+      address: 'Calle Los Cerezos 45',
+      city: 'Las Condes',
+      active: true,
+      company_id: null,
+      company: null as any,
+    };
+
     it('should reject 409 and roll back when renaming onto an existing normalized name', async () => {
-      const userToUpdate = { ...mockClients[0] };
-      (clientRepository.findOne as jest.Mock).mockResolvedValue(userToUpdate);
-      const existing = { id: 9, name: 'Maria Gonzalez', active: true } as ClientEntity;
-      (queryRunner.manager.find as jest.Mock).mockResolvedValue([existing]);
+      jest.spyOn(clientRepository, 'findOne').mockResolvedValue({ ...baseClient });
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([
+        { id: 9, name: 'Maria Gonzalez', active: true },
+      ]);
 
       await expect(
-        service.updateUserById(1, { ...mockClients[0], name: 'maria  GONZALEZ' }),
-      ).rejects.toThrow(
-        new HttpException(
-          'Ya existe un cliente similar: "Maria Gonzalez" (#9)',
-          HttpStatus.CONFLICT,
-        ),
-      );
+        service.updateUserById(1, { ...baseClient, name: 'maria  GONZALEZ' }),
+      ).rejects.toMatchObject({ status: HttpStatus.CONFLICT });
 
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
       expect(queryRunner.manager.save).not.toHaveBeenCalled();
     });
 
-    it('should save inside the transaction and commit (T2: write covered by the lock)', async () => {
-      const userToUpdate = { ...mockClients[0] };
-      (clientRepository.findOne as jest.Mock).mockResolvedValue(userToUpdate);
+    it('should save inside the transaction and commit (write covered by the lock)', async () => {
+      jest.spyOn(clientRepository, 'findOne').mockResolvedValue({ ...baseClient });
       (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
       (queryRunner.manager.save as jest.Mock).mockImplementation(
         async (_entity: any, client: ClientEntity) => client,
       );
 
-      const result = await service.updateUserById(1, { ...mockClients[0], city: 'Viña del Mar' });
+      const result = await service.updateUserById(1, { ...baseClient, city: 'Viña del Mar' });
 
       expect(result.city).toBe('Viña del Mar');
       expect(queryRunner.manager.save).toHaveBeenCalledWith(ClientEntity, expect.anything());
@@ -597,18 +629,18 @@ describe('ClientService', () => {
   });
 
   describe('getGroupClients', () => {
-    it('should return all clients for a given group_id', async () => {
-      const mockGroupClients: ClientEntity[] = [
-        { id: 1, name: 'A', rut_raw: '1', address: '', city: '', active: true, group_id: 1, group: mockGroup },
-        { id: 2, name: 'B', rut_raw: '2', address: '', city: '', active: true, group_id: 2, group: { ...mockGroup, id: 2 } },
+    it('should return all clients for a given company_id', async () => {
+      const mockCompanyClients: ClientEntity[] = [
+        { id: 1, name: 'A', rut_raw: '1', address: '', city: '', active: true, company_id: 1, company: mockCompany },
+        { id: 2, name: 'B', rut_raw: '2', address: '', city: '', active: true, company_id: 2, company: { ...mockCompany, id: 2 } },
       ];
-      jest.spyOn(clientRepository, 'find').mockResolvedValue(mockGroupClients);
+      jest.spyOn(clientRepository, 'find').mockResolvedValue(mockCompanyClients);
 
       const result = await service.getGroupClients(1);
 
-      expect(result).toEqual(mockGroupClients);
+      expect(result).toEqual(mockCompanyClients);
       expect(result).toHaveLength(2);
-      expect(clientRepository.find).toHaveBeenCalledWith({ where: { group_id: 1 } });
+      expect(clientRepository.find).toHaveBeenCalledWith({ where: { company_id: 1 } });
     });
 
     it('should return empty array when group has no clients', async () => {

@@ -8,7 +8,9 @@
  *  - Correo: exacto
  *  - Nombre: similitud >= 0.82
  *  - Dirección: similitud >= 0.90 (más estricta)
- *  - Empresa: similitud >= 0.82 (solo si el cliente es empresa)
+ *  - La identidad de EMPRESA ya no se compara aquí: las sucursales se
+ *    excluyen por company_id en ClientService (spec order-registration,
+ *    portado de ABAGAS empresas-gestion).
  */
 
 export interface DuplicateCheckInput {
@@ -17,8 +19,11 @@ export interface DuplicateCheckInput {
   address?: string;
   phone?: string;
   email?: string;
-  company_name?: string;
-  has_company?: boolean;
+  /** Cliente ya seleccionado explícitamente: se excluye del chequeo. */
+  clientId?: number;
+  /** Empresa seleccionada explícitamente: sus sucursales se excluyen
+   *  (comparten rut por diseño — no son duplicados). */
+  companyId?: number;
 }
 
 export interface FieldMatch {
@@ -36,7 +41,6 @@ export interface DuplicateMatch {
     city?: string;
     phone?: string;
     email?: string;
-    company_name?: string;
   };
   fields: FieldMatch[];
 }
@@ -45,7 +49,6 @@ export interface DuplicateMatch {
 export const THRESHOLDS = {
   name: 0.82,
   address: 0.9,
-  company: 0.82,
 };
 
 /** Normaliza texto para comparar: minúsculas, sin acentos/puntuación, espacios colapsados. */
@@ -100,7 +103,7 @@ export function similarityAtLeast(a: string, b: string, minSim: number): number 
 }
 
 /** RUT "real" (no basura tipo 0/00/vacío): normalizado con >= 7 chars y no todo ceros. */
-function isMeaningfulRut(rut: string): boolean {
+export function isMeaningfulRut(rut: string): boolean {
   if (rut.length < 7) return false;
   return !/^0+$/.test(rut);
 }
@@ -135,7 +138,6 @@ export function findDuplicates(
     city?: string;
     phone?: string;
     email?: string;
-    company_name?: string;
   }>,
   input: DuplicateCheckInput,
   limit = 6,
@@ -145,8 +147,6 @@ export function findDuplicates(
   const normAddress = normalize(input.address);
   const normPhone = phoneKey(input.phone ?? '');
   const normEmail = (input.email ?? '').toLowerCase().trim();
-  const normCompany = normalize(input.company_name);
-  const companyActive = input.has_company === true && normCompany.length >= 3;
   const emailUsable = isMeaningfulEmail(normEmail);
 
   const results: DuplicateMatch[] = [];
@@ -196,14 +196,6 @@ export function findDuplicates(
       }
     }
 
-    // Empresa difusa
-    if (companyActive) {
-      const sim = similarityAtLeast(normCompany, normalize(c.company_name), THRESHOLDS.company);
-      if (sim >= THRESHOLDS.company) {
-        fields.push({ field: 'company', value: c.company_name ?? '', similarity: sim });
-      }
-    }
-
     if (fields.length > 0) {
       results.push({
         client: {
@@ -214,7 +206,6 @@ export function findDuplicates(
           city: c.city,
           phone: c.phone,
           email: c.email,
-          company_name: c.company_name,
         },
         fields,
       });

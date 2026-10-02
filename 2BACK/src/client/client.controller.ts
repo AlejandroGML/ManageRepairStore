@@ -2,7 +2,7 @@ import { Controller, Get, Param, Post, Body, UsePipes, ValidationPipe, Patch, De
 import { ApiTags, ApiResponse, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ClientEntity } from '../entities/client.entity';
-import { ClientService, CompanyInfo } from './client.service';
+import { ClientService } from './client.service';
 import { ClientExample } from '../utils/controllers.examples';
 import { DuplicateCheckDto } from './dto/duplicate-check.dto';
 import { DuplicateMatch } from './duplicate-matcher';
@@ -20,16 +20,9 @@ export class ClientController {
     return this.clientService.getAllUsers();
   }
 
-  @Get('/companies')
-  @ApiResponse({ status: 200, description: 'Empresas inscritas (autocomplete).'})
-  @ApiOperation({ summary: 'Get registered companies with representative RUT' })
-  async getCompanies(): Promise<CompanyInfo[]> {
-    return this.clientService.getCompanies();
-  }
-
   @Post('/duplicates-check')
   @ApiResponse({ status: 200, description: 'Coincidencias potenciales de clientes.'})
-  @ApiOperation({ summary: 'Check client duplicates by name/rut/phone/email/address/company' })
+  @ApiOperation({ summary: 'Check client duplicates by name/rut/phone/email/address' })
   async checkDuplicates(@Body() dto: DuplicateCheckDto): Promise<{ count: number; matches: DuplicateMatch[] }> {
     return this.clientService.checkDuplicates(dto);
   }

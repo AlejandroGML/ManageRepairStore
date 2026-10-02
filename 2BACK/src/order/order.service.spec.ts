@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner, EntityManager } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 import { ClientEntity } from '../entities/client.entity';
-import { ClientGroupEntity } from '../entities/client-group.entity';
+import { CompanyEntity } from '../entities/company.entity';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderStatus } from './order-status.enum';
 import { OrderService } from './order.service';
@@ -12,12 +12,12 @@ describe('OrderService', () => {
   let service: OrderService;
   let queryRunner: jest.Mocked<QueryRunner>;
   let dataSource: jest.Mocked<DataSource>;
+  let orderRepository: Repository<OrderEntity>;
 
   const mockOrder = (overrides: Partial<OrderEntity> = {}): OrderEntity => ({
     description: 'fix leak',
     status: OrderStatus.PENDIENTE,
     total: 0,
-    code: 'ORD-1',
     ...overrides,
   });
 
@@ -46,14 +46,14 @@ describe('OrderService', () => {
   };
 
   const makeClient = (overrides: Partial<ClientEntity> = {}): ClientEntity => ({
-    name: 'Comercial Demo SpA',
+    name: 'Abagas Toledo',
     rut_raw: '12345678-5',
     rut_normalizado: '12345678-5',
-    address: 'Providencia 123',
+    address: 'Toledo 123',
     city: 'Santiago',
     active: true,
-    group_id: 1,
-    group: null as any,
+    company_id: null,
+    company: null as any,
     orders: [mockOrder()],
     ...overrides,
   });
@@ -72,7 +72,7 @@ describe('OrderService', () => {
           },
         },
         {
-          provide: getRepositoryToken(ClientGroupEntity),
+          provide: getRepositoryToken(CompanyEntity),
           useValue: {
             findOne: jest.fn().mockResolvedValue(null),
             save: jest.fn(),
@@ -98,33 +98,74 @@ describe('OrderService', () => {
 
     service = module.get<OrderService>(OrderService);
     dataSource = module.get<DataSource>(DataSource) as jest.Mocked<DataSource>;
+    orderRepository = module.get<Repository<OrderEntity>>(getRepositoryToken(OrderEntity));
 
     queryRunner = mockQueryRunner();
     (dataSource.createQueryRunner as jest.Mock).mockReturnValue(queryRunner);
   });
 
+  describe('findRecent', () => {
+    const recentOrder = {
+      id: 59343,
+      status: 'Pendiente',
+      total: 15000,
+      client: { id: 1, name: 'cliente uno' },
+    } as unknown as OrderEntity;
+
+    const buildQb = (): any => ({
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      getCount: jest.fn().mockResolvedValue(8123),
+      orderBy: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([recentOrder]),
+    });
+
+    it('should return the latest orders with client relation and total', async () => {
+      const qb = buildQb();
+      jest.spyOn(orderRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      const result = await service.findRecent(6);
+
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('o.client', 'c');
+      expect(qb.orderBy).toHaveBeenCalledWith('o.id', 'DESC');
+      expect(qb.take).toHaveBeenCalledWith(6);
+      expect(result.total).toBe(8123);
+      expect(result.items).toEqual([recentOrder]);
+    });
+
+    it('should cap the limit at 20 and default to 1 minimum', async () => {
+      const qb = buildQb();
+      jest.spyOn(orderRepository, 'createQueryBuilder').mockReturnValue(qb as any);
+
+      await service.findRecent(500);
+      expect(qb.take).toHaveBeenCalledWith(20);
+
+      await service.findRecent(0);
+      expect(qb.take).toHaveBeenCalledWith(1);
+    });
+  });
+
   describe('registerClientOrder — matching', () => {
     const existingClient: ClientEntity = {
       id: 10,
-      name: 'Comercial Demo SpA',
+      name: 'Abagas Toledo',
       rut_raw: '12.345.678-5',
       rut_normalizado: '12345678-5',
-      address: 'Providencia 123',
+      address: 'Toledo 123',
       city: 'Santiago',
       active: true,
-      company_name: 'Principal',
-      group_id: 1,
-      group: null as any,
+      company_id: 1,
+      company: null as any,
     };
 
     it('should match by normalized RUT + name (ilower, trimmed) when rut_normalizado is available', async () => {
       const incoming: ClientEntity = {
-        ...makeClient({ rut_normalizado: '12345678-5', rut_raw: '12345678-5', name: '  Comercial Demo SpA  ' }),
+        ...makeClient({ rut_normalizado: '12345678-5', rut_raw: '12345678-5', name: '  Abagas Toledo  ' }),
       };
 
       const matchedClient = { ...existingClient, rut_raw: '12345678-5' };
       const normalizedWhere = {
-        name: 'comercial demo spa',
+        name: 'abagas toledo',
         rut_normalizado: '12345678-5',
         active: true,
       };
@@ -140,12 +181,12 @@ describe('OrderService', () => {
       });
       expect(queryRunner.manager.findOne).toHaveBeenCalledTimes(1);
       expect(result.id).toBe(10);
-      expect(result.name).toBe('Comercial Demo SpA');
+      expect(result.name).toBe('Abagas Toledo');
     });
 
     it('should fallback to rut_raw + name when no normalized RUT match found', async () => {
       const incoming: ClientEntity = {
-        ...makeClient({ rut_normalizado: '12345678-5', rut_raw: '12345678-5', name: 'Comercial Demo SpA' }),
+        ...makeClient({ rut_normalizado: '12345678-5', rut_raw: '12345678-5', name: 'Abagas Toledo' }),
       };
 
       const matchedClient = { ...existingClient, rut_raw: '12345678-5' };
@@ -186,11 +227,11 @@ describe('OrderService', () => {
 
     it('should match by client.id as last resort when both RUT matches fail', async () => {
       const incoming: ClientEntity = {
-        ...makeClient({ id: 42, rut_normalizado: '12345678-5', rut_raw: '99999999-9', name: 'Comercial Demo SpA' }),
+        ...makeClient({ id: 42, rut_normalizado: '12345678-5', rut_raw: '99999999-9', name: 'Abagas Toledo' }),
       };
 
       const idMatch: ClientEntity = {
-        ...existingClient, id: 42, name: 'Comercial Demo SpA', rut_raw: '99999999-9',
+        ...existingClient, id: 42, name: 'Abagas Toledo', rut_raw: '99999999-9',
       };
 
       // Both normalized and raw RUT matches fail
@@ -226,32 +267,31 @@ describe('OrderService', () => {
 
     it('should disambiguate multiple branches sharing same normalized RUT by matching name', async () => {
       const incoming: ClientEntity = {
-        ...makeClient({ rut_normalizado: '76042014-K', rut_raw: '76042014-K', name: 'Retail Demo Norte' }),
+        ...makeClient({ rut_normalizado: '76042014-K', rut_raw: '76042014-K', name: 'Walmart Viña' }),
       };
 
-      const branchNorte: ClientEntity = {
+      const branchViña: ClientEntity = {
         id: 50,
-        name: 'Retail Demo Norte',
+        name: 'Walmart Viña',
         rut_raw: '76042014-K',
         rut_normalizado: '76042014-K',
-        address: 'Santiago',
-        city: 'Santiago',
+        address: 'Viña del Mar',
+        city: 'Viña del Mar',
         active: true,
-        company_name: 'Sucursal Norte',
-        group_id: 5,
-        group: null as any,
+        company_id: 5,
+        company: null as any,
       };
 
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(branchNorte);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(branchViña);
 
       const result = await service.registerClientOrder(incoming);
 
       // Should match by normalized RUT + name, returning the correct branch
       expect(result.id).toBe(50);
-      expect(result.company_name).toBe('Sucursal Norte');
+      expect(result.company_id).toBe(5);
       expect(queryRunner.manager.findOne).toHaveBeenCalledWith(ClientEntity, {
         where: {
-          name: 'retail demo norte',
+          name: 'walmart viña',
           rut_normalizado: '76042014-k',
           active: true,
         },
@@ -293,8 +333,8 @@ describe('OrderService', () => {
         caught = err;
       }
 
-      // The SAME HttpException travels: status 400, message intact, no
-      // "Error registering client order" wrapper added.
+      // The SAME HttpException travels: no "Error registering client order"
+      // wrapper added.
       expect(caught).toBe(guard);
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
@@ -316,73 +356,253 @@ describe('OrderService', () => {
     });
   });
 
-  describe('registerClientOrder — company_name update', () => {
+  describe('registerClientOrder — order code generation', () => {
     const existingClient: ClientEntity = {
-      id: 20,
-      name: 'Comercial Demo SpA',
-      rut_raw: '12345678-5',
+      id: 10,
+      name: 'Abagas Toledo',
+      rut_raw: '12.345.678-5',
       rut_normalizado: '12345678-5',
-      address: 'Providencia 123',
+      address: 'Toledo 123',
       city: 'Santiago',
       active: true,
-      company_name: 'Old Branch',
-      group_id: 1,
-      group: null as any,
+      company_id: 1,
+      company: null as any,
     };
 
-    it('should update company_name when frontend sends a different one', async () => {
+    it('should assign code ORD-{1000+id} to a new order on an existing client', async () => {
       const incoming: ClientEntity = {
         ...makeClient({
           rut_normalizado: '12345678-5',
           rut_raw: '12345678-5',
-          name: 'Comercial Demo SpA',
-          company_name: 'New Branch',
+          name: 'Abagas Toledo',
         }),
       };
 
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingClient);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValueOnce(existingClient);
 
-      await service.registerClientOrder(incoming);
+      const result = await service.registerClientOrder(incoming);
 
-      expect(queryRunner.manager.update).toHaveBeenCalledWith(
-        ClientEntity,
-        existingClient.id,
-        { company_name: 'New Branch' },
+      // manager.save(OrderEntity, ...) mock returns id 999 → code ORD-1999
+      expect(queryRunner.manager.update).toHaveBeenCalledWith(OrderEntity, 999, {
+        code: 'ORD-1999',
+      });
+      const lastOrder = result.orders![result.orders!.length - 1];
+      expect(lastOrder.code).toBe('ORD-1999');
+      expect(lastOrder.total).toBe(0); // default until totals are computed elsewhere
+    });
+
+    it('should assign codes to cascaded orders when creating a new client', async () => {
+      const incoming: ClientEntity = {
+        ...makeClient({
+          id: undefined,
+          orders: [mockOrder()],
+          name: 'Nuevo Cliente',
+          rut_raw: '00.000.000-0',
+          rut_normalizado: '00000000-0',
+        }),
+      };
+
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
+
+      // Simulate TypeORM cascade: saving the client assigns ids to nested orders
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (entity: any, data: any) => {
+          if (entity === ClientEntity) {
+            return {
+              ...data,
+              id: 500,
+              orders: (data.orders ?? []).map((o: any, i: number) => ({
+                ...o,
+                id: 700 + i,
+              })),
+            };
+          }
+          return { id: 999, ...data };
+        },
+      );
+
+      const result = await service.registerClientOrder(incoming);
+
+      expect(queryRunner.manager.update).toHaveBeenCalledWith(OrderEntity, 700, {
+        code: 'ORD-1700',
+      });
+      expect(result.orders?.[0].code).toBe('ORD-1700');
+    });
+
+    it('should not generate codes when the incoming order list is empty', async () => {
+      const incoming: ClientEntity = {
+        ...makeClient({
+          rut_normalizado: '12345678-5',
+          rut_raw: '12345678-5',
+          name: 'Abagas Toledo',
+          orders: [],
+        }),
+      };
+
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValueOnce(existingClient);
+
+      const result = await service.registerClientOrder(incoming);
+
+      expect(queryRunner.manager.update).not.toHaveBeenCalledWith(
+        OrderEntity,
+        expect.anything(),
+        expect.objectContaining({ code: expect.any(String) }),
+      );
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('registerClientOrder — company resolution', () => {
+    const payload = (overrides: any = {}) =>
+      makeClient({
+        company_id: null,
+        company: null as any,
+        rut_raw: '11111111-1',
+        rut_normalizado: '11111111-1',
+        ...overrides,
+      });
+
+    it('links an existing company found by meaningful rut when is_company is true', async () => {
+      const company = { id: 7, rut_normalizado: '96792430k', name: 'Sodimac', active: true } as CompanyEntity;
+      (queryRunner.manager.findOne as jest.Mock)
+        .mockResolvedValueOnce(null) // step 1: rut + name
+        .mockResolvedValueOnce(null) // step 2: rut_raw + name
+        .mockResolvedValueOnce(company); // resolveCompany: empresa por rut
+
+      await service.registerClientOrder(
+        payload({ rut_normalizado: '96792430k', rut_raw: '96792430k', is_company: true }) as any,
+      );
+
+      const clientSave = (queryRunner.manager.save as jest.Mock).mock.calls.find(
+        (c) => c[0] === ClientEntity,
+      );
+      expect(clientSave?.[1].company_id).toBe(7);
+    });
+
+    it('does NOT link a particular even when the rut matches an existing company', async () => {
+      (queryRunner.manager.findOne as jest.Mock)
+        .mockResolvedValueOnce(null) // step 1
+        .mockResolvedValueOnce(null); // step 2
+
+      await service.registerClientOrder(
+        payload({ rut_normalizado: '96792430k', rut_raw: '96792430k' }) as any,
+      );
+
+      const clientSave = (queryRunner.manager.save as jest.Mock).mock.calls.find(
+        (c) => c[0] === ClientEntity,
+      );
+      expect(clientSave?.[1].company_id).toBeNull();
+      const companyLookups = (queryRunner.manager.findOne as jest.Mock).mock.calls.filter(
+        (c) => c[0] === CompanyEntity,
+      );
+      expect(companyLookups.length).toBe(0);
+    });
+
+    it('rejects a companyId whose rut does not match the company rut', async () => {
+      const company = { id: 12, rut_normalizado: '96792430k', name: 'Sodimac', active: true } as CompanyEntity;
+      (queryRunner.manager.findOne as jest.Mock)
+        .mockResolvedValueOnce(null) // step 1
+        .mockResolvedValueOnce(null) // step 2
+        .mockResolvedValueOnce(company); // resolveCompany: empresa por id
+
+      const mismatchCall = service.registerClientOrder(
+        payload({
+          rut_normalizado: '123456785',
+          rut_raw: '12.345.678-5',
+          companyId: 12,
+        }) as any,
+      );
+
+      await expect(mismatchCall).rejects.toThrow('no calza con el de la empresa');
+      // El 400 viaja tal cual (no envuelto como Error plano — JD ronda 2).
+      await expect(mismatchCall).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+
+    it('creates a company only when is_company is true', async () => {
+      (queryRunner.manager.findOne as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null); // sin empresa previa por rut
+
+      await service.registerClientOrder(
+        payload({
+          rut_normalizado: '76042014k',
+          rut_raw: '76042014k',
+          is_company: true,
+          company_name: 'Walmart Chile',
+        }) as any,
+      );
+
+      expect(queryRunner.manager.save).toHaveBeenCalledWith(
+        CompanyEntity,
+        expect.objectContaining({ rut_normalizado: '76042014k', name: 'Walmart Chile' }),
       );
     });
 
-    it('should NOT update company_name when it is the same', async () => {
-      const incoming: ClientEntity = {
-        ...makeClient({
-          rut_normalizado: '12345678-5',
-          rut_raw: '12345678-5',
-          name: 'Comercial Demo SpA',
-          company_name: 'Old Branch',
-        }),
-      };
+    it('reactivates an INACTIVE company with the same rut instead of failing on UNIQUE (B4)', async () => {
+      const inactive = {
+        id: 21,
+        rut_normalizado: '76042014k',
+        name: 'Walmart (vieja)',
+        active: false,
+      } as CompanyEntity;
+      (queryRunner.manager.findOne as jest.Mock)
+        .mockResolvedValueOnce(null) // step 1
+        .mockResolvedValueOnce(null) // step 2
+        .mockResolvedValueOnce(null) // empresa ACTIVA por rut: no hay
+        .mockResolvedValueOnce(inactive); // empresa inactiva por rut: sí
 
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingClient);
+      await service.registerClientOrder(
+        payload({
+          rut_normalizado: '76042014k',
+          rut_raw: '76042014k',
+          is_company: true,
+          company_name: 'Walmart Chile',
+        }) as any,
+      );
 
-      await service.registerClientOrder(incoming);
-
-      expect(queryRunner.manager.update).not.toHaveBeenCalled();
+      expect(queryRunner.manager.save).toHaveBeenCalledWith(
+        CompanyEntity,
+        expect.objectContaining({ id: 21, active: true }),
+      );
+      const clientSave = (queryRunner.manager.save as jest.Mock).mock.calls.find(
+        (c) => c[0] === ClientEntity,
+      );
+      expect(clientSave?.[1].company_id).toBe(21);
     });
 
-    it('should NOT update company_name when frontend does not send it', async () => {
-      const incoming: ClientEntity = {
-        ...makeClient({
-          rut_normalizado: '12345678-5',
-          rut_raw: '12345678-5',
-          name: 'Comercial Demo SpA',
-          company_name: undefined,
-        }),
-      };
+    it('keeps company null for junk ruts — never groups', async () => {
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(null);
 
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingClient);
+      await service.registerClientOrder(payload({ rut_normalizado: '0', rut_raw: '0' }) as any);
 
-      await service.registerClientOrder(incoming);
+      const clientSave = (queryRunner.manager.save as jest.Mock).mock.calls.find(
+        (c) => c[0] === ClientEntity,
+      );
+      expect(clientSave?.[1].company_id).toBeNull();
+      const companyLookups = (queryRunner.manager.findOne as jest.Mock).mock.calls.filter(
+        (c) => c[0] === CompanyEntity,
+      );
+      expect(companyLookups.length).toBe(0);
+    });
 
-      expect(queryRunner.manager.update).not.toHaveBeenCalled();
+    it('uses the explicitly selected companyId and copies the rut when missing', async () => {
+      const company = { id: 12, rut_normalizado: '96792430k', name: 'Sodimac', active: true } as CompanyEntity;
+      (queryRunner.manager.findOne as jest.Mock)
+        .mockResolvedValueOnce(null) // step 2 (sin rut_normalizado se salta el step 1)
+        .mockResolvedValueOnce(company); // resolveCompany: empresa por id
+
+      await service.registerClientOrder(
+        payload({ rut_normalizado: '', rut_raw: '', companyId: 12 }) as any,
+      );
+
+      const clientSave = (queryRunner.manager.save as jest.Mock).mock.calls.find(
+        (c) => c[0] === ClientEntity,
+      );
+      expect(clientSave?.[1].company_id).toBe(12);
+      expect(clientSave?.[1].rut_normalizado).toBe('96792430k');
     });
   });
 });

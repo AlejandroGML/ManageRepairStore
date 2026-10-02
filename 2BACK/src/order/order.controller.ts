@@ -30,6 +30,15 @@ export class OrderController {
     return this.orderService.getAllOrders();
   }
 
+  @Get('/recent')
+  @ApiResponse({ status: 200, description: 'Últimas órdenes con su cliente (panel finder).' })
+  @ApiOperation({ summary: 'Returns the latest orders' })
+  async findRecent(
+    @Query('limit') limit: string = '6',
+  ): Promise<{ items: OrderEntity[]; total: number }> {
+    return this.orderService.findRecent(Number(limit) || 6);
+  }
+
   @Get('/code/:code')
   @ApiResponse({ status: 200, description: 'Elementos filtrados por RUT y Nombre', type: [ClientEntity], isArray:true})
   @ApiOperation({ summary: 'Returns orders by RUT and Name' })

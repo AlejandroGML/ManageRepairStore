@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { OrderEntity } from "./order.entity";
-import { ClientGroupEntity } from "./client-group.entity";
+import { CompanyEntity } from "./company.entity";
 
 @Entity()
 export class ClientEntity {
@@ -24,18 +24,17 @@ export class ClientEntity {
   @Column({nullable:true, length: 12})
   rut_normalizado?: string;
 
-  @Column({ nullable: true })
-  company_name?: string;
-
   @Column({default:true})
   active?: boolean;
 
-  @Column()
-  group_id: number;
+  /** Empresa (sucursales comparten rut). NULL = cliente particular. */
+  @Index('IDX_client_company_id')
+  @Column({ nullable: true })
+  company_id?: number | null;
 
-  @ManyToOne(() => ClientGroupEntity, group => group.clients, { nullable: false })
-  @JoinColumn({ name: 'group_id' })
-  group!: ClientGroupEntity;
+  @ManyToOne(() => CompanyEntity, company => company.clients, { nullable: true })
+  @JoinColumn({ name: 'company_id' })
+  company?: CompanyEntity | null;
 
   @OneToMany(() => OrderEntity, order => order.client,{cascade:true})
   orders?: OrderEntity[];

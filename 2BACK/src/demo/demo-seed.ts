@@ -4,7 +4,7 @@ import { UserEntity } from '../entities/user.entity';
 import { CategoryEntity } from '../entities/category.entity';
 import { ProductEntity } from '../entities/product.entity';
 import { TransactionEntity } from '../entities/transaction.entity';
-import { ClientGroupEntity } from '../entities/client-group.entity';
+import { CompanyEntity } from '../entities/company.entity';
 import { ClientEntity } from '../entities/client.entity';
 import { LogEntity } from '../entities/log.entity';
 import { RefillGroupEntity } from '../entities/refill-group.entity';
@@ -86,24 +86,26 @@ const PRODUCTS: DemoProduct[] = [
 
 interface DemoClient {
   name: string;
-  companyName?: string;
+  /** Empresa a la que pertenece (las sucursales comparten el RUT de la empresa). */
+  company?: string;
   rut: SyntheticRut;
   address: string;
   city: string;
   phone: string;
   email: string;
-  group: string;
 }
 
 const CLIENTS: DemoClient[] = [
-  { name: 'María González', rut: makeRut('15234567'), address: 'Calle Los Cerezos 45', city: 'Las Condes', phone: '+56 9 8234 1102', email: 'maria.gonzalez@demo.example', group: 'Clientes Minoristas' },
-  { name: 'Pedro Rojas', rut: makeRut('18765432'), address: 'Pasaje Los Aromos 8', city: 'La Florida', phone: '+56 9 6733 4487', email: 'pedro.rojas@demo.example', group: 'Clientes Minoristas' },
-  { name: 'Juan Pérez', rut: makeRut('12345678'), address: 'Av. Irarrázaval 2890', city: 'Ñuñoa', phone: '+56 9 5210 9981', email: 'juan.perez@demo.example', group: 'Clientes Minoristas' },
-  { name: 'Ana Torres', rut: makeRut('16987654'), address: 'Av. Providencia 987', city: 'Providencia', phone: '+56 9 7412 3321', email: 'ana.torres@demo.example', group: 'Clientes Minoristas' },
-  { name: 'Luis Soto', rut: makeRut('19111222'), address: 'Calle Los Plátanos 120', city: 'Santiago', phone: '+56 9 8820 1456', email: 'luis.soto@demo.example', group: 'Clientes Minoristas' },
-  { name: 'Comercial Demo SpA', companyName: 'Comercial Demo SpA', rut: makeRut('76034512'), address: 'Av. Providencia 1234', city: 'Providencia', phone: '+56 9 5555 1001', email: 'contacto@comercialdemo.example', group: 'Empresas' },
-  { name: 'Taller Express Ltda', companyName: 'Taller Express Ltda', rut: makeRut('77123456'), address: 'Av. Matta 350', city: 'Santiago', phone: '+56 9 5555 1003', email: 'ventas@tallerexpress.example', group: 'Empresas' },
-  { name: 'Electro Sur SpA', companyName: 'Electro Sur SpA', rut: makeRut('76987654'), address: 'Av. Vicuña Mackenna 6100', city: 'La Florida', phone: '+56 9 5555 1005', email: 'compras@electrosur.example', group: 'Empresas' },
+  { name: 'María González', rut: makeRut('15234567'), address: 'Calle Los Cerezos 45', city: 'Las Condes', phone: '+56 9 8234 1102', email: 'maria.gonzalez@demo.example' },
+  { name: 'Pedro Rojas', rut: makeRut('18765432'), address: 'Pasaje Los Aromos 8', city: 'La Florida', phone: '+56 9 6733 4487', email: 'pedro.rojas@demo.example' },
+  { name: 'Juan Pérez', rut: makeRut('12345678'), address: 'Av. Irarrázaval 2890', city: 'Ñuñoa', phone: '+56 9 5210 9981', email: 'juan.perez@demo.example' },
+  { name: 'Ana Torres', rut: makeRut('16987654'), address: 'Av. Providencia 987', city: 'Providencia', phone: '+56 9 7412 3321', email: 'ana.torres@demo.example' },
+  { name: 'Luis Soto', rut: makeRut('19111222'), address: 'Calle Los Plátanos 120', city: 'Santiago', phone: '+56 9 8820 1456', email: 'luis.soto@demo.example' },
+  // Empresa demo con 2 sucursales (comparten RUT — spec companies).
+  { name: 'Comercial Demo SpA', company: 'Comercial Demo SpA', rut: makeRut('76034512'), address: 'Av. Providencia 1234', city: 'Providencia', phone: '+56 9 5555 1001', email: 'contacto@comercialdemo.example' },
+  { name: 'Comercial Demo SpA Ñuñoa', company: 'Comercial Demo SpA', rut: makeRut('76034512'), address: 'Av. Irarrázaval 1001', city: 'Ñuñoa', phone: '+56 9 5555 1002', email: 'nunoa@comercialdemo.example' },
+  { name: 'Taller Express Ltda', company: 'Taller Express Ltda', rut: makeRut('77123456'), address: 'Av. Matta 350', city: 'Santiago', phone: '+56 9 5555 1003', email: 'ventas@tallerexpress.example' },
+  { name: 'Electro Sur SpA', company: 'Electro Sur SpA', rut: makeRut('76987654'), address: 'Av. Vicuña Mackenna 6100', city: 'La Florida', phone: '+56 9 5555 1005', email: 'compras@electrosur.example' },
 ];
 
 /** Prototype: ORD-1039..ORD-1042 (las 4 más recientes, con código explícito). */
@@ -177,7 +179,7 @@ export async function runDemoSeed(ds: DataSource): Promise<void> {
 
     await qr.query(
       `TRUNCATE TABLE refill_groups, transaction_entity, order_entity, sales,
-       client_entity, product_entity, category_entity, client_group_entity,
+       client_entity, product_entity, category_entity, company_entity,
        user_entity, log_entity, worker_entity RESTART IDENTITY CASCADE`,
     );
 
@@ -257,26 +259,27 @@ export async function runDemoSeed(ds: DataSource): Promise<void> {
     }
     console.log(`  ✓ Products: ${PRODUCTS.length} (with locations + minimums)`);
 
-    // 4) Client groups
-    const groupRepo = qr.manager.getRepository(ClientGroupEntity);
-    const groups = new Map<string, ClientGroupEntity>();
-    groups.set(
-      'Empresas',
-      await groupRepo.save(groupRepo.create({ name: 'Empresas', credit_limit: 500000, payment_terms: '30 días', active: true })),
-    );
-    groups.set(
-      'Clientes Minoristas',
-      await groupRepo.save(groupRepo.create({ name: 'Clientes Minoristas', credit_limit: 0, payment_terms: 'Contado', active: true })),
-    );
-    console.log(`  ✓ Client groups: ${groups.size}`);
+    // 4) Companies (find-or-create by rut — las sucursales comparten rut)
+    const companyRepo = qr.manager.getRepository(CompanyEntity);
+    const companies = new Map<string, CompanyEntity>();
+    for (const c of CLIENTS) {
+      if (!c.company) continue;
+      const normalized = c.rut.normalized;
+      let company = companies.get(normalized);
+      if (!company) {
+        company = await companyRepo.save(
+          companyRepo.create({ rut_normalizado: normalized, name: c.company, active: true }),
+        );
+        companies.set(normalized, company);
+      }
+    }
 
-    // 5) Clients (prototype clientes table: 5 minoristas + 3 empresas)
+    // 5) Clients (5 particulares sin empresa + 4 sucursales en 3 empresas)
     const clientRepo = qr.manager.getRepository(ClientEntity);
     for (const c of CLIENTS) {
       await clientRepo.save(
         clientRepo.create({
           name: c.name,
-          company_name: c.companyName,
           rut_raw: c.rut.raw,
           rut_normalizado: c.rut.normalized,
           address: c.address,
@@ -284,11 +287,11 @@ export async function runDemoSeed(ds: DataSource): Promise<void> {
           phone: c.phone,
           email: c.email,
           active: true,
-          group: groups.get(c.group),
+          company_id: c.company ? companies.get(c.rut.normalized)?.id ?? null : null,
         }),
       );
     }
-    console.log(`  ✓ Clients: ${CLIENTS.length}`);
+    console.log(`  ✓ Companies: ${companies.size} · Clients: ${CLIENTS.length}`);
 
     // 6) Service orders (36 total: 32 históricas + ORD-1039..ORD-1042 recientes)
     const orderRepo = qr.manager.getRepository(OrderEntity);

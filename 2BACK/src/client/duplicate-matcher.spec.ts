@@ -47,9 +47,9 @@ describe('duplicate-matcher', () => {
   });
 
   const candidates = [
-    { id: 1, name: 'walmart calera', rut_raw: '76042014k', phone: '+56 9 1234 5678', address: 'calera 123', email: 'calera@walmart.cl', company_name: '' },
-    { id: 2, name: 'juan perez', rut_raw: '12345678-5', phone: '9 8765 4321', address: 'av independencia 44', email: 'juan@mail.cl', company_name: '' },
-    { id: 3, name: 'sodimac quinta vergara', rut_raw: '96792430k', phone: '', address: '', email: '', company_name: 'sodimac' },
+    { id: 1, name: 'walmart calera', rut_raw: '76042014k', phone: '+56 9 1234 5678', address: 'calera 123', email: 'calera@walmart.cl' },
+    { id: 2, name: 'juan perez', rut_raw: '12345678-5', phone: '9 8765 4321', address: 'av independencia 44', email: 'juan@mail.cl' },
+    { id: 3, name: 'sodimac quinta vergara', rut_raw: '96792430k', phone: '', address: '', email: '' },
   ];
 
   it('matches by exact RUT plus fuzzy name', () => {
@@ -78,16 +78,9 @@ describe('duplicate-matcher', () => {
     expect(result[0].client.id).toBe(2);
   });
 
-  it('matches company by fuzzy name when has_company', () => {
-    const result = findDuplicates(candidates, { name: 'sucursal nueva', has_company: true, company_name: 'sodimac' });
-    expect(result.length).toBe(1);
-    expect(result[0].fields.some((f) => f.field === 'company')).toBe(true);
-  });
-
-  it('does not compare company when has_company is false', () => {
-    const result = findDuplicates(candidates, { name: 'sucursal nueva', has_company: false, company_name: 'sodimac' });
-    expect(result.every((m) => !m.fields.some((f) => f.field === 'company'))).toBe(true);
-  });
+  // La identidad de empresa ya no es fuzzy: las sucursales se excluyen por
+  // company_id en ClientService (spec order-registration). Ese caso vive en
+  // client.service.spec.ts.
 
   it('sorts by number of matched fields and caps the limit', () => {
     const many = Array.from({ length: 12 }, (_, i) => ({
@@ -97,7 +90,6 @@ describe('duplicate-matcher', () => {
       phone: '',
       address: '',
       email: '',
-      company_name: '',
     }));
     const result = findDuplicates(many, { name: 'walmar calera', rut: '76042014k' }, 5);
     expect(result.length).toBeLessThanOrEqual(5);

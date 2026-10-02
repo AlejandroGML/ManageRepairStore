@@ -8,6 +8,8 @@ export interface Client {
   phone?: string;
   email?: string;
   active?: boolean;
-  group_id?: number;
-  company_name?: string;
+  /** Empresa (sucursales comparten rut). NULL = particular. */
+  company_id?: number | null;
+  /** Empresa resuelta (para mostrar nombre/rut sin copias). */
+  company?: { id?: number; name: string; rut_normalizado?: string } | null;
 }

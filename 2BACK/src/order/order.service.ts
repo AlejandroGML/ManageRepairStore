@@ -1,18 +1,35 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import { ClientEntity } from '../entities/client.entity';
-import { ClientGroupEntity } from '../entities/client-group.entity';
+import { CompanyEntity } from '../entities/company.entity';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderStatusFront } from '../dto/order.status.front.dto';
+
+/** Rut significativo (misma regla que el matcher): >=7 chars, no solo ceros. */
+function isMeaningfulRut(rut?: string | null): boolean {
+  const clean = cleanRut(rut);
+  return clean.length >= 7 && !/^0+$/.test(clean);
+}
+
+/** Extrae solo dígitos + k/K para comparar ruts. */
+function cleanRut(rut?: string | null): string {
+  return (rut ?? '').toLowerCase().replace(/[^0-9kK]/g, '');
+}
+
+/** Payload de registrar orden: trae los extras del flujo empresas. */
+type RegisterOrderPayload = ClientEntity & {
+  is_company?: boolean;
+  companyId?: number;
+};
 
 @Injectable()
 export class OrderService {
   constructor( 
     @InjectRepository(ClientEntity)
     private clientRepository: Repository<ClientEntity>,
-    @InjectRepository(ClientGroupEntity)
-    private groupRepository: Repository<ClientGroupEntity>,
+    @InjectRepository(CompanyEntity)
+    private companyRepository: Repository<CompanyEntity>,
     @InjectRepository(OrderEntity)
     private orderRepository: Repository<OrderEntity>,
     private readonly dataSource: DataSource,
@@ -51,9 +68,23 @@ export class OrderService {
       .getOne();
      return order;
   }
+
+  /**
+   * Últimas órdenes globales (panel "Órdenes recientes" del finder).
+   * Ligero para el servidor: solo `limit` órdenes con su cliente.
+   */
+  async findRecent(limit = 6): Promise<{ items: OrderEntity[]; total: number }> {
+    const capped = Math.min(Math.max(limit, 1), 20);
+    const qb = this.orderRepository
+      .createQueryBuilder('o')
+      .leftJoinAndSelect('o.client', 'c');
+    const total = await qb.getCount();
+    const items = await qb.orderBy('o.id', 'DESC').take(capped).getMany();
+    return { items, total };
+  }
   
 
-  async registerClientOrder(client: ClientEntity): Promise<ClientEntity> {
+  async registerClientOrder(client: RegisterOrderPayload): Promise<ClientEntity> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -101,12 +132,8 @@ export class OrderService {
       const normalize = (r: string | null | undefined) => r?.toLowerCase().trim().replace(/[.-]/g, '') || '';
       const equalRut = normalize(dbClient?.rut_raw || '') === normalize(client.rut_raw);
       if (dbClient && equalName && equalRut && client.orders && client.orders.length > 0) {
-        // C3: Update company_name if different from frontend
-        if (client.company_name !== undefined && client.company_name !== dbClient.company_name) {
-          await queryRunner.manager.update(ClientEntity, dbClient.id, {
-            company_name: client.company_name,
-          });
-        }
+        // Cliente existente: la empresa ya vive en el cliente — solo se
+        // anexa la orden nueva (spec order-registration).
 
         // Fetch existing orders for the client
         dbClient.orders = await queryRunner.manager.find(OrderEntity, {
@@ -116,29 +143,28 @@ export class OrderService {
         // C5: Clone instead of mutating in place
         const orderToSave = { ...client.orders[0], client: dbClient };
         const savedOrder = await queryRunner.manager.save(OrderEntity, orderToSave);
+        await this.assignOrderCode(queryRunner.manager, savedOrder);
         // Remove circular reference before returning
         savedOrder.client = undefined;
         dbClient.orders.push(savedOrder);
       } else {
-        // C4: Clone instead of deleting properties
-        const { id: _unused, ...newClientData } = client;
-        // Find or create a group for the new client
-        if (newClientData.rut_normalizado) {
-          const existingGroup = await queryRunner.manager.findOne(ClientGroupEntity, {
-            where: { rut_normalizado: newClientData.rut_normalizado },
-          });
-          newClientData.group = existingGroup || await queryRunner.manager.save(ClientGroupEntity, {
-            rut_normalizado: newClientData.rut_normalizado,
-            name: newClientData.name,
-            active: true,
-          });
-        } else {
-          newClientData.group = await queryRunner.manager.save(ClientGroupEntity, {
-            name: newClientData.name,
-            active: true,
-          });
-        }
+        // Cliente nuevo: resolver empresa (reglas spec companies) y guardar.
+        // resolveCompany muta el payload (p. ej. copia el rut de la empresa);
+        // el destructuring va DESPUÉS para capturar esa mutación.
+        const company = await this.resolveCompany(queryRunner.manager, client);
+        const {
+          id: _unused,
+          is_company: _isCompany,
+          companyId: _companyId,
+          ...newClientData
+        } = client;
+        newClientData.company_id = company?.id ?? null;
+        newClientData.company = company ?? null;
         dbClient = await queryRunner.manager.save(ClientEntity, newClientData as ClientEntity);
+        // Cascade saves nested orders; assign codes to any order with a fresh id
+        for (const savedOrder of dbClient.orders ?? []) {
+          await this.assignOrderCode(queryRunner.manager, savedOrder);
+        }
       }
       await queryRunner.commitTransaction();
       return dbClient!;
@@ -194,5 +220,80 @@ export class OrderService {
       (wrappedError as any).cause = error;
       throw wrappedError;
     }
+  }
+
+  /**
+   * Assign the human-readable code `ORD-{1000+id}` to a saved order.
+   * Orders without an id (e.g. not yet persisted) are skipped.
+   */
+  private async assignOrderCode(manager: EntityManager, order: OrderEntity): Promise<void> {
+    if (!order.id) {
+      return;
+    }
+    const code = `ORD-${1000 + order.id}`;
+    await manager.update(OrderEntity, order.id, { code });
+    order.code = code;
+  }
+
+  /**
+   * Reglas de empresa (spec `companies`, design §2 — portado de ABAGAS):
+   * 1. `companyId` explícito → validar que existe y que el rut del cliente
+   *    CALZA con el de la empresa (copia si falta; 400 si difiere).
+   * 2. `is_company=true` con rut significativo: empresa activa con ese rut →
+   *    link automático; no existe → crear.
+   * 3. Resto (particulares, rut basura, is_company ausente) → NULL.
+   *    Sin grupos 1:1 — el auto-link NO aplica a particulares (Judgment Day
+   *    A3/B1: un particular con rut de empresa no debe quedar linkeado).
+   */
+  private async resolveCompany(
+    manager: EntityManager,
+    data: RegisterOrderPayload & { company_name?: string },
+  ): Promise<CompanyEntity | null> {
+    if (data.companyId) {
+      const company = await manager.findOne(CompanyEntity, {
+        where: { id: data.companyId, active: true },
+      });
+      if (company) {
+        if (!data.rut_normalizado) data.rut_normalizado = company.rut_normalizado;
+        if (!data.rut_raw) data.rut_raw = company.rut_normalizado;
+        const clientRut = cleanRut(data.rut_normalizado);
+        const companyRut = cleanRut(company.rut_normalizado);
+        if (clientRut && companyRut && clientRut !== companyRut) {
+          throw new BadRequestException(
+            `El RUT del cliente (${data.rut_raw || data.rut_normalizado}) no calza con el de la empresa #${company.id} (${company.rut_normalizado})`,
+          );
+        }
+        return company;
+      }
+    }
+
+    if (!isMeaningfulRut(data.rut_normalizado) || data.is_company !== true) {
+      // La basura ('0', vacío, <7) jamás agrupa, y los particulares tampoco
+      // (spec junk-rut-never-company + particular-flow-unchanged).
+      return null;
+    }
+
+    const existing = await manager.findOne(CompanyEntity, {
+      where: { rut_normalizado: data.rut_normalizado!, active: true },
+    });
+    if (existing) {
+      return existing;
+    }
+
+    // B4 (post-JD): si existe una empresa INACTIVA con ese rut, se reactiva
+    // en vez de crear una nueva (la UNIQUE de rut_normalizado daría 500).
+    const inactive = await manager.findOne(CompanyEntity, {
+      where: { rut_normalizado: data.rut_normalizado! },
+    });
+    if (inactive) {
+      inactive.active = true;
+      return manager.save(CompanyEntity, inactive);
+    }
+
+    return manager.save(CompanyEntity, {
+      rut_normalizado: data.rut_normalizado!,
+      name: (data.company_name ?? '').trim() || data.name,
+      active: true,
+    });
   }
 }
