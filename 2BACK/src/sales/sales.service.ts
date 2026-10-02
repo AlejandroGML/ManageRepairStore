@@ -6,9 +6,8 @@ import { SaleEntity } from '../entities/sale.entity';
 import { StockService } from '../product/stock.service';
 
 /**
- * Sales domain: legacy single sales and atomic batch sales. Stock mutations
- * always go through StockService.mutateStock() inside a single QueryRunner
- * transaction.
+ * Sales domain: atomic batch sales. Stock mutations always go through
+ * StockService.mutateStock() inside a single QueryRunner transaction.
  */
 @Injectable()
 export class SalesService {
@@ -27,37 +26,6 @@ export class SalesService {
   /** List all sales ordered by date desc (used by Panel KPIs). */
   async listSales(): Promise<SaleEntity[]> {
     return this.salesRepository.find({ order: { createdAt: 'DESC' } });
-  }
-
-  // Crear una venta con las transacciones correspondientes
-  async createSale(transactions: TransactionEntity[], total: number) {    // Crear una nueva venta
-    const sale = new SaleEntity();
-    sale.total = total;
-
-    // Crear un snapshot de las transacciones
-    const snapshot = transactions.map(transaction => ({
-      operation: transaction.operation,
-      productId: transaction.product?.id,
-      quantity: transaction.quantity,
-      sellingPrice: transaction.sellingPrice,
-      discount: transaction.maxDiscount,
-      finalStock: transaction.finalStock,
-      assignedWorker: transaction.assignedWorker,
-      createdAt: transaction.createdAt,
-      description: transaction.description,
-    }));
-    sale.snapshot = snapshot; // Guarda el snapshot como JSON
-
-    // Guardar la venta en la base de datos
-    const savedSale = await this.salesRepository.save(sale);
-
-    // Asocia cada transacción a la venta solo si está presente
-    for (const transaction of transactions) {
-      transaction.sale = savedSale;
-      await this.transactionRepository.save(transaction);
-    }
-
-    return savedSale;
   }
 
   /**

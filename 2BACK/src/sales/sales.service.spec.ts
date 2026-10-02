@@ -96,39 +96,6 @@ describe('SalesService', () => {
     (dataSource.createQueryRunner as jest.Mock).mockReturnValue(queryRunner);
   });
 
-  describe('createSale', () => {
-    it('should create a sale with snapshot', async () => {
-      const transactions: TransactionEntity[] = [
-        {
-          id: 1,
-          operation: 'Venta Producto',
-          quantity: -2,
-          sellingPrice: 100,
-          maxDiscount: 10,
-          finalStock: 8,
-          assignedWorker: 'worker1',
-          createdAt: new Date(),
-          description: 'test',
-          product: mockProduct({ id: 1 }) as ProductEntity,
-        } as TransactionEntity,
-      ];
-
-      const savedSale: SaleEntity = {
-        id: 1,
-        total: 200,
-        snapshot: [],
-      } as SaleEntity;
-
-      (salesRepository.save as jest.Mock).mockResolvedValue(savedSale);
-      (transactionRepository.save as jest.Mock).mockResolvedValue({});
-
-      const result = await service.createSale(transactions, 200);
-
-      expect(result.total).toBe(200);
-      expect(salesRepository.save).toHaveBeenCalled();
-    });
-  });
-
   describe('createSaleBatch', () => {
     it('should create batch sale with 2 products and return SaleEntity with snapshot', async () => {
       const product1 = mockProduct({ id: 1, name: 'p1', stock: 10 });

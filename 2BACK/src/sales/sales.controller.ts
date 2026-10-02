@@ -4,7 +4,6 @@ import { Response } from 'express';
 import { SalesService } from './sales.service';
 import { SalePdfService } from './sale-pdf.service';
 import { SalePdfDto } from './dto/sale-pdf.dto';
-import { TransactionEntity } from '../entities/transaction.entity';
 import { SaleEntity } from '../entities/sale.entity';
 import { LogEntity } from '../entities/log.entity';
 import { LogService } from '../log/log.service';
@@ -20,12 +19,6 @@ export class SalesController {
   @Get()
   async listSales(): Promise<SaleEntity[]> {
     return this.salesService.listSales();
-  }
-
-  @Post()
-  async createSale(@Body() saleData: { transactions?: TransactionEntity[], total: number }) {
-    const { transactions = [], total } = saleData;
-    return this.salesService.createSale(transactions, total);
   }
 
   @Post('/batch')
