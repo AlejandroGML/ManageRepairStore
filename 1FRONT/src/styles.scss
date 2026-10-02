@@ -109,6 +109,16 @@
   .mat-mdc-tab .mdc-tab-indicator__content--underline {
     border-color: var(--color-primary);
   }
+
+  // U2 (ABAGAS, portado): pairings that stayed dark-on-dark in dark mode.
+  // Light violet on dark surfaces — ~7:1, AA/AAA with the MRS palette.
+  .btn-soft,
+  .badge-neutral {
+    color: #C4B5FD;
+  }
+  .seg button.active {
+    color: #C4B5FD;
+  }
 }
 
 // --- Global styles (after Bootstrap = precedence) ---
