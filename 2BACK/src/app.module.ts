@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { UsersModule } from './users/users.module';
 import { ClientModule } from './client/client.module';
+import { CompanyModule } from './company/company.module';
 import { OrderModule } from './order/order.module';
 import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
@@ -43,6 +44,7 @@ import { DemoModule } from './demo/demo.module';
     AuthModule,
     UsersModule,
     ClientModule,
+    CompanyModule,
     OrderModule,
     ProductModule,
     CategoryModule,
