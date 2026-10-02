@@ -10,6 +10,12 @@ import { normalize } from '../client/duplicate-matcher';
 
 @Injectable()
 export class ProductService {
+  /**
+   * Umbral fijo del negocio: crítico ≤2 · bajo 3-6 → "stock bajo" = < 7.
+   * Única fuente de verdad para searchProducts y buildLowStockXlsx.
+   */
+  static readonly LOW_STOCK_THRESHOLD = 7;
+
   constructor(
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
@@ -164,8 +170,9 @@ export class ProductService {
     if (stock === 'stock') {
       qb.andWhere('p.stock > 0');
     } else if (stock === 'low') {
-      // Umbral fijo del negocio: crítico ≤2 · bajo 3-6 → "stock bajo" = < 7.
-      qb.andWhere('p.stock < 7');
+      qb.andWhere('p.stock < :threshold', {
+        threshold: ProductService.LOW_STOCK_THRESHOLD,
+      });
     }
     const total = await qb.getCount();
     const items = await qb
@@ -178,7 +185,7 @@ export class ProductService {
 
   /** Total de productos activos (encabezado del catálogo). */
   /**
-   * Export XLSX de productos con stock bajo (umbral fijo: < 7).
+   * Export XLSX de productos con stock bajo (umbral: LOW_STOCK_THRESHOLD).
    * Ordenado por stock ascendente: los más críticos primero.
    */
   async buildLowStockXlsx(): Promise<ExcelJS.Buffer> {
@@ -186,7 +193,7 @@ export class ProductService {
       where: { active: true },
       order: { stock: 'ASC' },
     });
-    const low = products.filter((p) => (p.stock ?? 0) < 7);
+    const low = products.filter((p) => (p.stock ?? 0) < ProductService.LOW_STOCK_THRESHOLD);
 
     const wb = new ExcelJS.Workbook();
     const sheet = wb.addWorksheet('Stock bajo');
