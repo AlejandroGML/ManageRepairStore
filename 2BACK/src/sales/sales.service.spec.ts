@@ -96,6 +96,39 @@ describe('SalesService', () => {
     (dataSource.createQueryRunner as jest.Mock).mockReturnValue(queryRunner);
   });
 
+  describe('getTodaySummary', () => {
+    it('should return today total and count, coercing string aggregates to numbers', async () => {
+      const qbMock = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getRawOne: jest.fn().mockResolvedValue({ total: '45000.00', count: '3' }),
+      };
+      (salesRepository.createQueryBuilder as jest.Mock).mockReturnValue(qbMock);
+
+      const result = await service.getTodaySummary();
+
+      // Postgres returns decimal/bigint aggregates as strings
+      expect(result).toEqual({ total: 45000, count: 3 });
+      expect(qbMock.where).toHaveBeenCalledWith('sale.createdAt >= :startOfDay',
+        expect.objectContaining({ startOfDay: expect.any(Date) }));
+    });
+
+    it('should return zeros on an empty day (COALESCE)', async () => {
+      const qbMock = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getRawOne: jest.fn().mockResolvedValue({ total: '0', count: '0' }),
+      };
+      (salesRepository.createQueryBuilder as jest.Mock).mockReturnValue(qbMock);
+
+      const result = await service.getTodaySummary();
+
+      expect(result).toEqual({ total: 0, count: 0 });
+    });
+  });
+
   describe('createSaleBatch', () => {
     it('should create batch sale with 2 products and return SaleEntity with snapshot', async () => {
       const product1 = mockProduct({ id: 1, name: 'p1', stock: 10 });

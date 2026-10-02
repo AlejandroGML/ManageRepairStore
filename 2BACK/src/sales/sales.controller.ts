@@ -16,9 +16,13 @@ export class SalesController {
     private readonly logService: LogService,
   ) {}
 
+  /**
+   * Today's sales summary (total + count). The dashboard KPI reads this —
+   * the frontend expects `{ total, count }`, NOT a sale array.
+   */
   @Get()
-  async listSales(): Promise<SaleEntity[]> {
-    return this.salesService.listSales();
+  async getTodaySummary(): Promise<{ total: number; count: number }> {
+    return this.salesService.getTodaySummary();
   }
 
   @Post('/batch')

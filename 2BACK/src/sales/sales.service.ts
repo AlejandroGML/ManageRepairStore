@@ -23,9 +23,23 @@ export class SalesService {
     private readonly stockService: StockService,
   ) {}
 
-  /** List all sales ordered by date desc (used by Panel KPIs). */
-  async listSales(): Promise<SaleEntity[]> {
-    return this.salesRepository.find({ order: { createdAt: 'DESC' } });
+  /**
+   * Today's sales summary for the dashboard KPI: total amount and sale count
+   * for the current day only (`createdAt >= startOfDay`).
+   */
+  async getTodaySummary(): Promise<{ total: number; count: number }> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const raw = await this.salesRepository
+      .createQueryBuilder('sale')
+      .select('COALESCE(SUM(sale.total), 0)', 'total')
+      .addSelect('COUNT(sale.id)', 'count')
+      .where('sale.createdAt >= :startOfDay', { startOfDay })
+      .getRawOne();
+
+    // Postgres returns decimal/bigint aggregates as strings via raw queries
+    return { total: Number(raw.total), count: Number(raw.count) };
   }
 
   /**
