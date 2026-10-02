@@ -33,6 +33,8 @@ describe('ProductService', () => {
   const mockQueryRunner = (): jest.Mocked<QueryRunner> => {
     const manager = {
       findOne: jest.fn(),
+      find: jest.fn().mockResolvedValue([]),
+      query: jest.fn().mockResolvedValue([]),
       save: jest.fn(),
       update: jest.fn(),
       createQueryBuilder: jest.fn(),
@@ -276,41 +278,49 @@ describe('ProductService', () => {
   });
 
   describe('registerProduct', () => {
-    it('should set product.stock = quantity for new product', async () => {
-      const newProduct: ProductEntity = {
-        name: 'nuevo producto',
-        active: true,
-        stock: 0,
-        minimum: 0,
-    costPrice: 0,
-    sellingPrice: 0,
-    maxDiscount: 0,
-    location: '',
-    description: '',
-        transactions: [
-          {
-            operation: 'Nuevo Producto',
-            quantity: 5,
-            finalStock: 0,
-            costPrice: 50,
-            sellingPrice: 100,
-            location: 'A1',
-            payMethod: '',
-            maxDiscount: 0,
-            purchaseDiscount: 0,
-            description: '',
-            assignedWorker: '',
-          } as TransactionEntity,
-        ],
-      };
+    const newProductWith = (name: string, quantity: number): ProductEntity => ({
+      name,
+      active: true,
+      stock: 0,
+      minimum: 0,
+      costPrice: 0,
+      sellingPrice: 0,
+      maxDiscount: 0,
+      location: '',
+      description: '',
+      transactions: [
+        {
+          operation: 'Nuevo Producto',
+          quantity,
+          finalStock: 0,
+          costPrice: 50,
+          sellingPrice: 100,
+          location: 'A1',
+          payMethod: '',
+          maxDiscount: 0,
+          purchaseDiscount: 0,
+          description: '',
+          assignedWorker: '',
+        } as TransactionEntity,
+      ],
+    });
 
-      (productRepository.findOne as jest.Mock).mockResolvedValue(null);
-      (productRepository.save as jest.Mock).mockImplementation(
-        async (p: ProductEntity) => {
-          // Return the saved entity with id
-          return { ...p, id: 1 };
-        },
+    it('should set product.stock = quantity for new product', async () => {
+      const newProduct = newProductWith('nuevo producto', 5);
+
+      // No active normalized conflict
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      // Atomic save inside the transaction returns the product with id
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (p: ProductEntity) => ({ ...p, id: 1 }),
       );
+      // Post-commit re-fetch with relations
+      (productRepository.findOne as jest.Mock).mockResolvedValue({
+        ...newProduct,
+        id: 1,
+        stock: 5,
+        transactions: [{ ...newProduct.transactions[0], finalStock: 5 }],
+      });
 
       const result = await service.registerProduct(newProduct);
 
@@ -320,103 +330,230 @@ describe('ProductService', () => {
     });
 
     it('should set product.stock = 0 when quantity is 0', async () => {
-      const newProduct: ProductEntity = {
-        name: 'producto sin stock',
-        active: true,
-        stock: 0,
-        minimum: 0,
-    costPrice: 0,
-    sellingPrice: 0,
-    maxDiscount: 0,
-    location: '',
-    description: '',
-        transactions: [
-          {
-            operation: 'Nuevo Producto',
-            quantity: 0,
-            finalStock: 0,
-            costPrice: 10,
-            sellingPrice: 20,
-            location: '',
-            payMethod: '',
-            maxDiscount: 0,
-            purchaseDiscount: 0,
-            description: '',
-            assignedWorker: '',
-          } as TransactionEntity,
-        ],
-      };
+      const newProduct = newProductWith('producto sin stock', 0);
 
-      (productRepository.findOne as jest.Mock).mockResolvedValue(null);
-      (productRepository.save as jest.Mock).mockImplementation(
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
         async (p: ProductEntity) => ({ ...p, id: 2 }),
       );
+      (productRepository.findOne as jest.Mock).mockResolvedValue({
+        ...newProduct,
+        id: 2,
+        stock: 0,
+      });
 
       const result = await service.registerProduct(newProduct);
 
       expect(result.stock).toBe(0);
-      expect(result.transactions?.[0]?.finalStock).toBe(0);
     });
 
-    it('should add stock to existing product via mutateStock', async () => {
-      const existingProduct = mockProduct({
-        id: 1,
-        name: 'producto existente',
-        stock: 10,
+    it('should save through the transaction manager, not the repository (atomic write)', async () => {
+      const newProduct = newProductWith('producto atomico', 3);
+
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (p: ProductEntity) => ({ ...p, id: 9 }),
+      );
+      (productRepository.findOne as jest.Mock).mockResolvedValue({
+        ...newProduct,
+        id: 9,
       });
 
-      const productAfterUpdate = mockProduct({
-        id: 1,
-        name: 'producto existente',
-        stock: 15,
+      await service.registerProduct(newProduct);
+
+      // J2: the write must happen INSIDE the open transaction
+      expect(queryRunner.manager.save).toHaveBeenCalledWith(newProduct);
+      expect(productRepository.save).not.toHaveBeenCalled();
+      expect(queryRunner.commitTransaction).toHaveBeenCalled();
+      expect(queryRunner.rollbackTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should take the advisory lock on the normalized name before recheck and save', async () => {
+      const newProduct = newProductWith('Taladro Percutor', 2);
+
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (p: ProductEntity) => ({ ...p, id: 3 }),
+      );
+      (productRepository.findOne as jest.Mock).mockResolvedValue({
+        ...newProduct,
+        id: 3,
       });
 
-      const newProduct: ProductEntity = {
-        name: 'producto existente',
-        active: true,
-        stock: 0,
-        minimum: 0,
-    costPrice: 0,
-    sellingPrice: 0,
-    maxDiscount: 0,
-    location: '',
-    description: '',
-        transactions: [
-          {
-            operation: 'Nuevo Producto',
-            quantity: 5,
-            finalStock: 0,
-            costPrice: 50,
-            sellingPrice: 100,
-            location: 'A1',
-            payMethod: '',
-            maxDiscount: 0,
-            purchaseDiscount: 0,
-            description: '',
-            assignedWorker: '',
-          } as TransactionEntity,
-        ],
-      };
+      await service.registerProduct(newProduct);
 
-      (productRepository.findOne as jest.Mock)
-        // First call: find existing product in registerProduct
-        .mockResolvedValueOnce(existingProduct)
-        // Second call: re-fetch after commit
-        .mockResolvedValueOnce(productAfterUpdate);
+      // Guard order: advisory lock → in-tx recheck → write
+      expect(queryRunner.manager.query).toHaveBeenCalledWith(
+        'SELECT pg_advisory_xact_lock(hashtext($1))',
+        ['taladro percutor'],
+      );
+      const queryOrder = (queryRunner.manager.query as jest.Mock).mock.invocationCallOrder[0];
+      const findOrder = (queryRunner.manager.find as jest.Mock).mock.invocationCallOrder[0];
+      const saveOrder = (queryRunner.manager.save as jest.Mock).mock.invocationCallOrder[0];
+      expect(queryOrder).toBeLessThan(findOrder);
+      expect(findOrder).toBeLessThan(saveOrder);
+    });
 
-      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(existingProduct);
-      (queryRunner.manager.update as jest.Mock).mockResolvedValue({ affected: 1 });
-      (queryRunner.manager.save as jest.Mock).mockResolvedValue({});
-      (transactionRepository.create as jest.Mock).mockReturnValue({
-        operation: 'Nuevo Producto',
-        quantity: 5,
-        finalStock: 15,
-      } as Partial<TransactionEntity>);
+    it('should reject 409 when an active product normalizes to the same name', async () => {
+      const newProduct = newProductWith('VALVULA  X', 4);
+      // Accent + case + double-space variants all normalize to 'valvula x'
+      const existing = mockProduct({ id: 7, name: 'Válvula X' });
+
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([existing]);
+
+      await expect(service.registerProduct(newProduct)).rejects.toThrow(
+        new HttpException(
+          'Ya existe un producto similar: "Válvula X" (#7)',
+          HttpStatus.CONFLICT,
+        ),
+      );
+
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(queryRunner.manager.save).not.toHaveBeenCalled();
+    });
+
+    it('should not block registration on inactive (soft-deleted) products', async () => {
+      const newProduct = newProductWith('producto reingresado', 1);
+
+      // The recheck only queries active products (where: { active: true })
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      (queryRunner.manager.save as jest.Mock).mockImplementation(
+        async (p: ProductEntity) => ({ ...p, id: 5 }),
+      );
+      (productRepository.findOne as jest.Mock).mockResolvedValue({
+        ...newProduct,
+        id: 5,
+      });
 
       const result = await service.registerProduct(newProduct);
 
-      expect(result.stock).toBe(15);
+      expect(result.id).toBe(5);
+      expect(queryRunner.manager.find).toHaveBeenCalledWith(ProductEntity, {
+        where: { active: true },
+        select: { id: true, name: true },
+      });
+    });
+
+    it('should store the product name lowercased (display convention preserved)', async () => {
+      const newProduct = newProductWith('Amortiguador Delantero', 2);
+
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([]);
+      let savedProduct: any = null;
+      (queryRunner.manager.save as jest.Mock).mockImplementation(async (p: any) => {
+        savedProduct = p;
+        return { ...p, id: 6 };
+      });
+      (productRepository.findOne as jest.Mock).mockResolvedValue({
+        ...newProduct,
+        id: 6,
+      });
+
+      await service.registerProduct(newProduct);
+
+      expect(savedProduct.name).toBe('amortiguador delantero');
+    });
+  });
+
+  describe('updateProductById — rename guard', () => {
+    const updateWithName = (name: string): Partial<ProductEntity> => ({
+      name,
+      transactions: [
+        {
+          operation: 'Producto Actualizado',
+          quantity: 1,
+        } as TransactionEntity,
+      ],
+    });
+
+    it('should reject 409 when renaming onto an existing normalized name', async () => {
+      const existing = mockProduct({ id: 12, name: 'freno disco' });
+
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue([existing]);
+
+      await expect(
+        service.updateProductById(1, updateWithName('FRENO  DISCO')),
+      ).rejects.toThrow(
+        new HttpException(
+          'Ya existe un producto similar: "freno disco" (#12)',
+          HttpStatus.CONFLICT,
+        ),
+      );
+
+      // Guard fired inside the transaction: rolled back, nothing written
+      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(queryRunner.manager.update).not.toHaveBeenCalled();
+    });
+
+    it('should not take the name lock when the update does not rename', async () => {
+      const product = mockProduct({ id: 1, stock: 10 });
+      const productAfterUpdate = mockProduct({ id: 1, stock: 11 });
+
+      (productRepository.findOne as jest.Mock)
+        .mockResolvedValueOnce(productAfterUpdate);
+
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(product);
+      (queryRunner.manager.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (queryRunner.manager.save as jest.Mock).mockResolvedValue({});
+      (transactionRepository.create as jest.Mock).mockReturnValue({});
+
+      await service.updateProductById(1, {
+        transactions: [{ operation: 'Producto Actualizado', quantity: 1 } as TransactionEntity],
+      });
+
+      expect(queryRunner.manager.query).not.toHaveBeenCalled();
       expect(queryRunner.commitTransaction).toHaveBeenCalled();
+    });
+
+    it('should allow renaming to a name that only substring-matches another product', async () => {
+      const product = mockProduct({ id: 1, name: 'amortiguador' });
+      const others = [mockProduct({ id: 12, name: 'amortiguador delantero' })];
+
+      (queryRunner.manager.find as jest.Mock).mockResolvedValue(others);
+      (queryRunner.manager.findOne as jest.Mock).mockResolvedValue(product);
+      (queryRunner.manager.update as jest.Mock).mockResolvedValue({ affected: 1 });
+      (queryRunner.manager.save as jest.Mock).mockResolvedValue({});
+      (transactionRepository.create as jest.Mock).mockReturnValue({});
+      (productRepository.findOne as jest.Mock).mockResolvedValue(product);
+
+      const result = await service.updateProductById(1, updateWithName('Amortiguador'));
+
+      expect(result).toBeDefined();
+      expect(queryRunner.commitTransaction).toHaveBeenCalled();
+    });
+  });
+
+  describe('existsByNormalizedName', () => {
+    it('should return true for an exact normalized match', async () => {
+      (productRepository.find as jest.Mock).mockResolvedValue([
+        mockProduct({ id: 1, name: 'Válvula de Retención' }),
+      ]);
+
+      const result = await service.existsByNormalizedName('valvula de retencion');
+
+      expect(result).toBe(true);
+      expect(productRepository.find).toHaveBeenCalledWith({
+        where: { active: true },
+        select: { id: true, name: true },
+      });
+    });
+
+    it('should return false for a substring-only match', async () => {
+      (productRepository.find as jest.Mock).mockResolvedValue([
+        mockProduct({ id: 1, name: 'amortiguador delantero' }),
+      ]);
+
+      const result = await service.existsByNormalizedName('amortiguador');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false for an empty name', async () => {
+      const result = await service.existsByNormalizedName('   ');
+
+      expect(result).toBe(false);
+      expect(productRepository.find).not.toHaveBeenCalled();
     });
   });
 

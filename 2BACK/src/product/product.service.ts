@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { EntityManager, Repository, DataSource } from 'typeorm';
 import { ProductEntity } from '../entities/product.entity';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { CategoryEntity } from '../entities/category.entity';
@@ -33,23 +33,27 @@ export class ProductService {
   /**
    * Nombres se comparan normalizados (sin tildes/puntuación, espacios
    * colapsados): evita duplicados tipo "válvula X" vs "valvula x".
+   *
+   * Race safety (TOCTOU): the check-then-write runs inside ONE transaction
+   * guarded by a transaction-scoped advisory lock keyed on the normalized
+   * name (pg_advisory_xact_lock + hashtext). Two concurrent registrations
+   * of the same name serialize; the loser sees the winner's row in the
+   * in-transaction recheck and gets a 409. Collision-tolerant by design:
+   * a hashtext collision just serializes two unrelated names, which is
+   * harmless. A unique index was rejected because legacy data may hold
+   * duplicates (the migration would crash on deploy).
    */
-  private async assertNoNormalizedNameConflict(name: string, excludeId?: number): Promise<void> {
-    const normalized = normalize(name);
-    if (!normalized) return;
-    const all = await this.productRepository.find({
+  private async findNormalizedConflict(
+    manager: EntityManager,
+    normalized: string,
+    excludeId?: number,
+  ): Promise<ProductEntity | null> {
+    if (!normalized) return null;
+    const all = await manager.find(ProductEntity, {
       where: { active: true },
       select: { id: true, name: true },
     });
-    const conflict = all.find(
-      (p) => p.id !== excludeId && normalize(p.name) === normalized,
-    );
-    if (conflict) {
-      throw new HttpException(
-        `Ya existe un producto similar: "${conflict.name}" (#${conflict.id})`,
-        HttpStatus.CONFLICT,
-      );
-    }
+    return all.find((p) => p.id !== excludeId && normalize(p.name) === normalized) ?? null;
   }
 
   async registerProduct(product: ProductEntity): Promise<ProductEntity> {
@@ -66,67 +70,52 @@ export class ProductService {
         throw new Error('Se requiere al menos una transacción para registrar el producto.');
     }
 
-    await this.assertNoNormalizedNameConflict(product.name);
-
-    // Asigna la fecha a la primera transacción
+    // Un solo camino de duplicados: igualdad normalizada exacta contra
+    // productos ACTIVOS. (Antes había dos: el guard normalizado y un
+    // append por nombre lowercase-exact que solo alcanzaba a correr
+    // contra productos inactivos, sumándoles stock sin reactivarlos.)
     const transaction = product.transactions[0];
-    transaction.createdAt = new Date();
-    product.name = product.name.toLowerCase();
+    const normalized = normalize(product.name);
+    if (!normalized) {
+      throw new HttpException('Product name is required', HttpStatus.BAD_REQUEST);
+    }
 
-    const existingProduct = await this.productRepository.findOne({
-      where: { name: product.name },
-      relations: { transactions: true }, // Asegura que las transacciones se carguen
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (existingProduct) {
-      // Determine delta: Nuevo Producto adds stock, other operations remove
-      const isNewProduct = transaction.operation === 'Nuevo Producto';
-      const quantity = Number(transaction.quantity) || 0;
-      const delta = isNewProduct ? Math.abs(quantity) : -Math.abs(quantity);
+    try {
+      await queryRunner.manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [normalized]);
 
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const { newStock } = await this.stockService.mutateStock(queryRunner, existingProduct.id!, delta);
-
-        const newTransaction = this.transactionRepository.create({
-          operation: transaction.operation || 'Nuevo Producto',
-          quantity: transaction.quantity ?? 0,
-          costPrice: transaction.costPrice ?? 0,
-          sellingPrice: transaction.sellingPrice ?? 0,
-          location: transaction.location || 'Sin Datos',
-          payMethod: transaction.payMethod || 'Sin Datos',
-          finalStock: newStock,
-          maxDiscount: transaction.maxDiscount ?? 0,
-          purchaseDiscount: transaction.purchaseDiscount ?? 0,
-          description: transaction.description || 'Sin Datos',
-          assignedWorker: transaction.assignedWorker || 'Sin Datos',
-          createdAt: new Date(),
-          product: existingProduct,
-        });
-
-        await queryRunner.manager.save(newTransaction);
-        await queryRunner.commitTransaction();
-
-        // Re-fetch with relations
-        return (await this.productRepository.findOne({
-          where: { id: existingProduct.id },
-          relations: { transactions: true },
-        }))!;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
+      const conflict = await this.findNormalizedConflict(queryRunner.manager, normalized);
+      if (conflict) {
+        throw new HttpException(
+          `Ya existe un producto similar: "${conflict.name}" (#${conflict.id})`,
+          HttpStatus.CONFLICT,
+        );
       }
-    } else {
-      // New product: stock starts at initial quantity
-      product.stock = Number(transaction.quantity ?? 0);
-      transaction.finalStock = product.stock;
 
-      return await this.productRepository.save(product);
+      // New product: stock starts at initial quantity
+      transaction.createdAt = new Date();
+      transaction.finalStock = Number(transaction.quantity ?? 0);
+      product.name = product.name.toLowerCase();
+      product.stock = transaction.finalStock;
+
+      // Atomic write: product + initial transaction commit or roll back
+      // together (cascade insert through the transaction's manager).
+      const saved = await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+
+      // Re-fetch with relations
+      return (await this.productRepository.findOne({
+        where: { id: saved.id },
+        relations: { transactions: true },
+      }))!;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
 }
 
@@ -269,6 +258,24 @@ export class ProductService {
       .getMany();
   }
 
+  /**
+   * Exact answer to the duplicate-guard question: does an ACTIVE product
+   * exist whose normalized name equals this one? Feeds GET /product/exists
+   * (rename pre-check). Deliberately exact-normalized — substring or fuzzy
+   * matches are NOT conflicts, so the endpoint must not report them,
+   * otherwise legitimate renames get blocked. Soft-deleted products don't
+   * count: re-registering their name is allowed.
+   */
+  async existsByNormalizedName(name: string): Promise<boolean> {
+    const normalized = normalize(name);
+    if (!normalized) return false;
+    const all = await this.productRepository.find({
+      where: { active: true },
+      select: { id: true, name: true },
+    });
+    return all.some((p) => normalize(p.name) === normalized);
+  }
+
   // Obtener productos por ubicación
   async getProductsByLocation(location: string): Promise<ProductEntity[]> {
     return await this.productRepository
@@ -286,9 +293,7 @@ export class ProductService {
     }
 
     const transactionData = updateData.transactions[0];
-    if (updateData.name) {
-      await this.assertNoNormalizedNameConflict(updateData.name, id);
-    }
+    const normalizedNewName = updateData.name ? normalize(updateData.name) : null;
     const isUpdateOperation = transactionData.operation === 'Producto Actualizado';
     const rawQuantity = Number(transactionData.quantity) || 0;
     const delta = isUpdateOperation ? Math.abs(rawQuantity) : -Math.abs(rawQuantity);
@@ -298,6 +303,20 @@ export class ProductService {
     await queryRunner.startTransaction();
 
     try {
+      // Rename guard lives INSIDE the transaction it protects: advisory
+      // lock on the new normalized name, then recheck, then write.
+      if (normalizedNewName) {
+        await queryRunner.manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [normalizedNewName]);
+
+        const conflict = await this.findNormalizedConflict(queryRunner.manager, normalizedNewName, id);
+        if (conflict) {
+          throw new HttpException(
+            `Ya existe un producto similar: "${conflict.name}" (#${conflict.id})`,
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
       const { newStock } = await this.stockService.mutateStock(queryRunner, id, delta);
 
       const newTransaction = this.transactionRepository.create({

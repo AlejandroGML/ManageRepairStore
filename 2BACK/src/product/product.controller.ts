@@ -207,11 +207,13 @@ export class ProductController {
     return this.productService.addTransactionToProduct(id, formData);
   }
 
-// Nuevo endpoint para verificar el nombre de un producto ya existente
+// Endpoint para verificar el nombre de un producto ya existente.
+// Exactitud normalizada: misma pregunta que responde el guard del
+// registro (activos con nombre normalizado igual). Un substring NO es
+// duplicado — reportarlo bloquearía renombres legítimos.
 @Get('/exists')
 async checkProductNameExists(@Query('name') name: string): Promise<boolean> {
-  const product = await this.productService.getProductsByName(name);
-  return product.length > 0;
+  return this.productService.existsByNormalizedName(name);
 }
 
 // Endpoint for atomic batch refill operations
