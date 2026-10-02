@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LoginComponent } from './login.component';
+import { getApiUrl } from '../../../services/api-url';
 import { AuthService } from '../../../services/auth.service';
 
 describe('LoginComponent', () => {
@@ -18,7 +19,7 @@ describe('LoginComponent', () => {
   let httpMock: HttpTestingController;
   let snackBar: MatSnackBar;
 
-  const backendUrl = 'http://localhost:3000';
+  const backendUrl = getApiUrl();
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({

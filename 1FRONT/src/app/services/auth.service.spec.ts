@@ -4,8 +4,12 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { UserProfile } from '../interface/user-profile';
+import { getApiUrl } from './api-url';
 
 describe('AuthService', () => {
+  // Same-origin base the service actually uses (/api) — matching the
+  // service's own resolution keeps these specs honest across environments.
+  const base = getApiUrl();
   let service: AuthService;
   let httpMock: HttpTestingController;
   let router: Router;
@@ -35,7 +39,7 @@ describe('AuthService', () => {
     it('should POST to /auth/login with email and password', () => {
       service.login('admin@demo.example', 'Admin123!').subscribe();
 
-      const req = httpMock.expectOne('http://localhost:3000/auth/login');
+      const req = httpMock.expectOne(`${base}/auth/login`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ email: 'admin@demo.example', password: 'Admin123!' });
       req.flush(mockLoginResponse);
@@ -49,7 +53,7 @@ describe('AuthService', () => {
         expect(storedUser.role).toBe('admin');
       });
 
-      const req = httpMock.expectOne('http://localhost:3000/auth/login');
+      const req = httpMock.expectOne(`${base}/auth/login`);
       req.flush(mockLoginResponse);
     });
 
@@ -62,7 +66,7 @@ describe('AuthService', () => {
         });
       });
 
-      const req = httpMock.expectOne('http://localhost:3000/auth/login');
+      const req = httpMock.expectOne(`${base}/auth/login`);
       req.flush(mockLoginResponse);
     });
   });
@@ -121,7 +125,7 @@ describe('AuthService', () => {
   describe('isAdmin()', () => {
     it('should return true when current user role is admin', () => {
       service.login('admin@demo.example', 'Admin123!').subscribe();
-      httpMock.expectOne('http://localhost:3000/auth/login').flush(mockLoginResponse);
+      httpMock.expectOne(`${base}/auth/login`).flush(mockLoginResponse);
       expect(service.isAdmin()).toBeTrue();
     });
 
@@ -131,7 +135,7 @@ describe('AuthService', () => {
         user: { id: 2, name: 'Seller', email: 'test@demo.example', role: 'seller' } as UserProfile,
       };
       service.login('test@demo.example', 'pass123').subscribe();
-      httpMock.expectOne('http://localhost:3000/auth/login').flush(sellerResponse);
+      httpMock.expectOne(`${base}/auth/login`).flush(sellerResponse);
       expect(service.isAdmin()).toBeFalse();
     });
   });
@@ -144,7 +148,7 @@ describe('AuthService', () => {
         expect(user?.name).toBe('Admin');
         expect(user?.role).toBe('admin');
       });
-      httpMock.expectOne('http://localhost:3000/auth/login').flush(mockLoginResponse);
+      httpMock.expectOne(`${base}/auth/login`).flush(mockLoginResponse);
     });
 
     it('should return null before login', () => {

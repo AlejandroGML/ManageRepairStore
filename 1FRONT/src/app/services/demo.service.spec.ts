@@ -5,11 +5,12 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { DemoService } from './demo.service';
+import { getApiUrl } from './api-url';
 
 describe('DemoService', () => {
   let service: DemoService;
   let httpMock: HttpTestingController;
-  const apiUrl = 'http://localhost:3000';
+  const apiUrl = getApiUrl();
 
   beforeEach(() => {
     TestBed.configureTestingModule({
