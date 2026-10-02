@@ -48,14 +48,12 @@ work-unit commit per task.
       all three hardcoded) now mirror the datasource's NODE_ENV env-file
       selection. P4: CORS_ORIGIN split(',') → array, single value
       unchanged. Commits: all three in 029dc8a. Backend 266/266 green.
-      HONEST LIMITATION (U3): the Karma spec could not be EXECUTED on
-      this machine — no Chrome/Chromium binary (Garuda ships
-      helium-browser; CHROME_BIN=/usr/bin/helium-browser is unstable
-      under Karma: trivial specs fail with reload/ping-timeout errors,
-      pre-existing environment issue, not the new test). Template
-      AOT-compile verified twice (bundle generation complete); spec
-      mirrors the ABAGAS-verified pattern. Executable where a Chrome
-      binary exists (e.g. the VPS or a chromium install).
+      HONEST LIMITATION — RESOLVED: initial run used helium-browser
+      (unstable under Karma); Xoko pointed out Brave is installed. With
+      CHROME_BIN=/usr/bin/brave the U3 spec passes (register suite
+      19/19) and the FULL Karma suite ran green after fixing 13 stale
+      specs (see follow-up commit 2f3f096 — pre-existing breakage from
+      the same-origin /api refactor, not from this batch).
 
 ## Acceptance criteria
 
@@ -69,9 +67,10 @@ work-unit commit per task.
 - ①: a24c4a7 — GET /sales today-summary. Backend 260/260.
 - ②: 5284c12 — J1 HttpException re-throw, 3 sites. Backend 262/262.
 - ③: d009240 — T2-clientes lock + atomic group. Backend 266/266.
-- ④: 029dc8a — U3 + P3 (3 scripts) + P4. Backend 266/266; front tsc clean;
-  Karma spec unexecutable locally (see honest limitation above).
+- ④: 029dc8a — U3 + P3 (3 scripts) + P4. Backend 266/266.
+- Follow-up: 2f3f096 — 13 stale specs fixed (same-origin /api refactor
+  leftovers, pre-existing). Karma FULL suite: 352/352 green with
+  CHROME_BIN=/usr/bin/brave (helium-browser is unstable under Karma —
+  use Brave on this machine).
 
-## Status: COMPLETE (all four closed; ①②③ with executed tests, ④ backend
-verified + frontend compile-verified, spec execution deferred to a machine
-with Chrome)
+## Status: COMPLETE — backend 266/266, frontend Karma 352/352, both verified
