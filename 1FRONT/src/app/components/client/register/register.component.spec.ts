@@ -293,4 +293,29 @@ describe('RegisterComponent', () => {
     expect(component.enablePDF).toBeFalse();
     expect(component.ordenIngreso.code).toBeUndefined();
   });
+
+  it('should hide the summary hint once registered and restore it after clearing (U3)', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    // An informational hint is a promise about state: visible while the
+    // order is not registered...
+    expect(compiled.querySelector('.summary-hint')).not.toBeNull();
+
+    ordersApiSpy.create.and.returnValue(of(registeredClient));
+    component.form.get('name')?.setValue('Test Client');
+    component.form.get('rut')?.setValue('12.345.678-5');
+    component.form.get('address')?.setValue('Test Address');
+    component.form.get('city')?.setValue('Test City');
+    component.form.get('phone')?.setValue('123456789');
+    component.form.get('description')?.setValue('Test description');
+    component.form.get('observation')?.setValue('Test observation');
+    component.registerOrder();
+    fixture.detectChanges();
+    // ...gone once PDF/QR are already enabled (the hint would contradict
+    // the UI), and back after the state resets.
+    expect(compiled.querySelector('.summary-hint')).toBeNull();
+
+    component.clearAllDataForm();
+    fixture.detectChanges();
+    expect(compiled.querySelector('.summary-hint')).not.toBeNull();
+  });
 });

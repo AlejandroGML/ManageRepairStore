@@ -1,6 +1,14 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-dotenv.config({ path: path.resolve(__dirname, '../../.env.development') });
+// Mirror the datasource's env selection (ABAGAS finding P3): a hardcoded
+// dev env file silently falls back to localhost defaults where it does
+// not exist — which can point at a production database.
+dotenv.config({
+  path: path.resolve(
+    __dirname,
+    process.env.NODE_ENV === 'production' ? '../../.env.production' : '../../.env.development',
+  ),
+});
 
 /**
  * Group clients by matching raw RUT digits.

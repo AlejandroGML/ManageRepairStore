@@ -38,10 +38,18 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
 
-  // CORS configurado desde variable de entorno
+  // CORS configurado desde variable de entorno; CORS_ORIGIN acepta varios
+  // orígenes separados por comas (p.ej. LAN y tailscale a la vez). Un solo
+  // valor se comporta exactamente igual que antes.
   const corsOrigin = configService.get<string>('CORS_ORIGIN');
+  const configuredOrigins = corsOrigin
+    ?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: corsOrigin || ((origin, callback) => {
+    origin: configuredOrigins?.length
+      ? configuredOrigins
+      : ((origin, callback) => {
       // Allow all localhost variants (IPv4, IPv6) in development
       if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://[::1]') || origin.startsWith('http://192.168.')) {
         callback(null, true);

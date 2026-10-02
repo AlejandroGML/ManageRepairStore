@@ -115,7 +115,7 @@
             </span>
           </div>
 
-          <p class="summary-hint">{{ 'register.summaryHint' | t }}</p>
+          <p class="summary-hint" *ngIf="!enablePDF">{{ 'register.summaryHint' | t }}</p>
 
           <div class="summary-actions">
             <button type="button" class="btn btn-soft" [disabled]="!enablePDF" (click)="descargarPDF()">
