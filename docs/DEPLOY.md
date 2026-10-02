@@ -31,7 +31,6 @@ DB_USERNAME=postgres
 DB_PASSWORD=$(openssl rand -hex 24)
 DB_DATABASE=manage_repair_store
 NODE_ENV=production
-TYPEORM_SYNCHRONIZE=true
 PORT=3000
 JWT_SECRET=$(openssl rand -hex 32)
 CORS_ORIGIN=https://YOUR_DOMAIN
@@ -39,18 +38,42 @@ EOF
 chmod 600 .env
 ```
 
-`TYPEORM_SYNCHRONIZE=true` builds the schema from entities on first boot —
-acceptable here because every byte of data is synthetic and the demo resets
-itself on each page load. A real application would run migrations instead.
+## 3. Schema: migrations are the only path
 
-## 3. Build & run
+`synchronize` is off in every environment — entity edits never ALTER the
+database by themselves. The schema comes from `2BACK/src/migrations/`.
+
+Fresh database (empty volume):
+
+```bash
+docker compose -f docker-compose.vps.yml up -d postgres   # wait for healthy
+docker compose -f docker-compose.vps.yml run --rm app \
+  node node_modules/typeorm/typeorm.js migration:run -d dist/2BACK/src/datasource.js
+```
+
+Existing database that predates the baseline (schema built by the old
+`synchronize` and matching the current entities): record the baseline
+WITHOUT running DDL, or the first `migration:run` would try to CREATE
+existing tables and crash:
+
+```bash
+docker compose -f docker-compose.vps.yml run --rm app node dist/2BACK/src/scripts/mark-baseline.js
+```
+
+> Never mark-baseline a schema you have not diffed first. If the target
+> does not match the entity graph, fix the schema before marking.
+
+The demo reset (`POST /api/demo/reset`) is data seeding and stays outside
+the migration system.
+
+## 4. Build & run
 
 ```bash
 docker compose -f docker-compose.vps.yml up -d --build   # first build 5-10 min
 curl -sI http://127.0.0.1:8082/ | head -1                # expect: HTTP/1.1 200
 ```
 
-## 4. Caddy
+## 5. Caddy
 
 ```
 YOUR_DOMAIN {
@@ -61,15 +84,23 @@ YOUR_DOMAIN {
 Reload Caddy — it obtains the Let's Encrypt certificate automatically once
 DNS points at this server (and only then).
 
-## 5. First boot checklist
+## 6. First boot checklist
 
+- Schema: `migration:run` (fresh DB) or `mark-baseline` (existing DB) — see §3
 - `curl -X POST https://YOUR_DOMAIN/api/demo/reset` — seeds the synthetic data
 - `https://YOUR_DOMAIN/api-docs` — Swagger UI
 - Log in with the quick-login box; generate a sale PDF (exercises Chromium)
 
-## Updates
+## 7. Updates
 
 ```bash
 cd /opt/managerepairstore && git pull --ff-only \
   && docker compose -f docker-compose.vps.yml up -d --build app
+```
+
+If the pull brought new files under `2BACK/src/migrations/`, apply them:
+
+```bash
+docker compose -f docker-compose.vps.yml run --rm app \
+  node node_modules/typeorm/typeorm.js migration:run -d dist/2BACK/src/datasource.js
 ```

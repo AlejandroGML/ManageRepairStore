@@ -34,11 +34,10 @@ import { DemoModule } from './demo/demo.module';
         password: configService.get<string>('DB_PASSWORD', 'mrs_demo_local'),
         database: configService.get<string>('DB_DATABASE', 'manage_repair_store'),
         autoLoadEntities: true,
-        // TYPEORM_SYNCHRONIZE=true permite el auto-schema en producción SOLO
-        // para el demo efímero (datos 100% sintéticos); default: apagado en prod.
-        synchronize:
-          configService.get<string>('TYPEORM_SYNCHRONIZE') === 'true' ||
-          configService.get<string>('NODE_ENV') !== 'production',
+        // Migrations are the only schema path (see src/migrations/ and
+        // the migration:* scripts). Entity edits never auto-ALTER the
+        // database — generate and run a migration instead.
+        synchronize: false,
       }),
     }),
     AuthModule,

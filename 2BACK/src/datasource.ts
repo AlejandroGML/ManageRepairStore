@@ -11,6 +11,22 @@ import { LogEntity } from './entities/log.entity';
 import { RefillGroupEntity } from './entities/refill-group.entity';
 import { WorkerEntity } from './entities/worker.entity';
 
+/**
+ * CLI data source (typeorm migration:generate/run/revert/show).
+ *
+ * Exactly ONE DataSource binding lives here — typeorm 1.0's CLI rejects
+ * files exporting more than one.
+ *
+ * Migrations are the ONLY schema path: synchronize is off in every
+ * environment (entity edits never auto-ALTER anything; generate the
+ * migration instead). The demo database adopts its schema the same way;
+ * the demo reset (POST /demo/reset) is data seeding and stays outside
+ * the migration system.
+ *
+ * Credentials come from the DB_* environment (same variables the app
+ * reads); defaults match the dev docker-compose stack. Point the CLI at
+ * a different target with DB_DATABASE=x.
+ */
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -31,5 +47,7 @@ export const AppDataSource = new DataSource({
     RefillGroupEntity,
     WorkerEntity,
   ],
-  synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true' || process.env.NODE_ENV !== 'production',
+  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  migrationsRun: false,
+  synchronize: false,
 });
