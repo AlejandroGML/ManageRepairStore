@@ -109,7 +109,9 @@ commit (tests + docs alongside behavior) on branch `fix/tech-debt-port`.
 
 ## Feature complete
 
-All six checklist items closed with observed proof. Not merged to main
-(no merge authorization); branch ready for review.
+All six checklist items closed with observed proof. MERGED to main as
+fast-forward 7f625ab..95db3fa (merge authorized by Xoko); branch
+fix/tech-debt-port deleted after merge. Batch 2 + 13 stale-spec fix
+continued on the same branch (see tech-debt-port-2.md).
 Note: docs/TECH-DEBT-FIXES.md remains untracked (Xoko's document — left
 alone deliberately).

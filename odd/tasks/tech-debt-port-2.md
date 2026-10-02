@@ -63,7 +63,8 @@ work-unit commit per task.
 
 ## Evidence log
 
-- Branch: fix/tech-debt-port (continues batch 1, not merged).
+- Branch: fix/tech-debt-port (continues batch 1). MERGED to main as
+  fast-forward 7f625ab..95db3fa; branch deleted after merge.
 - ①: a24c4a7 — GET /sales today-summary. Backend 260/260.
 - ②: 5284c12 — J1 HttpException re-throw, 3 sites. Backend 262/262.
 - ③: d009240 — T2-clientes lock + atomic group. Backend 266/266.
