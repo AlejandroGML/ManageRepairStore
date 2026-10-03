@@ -38,6 +38,10 @@ graphify-out/
 .atl/
 .graphify/
 
+# Duplicates pipeline reports (maintenance scripts output)
+2BACK/duplicates-report.json
+2BACK/merge-plan-*.json
+
 # DB dumps
 *.sql
 .playwright-mcp/
