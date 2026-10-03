@@ -110,7 +110,9 @@ openspec/changes/archive/2026-10-01-empresas-gestion/{proposal,design,tasks}.md
 - Frontend convergió a superset de ABAGAS (solo login difiere +18
   líneas por i18n). Backend convergió (solo main.ts y rut.service.ts
   son MRS-mayores).
-- Sin merge a main: la rama feat/abagas-full-port espera revisión.
+- MERGED to main as fast-forward eaf286e..09ba93c (autorización
+  explícita de Xoko); rama feat/abagas-full-port eliminada tras el
+  merge. main queda adelantado de origin/main sin push (pendiente).
 
 ## Rules
 
