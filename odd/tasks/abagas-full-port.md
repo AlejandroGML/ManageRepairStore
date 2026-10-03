@@ -63,9 +63,16 @@ openspec/changes/archive/2026-10-01-empresas-gestion/{proposal,design,tasks}.md
       companies + demo + categories/workers MRS-only). 89e0fbb
 - [x] C6 scripts de mantenimiento porteados: find-duplicate-groups,
       merge-duplicates, find-product-name-groups (convenciones MRS).
-      QUIRK ABAGAS documentado: el guard sucursal de merge-duplicates
-      lee company_name del reporte que find-duplicate-groups ya no
-      emite — paridad mantenida, pendiente upstream. 89e0fbb
+      QUIRK ABAGAS RESUELTO en MRS: el guard sucursal de merge-duplicates
+      leía company_name del reporte que find-duplicate-groups ya no
+      emite (muerto desde el cambio empresas) — fix portado y mejorado:
+      el reporte ahora lleva companyId por miembro y el guard excluye
+      clusters con ≥2 miembros de la MISMA empresa. Verificado en vivo:
+      escaneo agrupa las 2 sucursales de Comercial Demo SpA, reporte
+      companyId [1,1], dry-run tier-1 planifica 0 merges. Bug reportado
+      a ABAGAS (odd/tasks/fix-merge-duplicates-sucursal-guard.md, commit
+      d12e1a7 en su repo) para que su agente aplique el fix upstream.
+      Commit: d90a5c1
 - [x] EXTRA: dev-setup.sh adaptado al loop MRS (compose+pnpm+migrations+
       seed). 8a5ff3c
 
