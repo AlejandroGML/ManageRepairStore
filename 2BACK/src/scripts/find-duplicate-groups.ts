@@ -44,6 +44,10 @@ interface Prepped {
   email: string | null;
   address: string | null;
   city: string | null;
+  /** Empresa del cliente (NULL = particular). Metadata del reporte: NO
+   *  une grupos — las sucursales comparten RUT por diseño, y el merge
+   *  usa este campo para NO fusionarlas (guard looksLikeSucursal). */
+  companyId: number | null;
   // campos ya normalizados para el escaneo
   nRut: string;
   nPhone: string;
@@ -56,7 +60,7 @@ interface GroupReport {
   strength: 'strong' | 'mixed' | 'fuzzy';
   members: Array<Pick<
     Prepped,
-    'id' | 'name' | 'rut_raw' | 'phone' | 'email' | 'address' | 'city'
+    'id' | 'name' | 'rut_raw' | 'phone' | 'email' | 'address' | 'city' | 'companyId'
   >>;
   matchedFields: Record<string, number>;
   matchedPairs: number;
@@ -125,6 +129,7 @@ function prep(c: ClientEntity): Prepped {
     email: c.email,
     address: c.address,
     city: c.city,
+    companyId: c.company_id ?? null,
     nRut: normalize(c.rut_normalizado || c.rut_raw),
     nPhone: phoneKey(c.phone ?? ''),
     nEmail: isMeaningfulEmail((c.email ?? '').toLowerCase().trim()) ? (c.email ?? '').toLowerCase().trim() : '',
@@ -149,7 +154,7 @@ async function findDuplicateGroups(): Promise<void> {
     .createQueryBuilder('c')
     .select([
       'c.id', 'c.name', 'c.rut_raw', 'c.rut_normalizado', 'c.phone',
-      'c.email', 'c.address', 'c.city',
+      'c.email', 'c.address', 'c.city', 'c.company_id',
     ])
     .where('c.active = :active', { active: true })
     .getMany();
@@ -245,6 +250,7 @@ async function findDuplicateGroups(): Promise<void> {
         email: m.email,
         address: m.address,
         city: m.city,
+        companyId: m.companyId,
       })),
       matchedFields,
       matchedPairs: Object.values(matchedFields).reduce((s, n) => s + n, 0),

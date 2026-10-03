@@ -37,7 +37,10 @@ import { AppDataSource } from '../datasource';
 interface ReportMember {
   id: number;
   name: string;
-  company_name: string | null;
+  /** Empresa del miembro (NULL = particular). El guard de sucursales usa
+   *  este id — la versión anterior leía company_name, que el reporte dejó
+   *  de emitir cuando el schema eliminó la columna (guard muerto). */
+  companyId: number | null;
 }
 interface ReportGroup {
   strength: 'strong' | 'mixed' | 'fuzzy';
@@ -75,12 +78,12 @@ if (!STRENGTH) {
 }
 
 /** Cluster tipo sucursal: estructura legítima del negocio, no duplicación.
- *  ≥2 miembros con empresa = requiere revisión humana (podrían ser
- *  sucursales del mismo retail compartiendo RUT). */
+ *  Si ≥2 miembros pertenecen a la MISMA empresa, son sucursales del mismo
+ *  retail compartiendo RUT → requiere revisión humana, nunca auto-merge. */
 function looksLikeSucursal(g: ReportGroup): boolean {
-  const conEmpresa = g.members.filter((m) => (m.company_name ?? '').trim() !== '');
-  if (g.members.length >= 3 && conEmpresa.length >= 2) return true;
-  return g.members.length === 2 && conEmpresa.length === 2;
+  const conEmpresa = g.members.filter((m) => m.companyId != null);
+  if (conEmpresa.length < 2) return false;
+  return conEmpresa.every((m) => m.companyId === conEmpresa[0].companyId);
 }
 
 async function main(): Promise<void> {
